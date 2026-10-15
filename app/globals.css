@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #2962ff;
+  --foreground: #000000;
+  --background: #ffffff;
+  --muted: #919eab; /* label, placeholder, disabled, icon mắt, "Chưa nhận được mã?" */
+  --border: #919eab; /* viền input, select, textarea */
+
+  /* Error */
+  --error-background: #ffe7d9;
+  --error-foreground: #7a0c2e;
+  --error-icon: #ff4842;
+
+  /* Success */
+  --success-background: #e9fcd4;
+  --success-foreground: #08660d;
+  --success-icon: #54d62c;
+
+  /* Sidebar */
+  --sidebar: #14317f;
+  --sidebar-foreground: #ffffff;
+}
+
+@theme inline {
+  --font-sans: var(--font-roboto);
+  --font-mono: var(--font-roboto-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-error-background: var(--error-background);
+  --color-error-foreground: var(--error-foreground);
+  --color-error-icon: var(--error-icon);
+  --color-success-background: var(--success-background);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-icon: var(--success-icon);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+}
+
+@theme {
+  --text-h1: 2rem; /* 32px */
+  --text-h1--line-height: 2.5rem;
+  --text-h2: 1.75rem; /* 28px */
+  --text-h2--line-height: 2.25rem;
+  --text-h3: 1.5rem; /* 24px */
+  --text-h3--line-height: 2rem;
+  --text-h4: 1.25rem; /* 20px */
+  --text-h4--line-height: 1.75rem;
+  --text-h5: 1.125rem; /* 18px */
+  --text-h5--line-height: 1.625rem;
+  --text-body: 1rem; /* 16px */
+  --text-small: 0.875rem; /* 14px */
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans text-body;
+  }
+
+  h1 {
+    @apply text-h1 font-bold;
+  }
+
+  h2 {
+    @apply text-h2 font-bold;
+  }
+
+  h3 {
+    @apply text-h3 font-bold;
+  }
+
+  h4 {
+    @apply text-h4 font-semibold;
+  }
+
+  h5 {
+    @apply text-h5 font-semibold;
+  }
+
+  small {
+    @apply text-small;
+  }
+
+  a,
+  img {
+    @apply block;
+  }
+
+  button {
+    @apply font-medium cursor-pointer;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+@layer components {
+}
