@@ -1,38 +1,80 @@
 ## Thư mục
 
-FE-SAMPLE/
-├── .next/  
-├── app/  
+libs/
+
+├── core/ ← CHỈ FE, dùng chung cho MỌI dự án FE
+
+│ ├── components/ ← UI component thuần, không gắn nghiệp vụ (Button, Modal, DataTable...)
+
+│ ├── models/ chứa type/interface/enum chỉ dùng phía FE và dùng chung cho nhiều dự án
+
+│ │ └── component.model.ts ← SelectOption, TableColumn<T>
+
+│ ├── hooks/ ← custom hook dùng lại được, không phụ thuộc nghiệp vụ
+
+│ │ └── useDebounce.ts
+
+│ ├── services/ ← cấu hình giao tiếp HTTP dùng chung
+
+│ │ └── axiosInstance.ts ← axiosInstance + axiosPublic
+
+│ ├── utils/ ← hàm tiện ích
+
+│ │ └── validators.ts ← validatePhone/Password/Otp
+
+│ │ └── jwtUtil.ts
+
+│ │ └── cookieUtil.ts
+
+│ ├── constants/ ← hằng số dùng chung
+
+│ │ └── limits.ts ← OTP_LENGTH, MAX_PASSWORD_LENGTH
+
 │
-├── libs/  
-│ │
-│ ├── core/ # [1] Phần dùng chung cho NHIỀU dự án
-│ │ ├── components/ # Component UI chung (Button, Input, Modal, Table...)
-│ │ ├── hooks/ # Custom hooks chung (useDebounce, useToggle...)
-│ │ ├── models/ # Model/kiểu dữ liệu cơ bản của core
-│ │ ├── services/ # Cấu hình gọi API chung (axios instance, interceptor...)
-│ │ └── styles/ # Style, theme, CSS dùng chung
-│ │
-│ ├── shared/ # [2] Models dùng chung cho cả BE và FE
-│ │ ├── core/ # Model dùng chung ở mức core
-│ │ ├── tts/ # Model riêng của dự án TTS
-│ │ │ ├── models/
-│ │ │ │ ├── department.model.ts # Interface/type/enum của Department
-│ │ │ │ └── index.ts # Export gom các model lại cho import gọn
-│ │ │ └── index.ts # Export gom toàn bộ phần tts
-│ │ └── index.ts # Export gom toàn bộ shared
-│ │
-│ └── tts/ # [3] Source của dự án (Thực tập sinh)
-│ ├── components/ # Component riêng của dự án
-│ ├── pages/ # Các màn hình của dự án
-│ │ ├── department/
-│ │ │ └── index.tsx # Màn hình quản lý Department
-│ │ └── index.ts # Export gom các page
-│ ├── providers/ # Context/Provider riêng (auth, theme, query...)
-│ └── services/ # Gọi API riêng của dự án
+
+├── shared/ ← FE + BE cùng dùng, đảm bảo 2 phía luôn khớp contract
+
+│ └── core/ ← chung cho MỌI dự án
+
+│ │ ├── models/
+
+│ │ │ ├── common.model.ts ← ApiResponse, PageResponse, ErrorResponse
+
+│ └── tts/ ← chung FE + BE, nhưng CHỈ cho dự án tts
+
+│ │ ├── models/
+
+│ │ │ ├── enums.ts ← UserRole
+
+│ │ │ ├── auth.model.ts ← LoginRequest, LoginResponse, ApiResponse...
+
+│ │ ├── schemas/ Zod schema
+
+│ │ │ ├── auth.schema.ts ← loginSchema, registerSchema, verifyOtpSchema...
+
 │
-├── node_modules/  
-├── public/
+
+└── tts/ source riêng của dự án tts
+
+│ └── assets/ logo, banner, nền
+
+│ └── components/ component chỉ dự án này dùng
+
+│ └── services/
+
+│ │ │ ├── apis/
+
+│ │ │ │ ├── authApi.ts
+
+│ │ │ │ ├── productApi.ts
+
+│ └── hooks
+
+│ │ ├── useAuth.ts ← useLogin, useRegister, useLogout...
+
+│ └── providers/ các providers
+
+│ │ ├── QueryProvider.tsx
 
 ## Clean code
 
