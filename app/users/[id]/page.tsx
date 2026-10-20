@@ -1,4 +1,5 @@
 import EditUserForm from "@/libs/tts/components/users/EditUserForm";
+import { Suspense } from "react";
 
 export default async function Page({
   params,
@@ -6,5 +7,9 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <EditUserForm userId={id} />;
+  return (
+    <Suspense>
+      <EditUserForm userId={id} />
+    </Suspense>
+  );
 }
