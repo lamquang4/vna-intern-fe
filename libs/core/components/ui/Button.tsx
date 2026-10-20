@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 
 const variants = {
   primary: "bg-primary text-white",
+  danger: "bg-error text-white",
   none: "",
 } as const;
 
@@ -20,9 +21,8 @@ export function Button({
     <button
       type={type}
       className={twMerge(
-        "font-normal whitespace-nowrap transition-colors cursor-pointer",
-        "outline-none",
-        "disabled:cursor-not-allowed disabled:opacity-50",
+        "font-normal whitespace-nowrap transition-colors cursor-pointer outline-none",
+        "disabled:cursor-not-allowed",
         variants[variant],
         className,
       )}

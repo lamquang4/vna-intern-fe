@@ -14,8 +14,8 @@ export function Input({ className, error, ref, ...props }: InputProps) {
       className={twMerge(
         "border border-border bg-background outline-none transition-colors",
         "focus:border-primary",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        error && "border-error-icon focus:border-error-icon",
+        "disabled:cursor-not-allowed",
+        error && "border-error focus:border-error",
         className,
       )}
       {...props}

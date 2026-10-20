@@ -4,18 +4,27 @@ import { KeyRound, LogOut, UserRound } from "lucide-react";
 import DropdownMenu from "@/libs/core/components/ui/DropdownMenu";
 import { Image } from "@/libs/core/components/ui/Image";
 import userAvatar from "@/libs/tts/assets/user.png";
+import ChangePasswordModal from "../../change-password/ChangePasswordModal";
+import { useLogout, useMe } from "@/libs/tts/hooks/useAuth";
 
 function ProfileMenu() {
   const [dropDownOpen, setDropDownOpen] = useState<boolean>(false);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+
+  const { data } = useMe();
+  const account = data?.data;
+
+  const logoutMutation = useLogout();
+
+  const handleLogout = () => {
+    setDropDownOpen(false);
+    logoutMutation.mutate();
+  };
 
   const handleToggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setDropDownOpen((prev) => !prev);
-  };
-
-  const account = {
-    username: "Quang Lam",
   };
 
   const menuItems = [
@@ -27,12 +36,15 @@ function ProfileMenu() {
     {
       label: "Đổi mật khẩu",
       icon: <KeyRound size={20} />,
-      onClick: () => {},
+      onClick: () => {
+        setDropDownOpen(false);
+        setModalOpen(true);
+      },
     },
     {
       label: "Đăng xuất",
       icon: <LogOut size={20} />,
-      onClick: () => {},
+      onClick: handleLogout,
       textColor: "text-error",
     },
   ];
@@ -42,28 +54,32 @@ function ProfileMenu() {
   }
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setDropDownOpen(true)}
-      onMouseLeave={() => setDropDownOpen(false)}
-    >
+    <>
       <div
-        className="flex cursor-pointer items-center gap-2"
-        onClick={handleToggleDropdown}
+        className="relative"
+        onMouseEnter={() => setDropDownOpen(true)}
+        onMouseLeave={() => setDropDownOpen(false)}
       >
-        <div className="w-[40px] h-[40px] p-1 rounded-full border border-border overflow-hidden">
-          <Image
-            src={userAvatar}
-            alt="user"
-            className="w-full h-full object-contain"
-            loading="eager"
-          />
+        <div
+          className="flex cursor-pointer items-center gap-2"
+          onClick={handleToggleDropdown}
+        >
+          <div className="w-[40px] h-[40px] p-1 rounded-full border border-border overflow-hidden">
+            <Image
+              src={account?.avatarUrl || userAvatar}
+              alt="user"
+              className="w-full h-full object-cover"
+              loading="eager"
+            />
+          </div>
+          <p>{account?.fullname}</p>
         </div>
-        <p>{account.username}</p>
+
+        {dropDownOpen && <DropdownMenu items={menuItems} vertical="bottom" />}
       </div>
 
-      {dropDownOpen && <DropdownMenu items={menuItems} vertical="bottom" />}
-    </div>
+      {modalOpen && <ChangePasswordModal onClose={() => setModalOpen(false)} />}
+    </>
   );
 }
 

@@ -4,7 +4,7 @@ interface OverlayProps {
   className?: string;
 }
 
-export function Overplay({ onClose, children, className = "" }: OverlayProps) {
+export function Overlay({ onClose, children, className = "" }: OverlayProps) {
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose?.();
   };

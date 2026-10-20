@@ -1,11 +1,31 @@
+export type Gender = "MALE" | "FEMALE";
+
 // request
+export interface UpdateUserRequest {
+  fullname: string;
+  birthDate?: string | null;
+  gender?: Gender | null;
+  position?: string | null;
+  roleId: string;
+  province?: string | null;
+  ward?: string | null;
+  address?: string | null;
+  isActive: boolean;
+  avatar?: File | null;
+}
 
 // response
-export interface UserResponse {
-  user_id: string;
-  first_name: string;
-  last_name: string;
-  phone: string;
+export interface UserDetailResponse {
+  username: string;
+  fullname: string;
+  avatarUrl: string | null;
+  birthDate: string | null;
+  gender: Gender | null;
+  position: string | null;
+  roleId: string;
   email: string;
-  avatar_url: string | null;
+  province: string | null;
+  ward: string | null;
+  address: string | null;
+  isActive: boolean;
 }

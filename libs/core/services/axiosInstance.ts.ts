@@ -7,13 +7,13 @@ const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 // Dùng cho route không cần token
 export const axiosPublic = axios.create({
-  baseURL: `${BASE_URL}/api`,
+  baseURL: `${BASE_URL}/api/v1`,
   timeout: 10000,
 });
 
 // Dùng cho route cần token
 export const axiosInstance = axios.create({
-  baseURL: `${BASE_URL}/api`,
+  baseURL: `${BASE_URL}/api/v1`,
   timeout: 10000,
 });
 
@@ -42,10 +42,10 @@ const doRefresh = async (): Promise<string> => {
 
   // BE áp dụng refresh token rotation, mỗi lần refresh
   // sẽ trả về refresh_token mới và vô hiệu hóa token cũ.
-  jwtUtil.setAccessToken(data.data.access_token);
-  jwtUtil.setRefreshToken(data.data.refresh_token);
+  jwtUtil.setAccessToken(data.data.accessToken);
+  jwtUtil.setRefreshToken(data.data.refreshToken);
 
-  return data.data.access_token;
+  return data.data.accessToken;
 };
 
 // Hàm gọi API để lấy access token mới bằng refresh token

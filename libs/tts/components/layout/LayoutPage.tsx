@@ -29,11 +29,11 @@ function LayoutPage({ children }: LayoutProps) {
     };
   }, []);
   return (
-    <div className="flex min-h-screen w-full relative bg-background-2">
+    <div className="relative flex h-screen w-full overflow-hidden">
       <SideBar menuOpen={menuOpen} onToggleMenu={toggleMenu} />
-      <main className="w-full">
+      <main className="flex min-w-0 flex-1 flex-col">
         <Header onToggleMenu={toggleMenu} />
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
       </main>
     </div>
   );

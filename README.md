@@ -4,8 +4,6 @@ libs/
 
 ├── core/ ← CHỈ FE, dùng chung cho MỌI dự án FE
 
-│ ├── components/ ← UI component thuần, không gắn nghiệp vụ (Button, Modal, DataTable...)
-
 │ ├── models/ chứa type/interface/enum chỉ dùng phía FE và dùng chung cho nhiều dự án
 
 │ │ └── component.model.ts ← SelectOption, TableColumn<T>
