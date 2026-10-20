@@ -6,13 +6,16 @@ import {
   ChangePasswordData,
   changePasswordSchema,
 } from "@/libs/shared/tts/schemas/auth.schema";
+import { useChangePassword } from "../../hooks/useAuth";
 
 interface Props {
   onClose: () => void;
 }
 
 function ChangePasswordForm({ onClose }: Props) {
-  const isLoading = false;
+  const changePasswordMutation = useChangePassword();
+
+  const isLoading = changePasswordMutation.isPending;
 
   const {
     register,
@@ -30,11 +33,21 @@ function ChangePasswordForm({ onClose }: Props) {
   });
 
   const onSubmit = (data: ChangePasswordData) => {
-    if (isLoading) {
-      return;
-    }
+    if (isLoading) return;
 
-    reset();
+    changePasswordMutation.mutate(
+      {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        confirmNewPassword: data.confirmNewPassword,
+      },
+      {
+        onSuccess: () => {
+          reset();
+          onClose();
+        },
+      },
+    );
   };
 
   return (

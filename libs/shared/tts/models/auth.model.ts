@@ -18,11 +18,15 @@ export interface ResetPasswordRequest {
   confirmNewPassword: string;
 }
 
+export interface ResendForgotPasswordOtpRequest {
+  email: string;
+}
+
 // Đổi mật khẩu
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
-  confirmNewPassword: string; // bỏ ra khi gửi request api
+  confirmNewPassword: string;
 }
 
 // Thay đổi email
@@ -32,11 +36,6 @@ export interface VerifyChangeEmailOtpRequest {
 
 export interface ChangeEmailRequest {
   newEmail: string;
-}
-
-// resend otp cho mấy cái request có otp
-export interface ResendOtpRequest {
-  email: string;
 }
 
 // refresh token

@@ -23,24 +23,34 @@ import {
   resetPasswordSchema,
 } from "@/libs/shared/tts/schemas/auth.schema";
 import { validateOtpDigit } from "@/libs/core/utils/validators";
+import {
+  useForgotPassword,
+  useResendForgotPasswordOtp,
+  useResetPassword,
+} from "../../hooks/useAuth";
 
 function ForgotPasswordForm() {
   const [step, setStep] = useState<"step1" | "step2">("step1");
+
   // Đếm ngược hết hạn OTP
-  const [isExpireTimerActive, setIsExpireTimerActive] = useState<boolean>(true);
-  const [expireEndTime, setExpireEndTime] = useState<number>(
-    () => Date.now() + OTP_EXPIRE_SECONDS * 1000,
-  );
-  const [timeLeft, setTimeLeft] = useState<number>(OTP_EXPIRE_SECONDS);
+  const [expireEndTime, setExpireEndTime] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
   // Đếm ngược cooldown gửi lại OTP
-  const [isCooldownActive, setIsCooldownActive] = useState<boolean>(true);
-  const [cooldownEndTime, setCooldownEndTime] = useState<number>(
-    () => Date.now() + OTP_RESEND_COOLDOWN_SECONDS * 1000,
-  );
-  const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number>(
-    OTP_RESEND_COOLDOWN_SECONDS,
-  );
+  const [cooldownEndTime, setCooldownEndTime] = useState<number | null>(null);
+  const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number>(0);
+
+  const forgotPasswordMutation = useForgotPassword();
+  const resendOtpMutation = useResendForgotPasswordOtp();
+  const resetPasswordMutation = useResetPassword();
+
+  const isLoading =
+    forgotPasswordMutation.isPending || resetPasswordMutation.isPending;
+
+  const isLoadingResendOtp = resendOtpMutation.isPending;
+
+  const isCooldownActive = cooldownEndTime !== null && cooldownTimeLeft > 0;
+  const isOtpExpired = expireEndTime !== null && timeLeft <= 0;
 
   const form1 = useForm<ForgotPasswordData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -59,77 +69,95 @@ function ForgotPasswordForm() {
     },
   });
 
-  const resetOtp = () => {
+  const startOtpTimers = () => {
     const now = Date.now();
 
-    // Reset thời gian hết hạn OTP
     setExpireEndTime(now + OTP_EXPIRE_SECONDS * 1000);
     setTimeLeft(OTP_EXPIRE_SECONDS);
-    setIsExpireTimerActive(true);
 
-    // Reset thời gian cooldown gửi lại
     setCooldownEndTime(now + OTP_RESEND_COOLDOWN_SECONDS * 1000);
-    setCooldownTimeLeft(OTP_RESEND_COOLDOWN_SECONDS); // CẬP NHẬT
-    setIsCooldownActive(true);
+    setCooldownTimeLeft(OTP_RESEND_COOLDOWN_SECONDS);
   };
 
   // Đếm ngược hết hạn OTP
   useEffect(() => {
-    if (!isExpireTimerActive) return;
+    if (expireEndTime === null) return;
 
-    const timer = setInterval(() => {
-      const remaining = Math.round((expireEndTime - Date.now()) / 1000);
-
-      if (remaining <= 0) {
-        clearInterval(timer);
-        setTimeLeft(0);
-        setIsExpireTimerActive(false);
-        return;
-      }
-
+    const tick = () => {
+      const remaining = Math.max(
+        0,
+        Math.round((expireEndTime - Date.now()) / 1000),
+      );
       setTimeLeft(remaining);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isExpireTimerActive, expireEndTime]);
-
-  // Đếm ngược cooldown gửi lại otp
-  useEffect(() => {
-    if (!isCooldownActive) return;
+      return remaining;
+    };
 
     const timer = setInterval(() => {
-      const remaining = Math.round((cooldownEndTime - Date.now()) / 1000);
-
-      if (remaining <= 0) {
-        clearInterval(timer);
-        setIsCooldownActive(false);
-        setCooldownTimeLeft(0);
-        return;
-      }
-
-      setCooldownTimeLeft(remaining);
+      if (tick() <= 0) clearInterval(timer);
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isCooldownActive, cooldownEndTime]);
+  }, [expireEndTime]);
 
-  const isLoading = false;
-  const isLoadingResendOtp = false;
+  // Đếm ngược cooldown gửi lại OTP
+  useEffect(() => {
+    if (cooldownEndTime === null) return;
+
+    const tick = () => {
+      const remaining = Math.max(
+        0,
+        Math.round((cooldownEndTime - Date.now()) / 1000),
+      );
+      setCooldownTimeLeft(remaining);
+      return remaining;
+    };
+
+    const timer = setInterval(() => {
+      if (tick() <= 0) clearInterval(timer);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [cooldownEndTime]);
+
   const email = form2.watch("email");
 
   const onSubmitStep1 = (data: ForgotPasswordData) => {
     if (isLoading) return;
 
-    form2.setValue("email", data.email);
-    form1.reset();
-    setStep("step2");
+    forgotPasswordMutation.mutate(data, {
+      onSuccess: () => {
+        form2.setValue("email", data.email);
+        form2.setValue("otpCode", "");
+        form1.reset();
+
+        startOtpTimers();
+        setStep("step2");
+      },
+    });
   };
 
   const onSubmitStep2 = (data: ResetPasswordData) => {
-    if (isLoading) return;
+    if (isLoading || isOtpExpired) return;
 
-    form2.reset();
-    resetOtp();
+    resetPasswordMutation.mutate(data, {
+      onSuccess: () => {
+        form2.reset();
+      },
+    });
+  };
+
+  const onResendOtp = () => {
+    if (isCooldownActive || isLoadingResendOtp || !email) return;
+
+    resendOtpMutation.mutate(
+      { email },
+      {
+        onSuccess: () => {
+          form2.setValue("otpCode", "");
+          startOtpTimers();
+        },
+      },
+    );
   };
 
   return (
@@ -230,16 +258,15 @@ function ForgotPasswordForm() {
                       <div className="flex justify-between items-center">
                         <Button
                           type="button"
+                          onClick={onResendOtp}
                           disabled={isCooldownActive || isLoadingResendOtp}
                           className={`font-medium transition-all ${
-                            !isCooldownActive
+                            !isCooldownActive && !isLoadingResendOtp
                               ? "text-primary cursor-pointer"
                               : "text-muted-foreground cursor-not-allowed"
                           }`}
                         >
-                          {isCooldownActive
-                            ? `Gửi lại mã (${cooldownTimeLeft}s)`
-                            : "Gửi lại mã"}
+                          Gửi lại mã
                         </Button>
 
                         {timeLeft > 0 ? (
@@ -266,7 +293,7 @@ function ForgotPasswordForm() {
                     )}
 
                     <Button
-                      disabled={isLoading}
+                      disabled={isLoading || (step === "step2" && isOtpExpired)}
                       type="submit"
                       variant="primary"
                       className="w-full font-medium rounded-sm px-2 py-2.5 text-center"

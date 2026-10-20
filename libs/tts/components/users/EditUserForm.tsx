@@ -8,42 +8,66 @@ import { Input } from "@/libs/core/components/ui/Input";
 import { Label } from "@/libs/core/components/ui/Label";
 import { Save } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ChangeEmailModal from "../change-email/ChangeEmailModal";
 import {
   UpdateUserData,
   updateUserSchema,
 } from "@/libs/shared/tts/schemas/user.schema";
 import AvatarUpload from "./AvatarUpload";
-import { UpdateUserRequest } from "@/libs/shared/tts/models/user.model";
 import z from "zod";
 import { useProvinces, useWards } from "../../hooks/useLocation";
+import { useMe } from "../../hooks/useAuth";
+import {
+  useUpdateMe,
+  useUpdateUser,
+  useUserDetail,
+} from "../../hooks/useUsers";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { useGetAllRoles } from "../../hooks/useRoles";
 
-function EditUserForm() {
+interface Props {
+  userId?: string;
+}
+
+function EditUserForm({ userId }: Props) {
+  const router = useRouter();
+
   const [modalOpen, setModalOpen] = useState<boolean>(false);
 
-  const user = {
-    username: "Vna25112020",
-    fullname: "Phan Thanh Tùng",
-    avatarUrl: null,
-    birthDate: "1995-06-01",
-    gender: "FEMALE",
-    position: "Chuyên viên",
-    roleId: "ADMIN",
-    email: "phanthanhtung093@gmail.com",
-    province: "Hồ Chí Minh",
-    ward: "Phường Vũng Tàu",
-    address: "ABC XYZ 75",
-    isActive: true,
-  };
+  const isAccountPage = !userId;
+
+  const { data } = useGetAllRoles();
+  const roles = data?.data;
+
+  const meQuery = useMe({ enabled: isAccountPage });
+  const userDetailQuery = useUserDetail(userId ?? "");
+
+  const activeQuery = isAccountPage ? meQuery : userDetailQuery;
+  const user = activeQuery.data?.data;
+
+  const updateMeMutation = useUpdateMe();
+  const updateUserMutation = useUpdateUser(userId ?? "");
+  const updateMutation = isAccountPage ? updateMeMutation : updateUserMutation;
+
+  const isLoading = updateMutation.isPending;
+  const isLoadingUser = activeQuery.isLoading;
+
+  useEffect(() => {
+    if (isLoadingUser || isAccountPage) return;
+
+    if (!user) {
+      toast.error("Không tìm thấy người dùng");
+      router.replace("/users");
+    }
+  }, [isLoadingUser, isAccountPage, user, router]);
 
   const {
-    register,
     control,
     handleSubmit,
-    reset,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm<
     z.input<typeof updateUserSchema>,
     unknown,
@@ -63,7 +87,7 @@ function EditUserForm() {
       province: user?.province ?? null,
       ward: user?.ward ?? null,
       address: user?.address ?? null,
-      isActive: user?.isActive,
+      isActive: user?.isActive ?? false,
       avatar: null,
     },
   });
@@ -78,12 +102,10 @@ function EditUserForm() {
 
   const wards = useWards(selectedProvince ?? "");
 
-  const isLoading = false;
-
   const onSubmit = async (data: UpdateUserData) => {
     if (isLoading) return;
 
-    console.log(data);
+    updateMutation.mutate(data);
   };
 
   return (
@@ -93,7 +115,7 @@ function EditUserForm() {
           className="flex flex-col gap-6 w-full"
           onSubmit={handleSubmit(onSubmit)}
         >
-          <h3>Thông tin tài khoản</h3>
+          <h3>Chi tiết người dùng</h3>
 
           <div className="grid w-full grid-cols-1 gap-[20px] lg:grid-cols-[3fr_7fr]">
             <div className="flex w-full h-fit flex-col gap-6 rounded-md border border-border p-[15px]">
@@ -104,7 +126,7 @@ function EditUserForm() {
                   <AvatarUpload
                     value={field.value}
                     onChange={field.onChange}
-                    currentUrl={user.avatarUrl}
+                    currentUrl={user?.avatarUrl}
                     disabled={isSubmitting}
                   />
                 )}
@@ -132,7 +154,7 @@ function EditUserForm() {
                         className="peer sr-only"
                       />
 
-                      <span className="h-6 w-12 rounded-full bg-muted transition-colors peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-disabled:opacity-50" />
+                      <span className="h-6 w-12 rounded-full bg-primary/50 transition-colors peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-disabled:opacity-50" />
 
                       <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-6" />
                     </span>
@@ -149,7 +171,7 @@ function EditUserForm() {
                   <FloatingInput
                     label="Tên tài khoản"
                     type="text"
-                    value={user.username}
+                    value={user?.username}
                     required
                     disabled
                   />
@@ -232,7 +254,11 @@ function EditUserForm() {
                         error={fieldState.error?.message}
                         disabled={isSubmitting}
                       >
-                        <option value="ADMIN">Quản trị viên</option>
+                        {roles?.map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name}
+                          </option>
+                        ))}
                       </FloatingSelect>
                     )}
                   />
@@ -242,7 +268,7 @@ function EditUserForm() {
                   <FloatingInput
                     label="Email"
                     type="text"
-                    value={user.email}
+                    value={user?.email}
                     disabled
                     containerClassName="flex-1"
                   />

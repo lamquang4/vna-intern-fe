@@ -83,16 +83,16 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
     <>
       <aside
         className={twMerge(
-          "fixed top-0 left-0 z-[55] h-screen w-[280px]",
+          "fixed top-0 left-0 z-[55] h-screen w-[300px]",
           "transition-transform duration-280 ease-in-out",
           "xl:sticky xl:top-0 xl:z-auto xl:translate-x-0",
           "xl:shrink-0 xl:overflow-hidden xl:transition-[width]",
           menuOpen ? "translate-x-0" : "-translate-x-full",
-          menuOpen ? "xl:w-0" : "xl:w-[280px]",
+          menuOpen ? "xl:w-0" : "xl:w-[300px]",
         )}
       >
-        <nav className="custom-scroll h-full w-[280px] overflow-y-auto bg-sidebar pb-5 text-sidebar-foreground">
-          <div className="mb-[20px] flex items-center gap-[15px] justify-center sticky top-0 py-4.5 px-3.5">
+        <nav className="custom-scroll h-full w-[300px] overflow-y-auto bg-sidebar pb-5 text-sidebar-foreground">
+          <div className="mb-[20px] flex items-center gap-[15px] justify-center sticky top-0 py-5 sm:px-[20px] px-[15px]">
             <Image src={logo} alt="logo" className="w-[45px]" loading="eager" />
 
             <p className="font-medium text-center">
@@ -100,7 +100,7 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
             </p>
           </div>
 
-          <ul className="flex flex-col gap-[15px] font-normal px-3.5">
+          <ul className="flex flex-col gap-[15px] font-normal sm:px-[20px] px-[15px]">
             {menuData.map((group, groupIndex) => (
               <div key={groupIndex} className="flex flex-col gap-[10px]">
                 <p className="uppercase">{group.title}</p>

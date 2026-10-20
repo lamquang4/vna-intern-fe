@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState, type ChangeEvent } from "react";
 import { Camera, X } from "lucide-react";
 import { Image } from "@/libs/core/components/ui/Image";

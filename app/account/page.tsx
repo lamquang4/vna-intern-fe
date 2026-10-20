@@ -1,4 +1,4 @@
-import EditUserForm from "@/libs/tts/components/user/EditUserForm";
+import EditUserForm from "@/libs/tts/components/users/EditUserForm";
 import LayoutPage from "../../libs/tts/components/layout/LayoutPage";
 
 function page() {

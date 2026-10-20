@@ -12,9 +12,11 @@ import Link from "next/link";
 import { Input } from "@/libs/core/components/ui/Input";
 import { Label } from "@/libs/core/components/ui/Label";
 import { LoginData, loginSchema } from "@/libs/shared/tts/schemas/auth.schema";
+import { useLogin } from "../../hooks/useAuth";
 
 function LoginForm() {
-  const isLoading = false;
+  const loginMutation = useLogin();
+  const isLoading = loginMutation.isPending;
 
   const {
     register,
@@ -31,11 +33,13 @@ function LoginForm() {
   });
 
   const onSubmit = (data: LoginData) => {
-    if (isLoading) {
-      return;
-    }
+    if (isLoading) return;
 
-    reset();
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        reset();
+      },
+    });
   };
 
   return (

@@ -5,19 +5,26 @@ import DropdownMenu from "@/libs/core/components/ui/DropdownMenu";
 import { Image } from "@/libs/core/components/ui/Image";
 import userAvatar from "@/libs/tts/assets/user.png";
 import ChangePasswordModal from "../../change-password/ChangePasswordModal";
+import { useLogout, useMe } from "@/libs/tts/hooks/useAuth";
 
 function ProfileMenu() {
   const [dropDownOpen, setDropDownOpen] = useState<boolean>(false);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
 
+  const { data } = useMe();
+  const account = data?.data;
+
+  const logoutMutation = useLogout();
+
+  const handleLogout = () => {
+    setDropDownOpen(false);
+    logoutMutation.mutate();
+  };
+
   const handleToggleDropdown = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setDropDownOpen((prev) => !prev);
-  };
-
-  const account = {
-    username: "Quang Lam",
   };
 
   const menuItems = [
@@ -37,7 +44,7 @@ function ProfileMenu() {
     {
       label: "Đăng xuất",
       icon: <LogOut size={20} />,
-      onClick: () => {},
+      onClick: handleLogout,
       textColor: "text-error",
     },
   ];
@@ -59,13 +66,13 @@ function ProfileMenu() {
         >
           <div className="w-[40px] h-[40px] p-1 rounded-full border border-border overflow-hidden">
             <Image
-              src={userAvatar}
+              src={account?.avatarUrl || userAvatar}
               alt="user"
               className="w-full h-full object-cover"
               loading="eager"
             />
           </div>
-          <p>{account.username}</p>
+          <p>{account?.fullname}</p>
         </div>
 
         {dropDownOpen && <DropdownMenu items={menuItems} vertical="bottom" />}
