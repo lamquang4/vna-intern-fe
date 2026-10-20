@@ -6,14 +6,19 @@ export interface PageResponse<T> {
   totalPages: number;
 }
 
-export interface ErrorResponse {
-  status: number;
-  message: string;
-  path?: string;
-  timestamp: string;
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
 }
 
-export interface ApiResponse<T> {
-  data: T;
+export interface MessageResponse {
+  success: boolean;
   message: string;
+}
+
+export interface ErrorResponse {
+  statusCode: number;
+  message: string | string[];
+  error?: string;
 }

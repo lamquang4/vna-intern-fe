@@ -4,9 +4,9 @@
   --primary: #2962ff;
   --foreground: #444444;
   --background: #ffffff;
-  --muted: #eeeeee; /* nền hover, nền disabled, skeleton */
+  --muted: #f4f6f8; /* nền hover, nền disabled, skeleton */
   --muted-foreground: #72747b; /* chữ phụ, icon, placeholder */
-  --border: #919eab;
+  --border: #d1d5db;
   /* Error */
   --error: #ff4842;
   --error-background: #ffe7d9;

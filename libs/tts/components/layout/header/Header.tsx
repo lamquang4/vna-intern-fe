@@ -13,9 +13,9 @@ function Header({ onToggleMenu }: Props) {
       <div className="w-full flex justify-between items-center sm:px-[20px] py-3.5 px-[15px]">
         <Button
           onClick={onToggleMenu}
-          className="w-8.5 h-8.5 rounded-lg border border-border justify-center items-center flex"
+          className="w-8.5 h-8.5 rounded-lg justify-center items-center flex bg-sidebar text-sidebar-foreground"
         >
-          <Menu size={18} />
+          <Menu size={20} />
         </Button>
 
         <ProfileMenu />
