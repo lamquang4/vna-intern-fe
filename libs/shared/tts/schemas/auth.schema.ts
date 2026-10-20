@@ -4,7 +4,6 @@ import type {
   ChangePasswordRequest,
   ForgotPasswordRequest,
   LoginRequest,
-  ResendOtpRequest,
   ResetPasswordRequest,
   VerifyChangeEmailOtpRequest,
 } from "../models/auth.model";
@@ -109,11 +108,3 @@ export const changeEmailSchema = z.object({
 }) satisfies z.ZodType<ChangeEmailRequest>;
 
 export type ChangeEmailData = z.infer<typeof changeEmailSchema>;
-
-// ---------- Gửi lại OTP ----------
-
-export const resendOtpSchema = z.object({
-  email: emailField,
-}) satisfies z.ZodType<ResendOtpRequest>;
-
-export type ResendOtpData = z.infer<typeof resendOtpSchema>;
