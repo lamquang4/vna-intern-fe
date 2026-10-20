@@ -50,7 +50,7 @@ export const jwtUtil = {
 
   getUserId: (): string | null => jwtUtil.getAccessTokenPayload()?.sub ?? null,
   getSessionId: (): string | null =>
-    jwtUtil.getAccessTokenPayload()?.session_id ?? null,
+    jwtUtil.getAccessTokenPayload()?.sid ?? null,
 
   isAccessTokenExpired: (): boolean => {
     const payload = jwtUtil.getAccessTokenPayload();
