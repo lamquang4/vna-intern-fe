@@ -5,6 +5,10 @@ import {
   OTP_LENGTH,
 } from "../constants/limits";
 
+export function validateUsername(value: string): boolean {
+  return /^VNA\d{8}$/i.test(value.trim());
+}
+
 export function validateOtpDigit(value: string): boolean {
   return /^\d?$/.test(value);
 }
@@ -12,11 +16,6 @@ export function validateOtpDigit(value: string): boolean {
 export function validateOtp(otp: string): boolean {
   const regex = new RegExp(`^\\d{${OTP_LENGTH}}$`);
   return regex.test(otp.trim());
-}
-
-export function validatePassword(password: string): boolean {
-  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
-  return regex.test(password.trim());
 }
 
 export function validateImageType(file: File): boolean {

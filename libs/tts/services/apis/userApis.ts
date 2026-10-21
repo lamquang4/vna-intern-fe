@@ -1,6 +1,7 @@
 import { axiosInstance } from "@/libs/core/services/axiosInstance.ts";
 import { ApiResponse } from "@/libs/shared/core/models/common.model";
 import {
+  CreateUserRequest,
   UpdateUserRequest,
   UserDetailResponse,
 } from "@/libs/shared/tts/models/user.model";
@@ -11,6 +12,11 @@ export const userApis = {
   getUserDetail: (userId: string) =>
     axiosInstance
       .get<ApiResponse<UserDetailResponse>>(`${BASE}/${userId}`)
+      .then((r) => r.data),
+
+  createUser: (data: CreateUserRequest) =>
+    axiosInstance
+      .put<ApiResponse<null>>(`${BASE}`, data)
       .then((r) => r.data),
 
   updateUser: (userId: string, data: UpdateUserRequest) =>

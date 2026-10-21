@@ -12,13 +12,8 @@ import {
   MIN_PASSWORD_LENGTH,
   OTP_LENGTH,
 } from "@/libs/core/constants/limits";
-import { validateOtp, validatePassword } from "@/libs/core/utils/validators";
-
-const emailField = z
-  .string()
-  .trim()
-  .min(1, "Email không để trống")
-  .email("Email không hợp lệ");
+import { validateOtp } from "@/libs/core/utils/validators";
+import { emailField } from "./common.schema";
 
 const otpField = z
   .string()
@@ -35,8 +30,7 @@ const newPasswordField = z
     MIN_PASSWORD_LENGTH,
     `Mật khẩu phải có ít nhất ${MIN_PASSWORD_LENGTH} ký tự`,
   )
-  .max(MAX_PASSWORD_LENGTH, `Mật khẩu tối đa ${MAX_PASSWORD_LENGTH} ký tự`)
-  .refine(validatePassword, "Mật khẩu phải có chữ hoa, chữ thường và chữ số");
+  .max(MAX_PASSWORD_LENGTH, `Mật khẩu tối đa ${MAX_PASSWORD_LENGTH} ký tự`);
 
 const confirmPasswordField = z
   .string()

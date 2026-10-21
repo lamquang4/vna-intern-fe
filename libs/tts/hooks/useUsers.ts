@@ -7,6 +7,7 @@ import type {
   ErrorResponse,
 } from "@/libs/shared/core/models/common.model";
 import type {
+  CreateUserRequest,
   UpdateUserRequest,
   UserDetailResponse,
 } from "@/libs/shared/tts/models/user.model";
@@ -27,6 +28,30 @@ export const useUserDetail = (userId: string) => {
   });
 };
 
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<null>,
+    AxiosError<ErrorResponse>,
+    CreateUserRequest
+  >({
+    mutationFn: (data) => userApis.createUser(data),
+
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({
+        queryKey: userKeys.all,
+      });
+
+      toast.success(res.message || "Thêm người dùng thành công");
+    },
+
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Thêm người dùng thất bại"));
+    },
+  });
+};
+
 export const useUpdateUser = (userId: string) => {
   const queryClient = useQueryClient();
 
@@ -42,11 +67,11 @@ export const useUpdateUser = (userId: string) => {
         queryKey: userKeys.detail(userId),
       });
 
-      toast.success(res.message || "Cập nhật thông tin thành công");
+      toast.success(res.message || "Cập nhật người dùng thành công");
     },
 
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Cập nhật thông tin thất bại"));
+      toast.error(getErrorMessage(error, "Cập nhật người dùng thất bại"));
     },
   });
 };

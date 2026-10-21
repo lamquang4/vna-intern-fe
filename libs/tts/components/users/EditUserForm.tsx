@@ -67,7 +67,6 @@ function EditUserForm({ userId }: Props) {
     control,
     handleSubmit,
     setValue,
-    formState: { isSubmitting },
   } = useForm<
     z.input<typeof updateUserSchema>,
     unknown,
@@ -127,7 +126,7 @@ function EditUserForm({ userId }: Props) {
                     value={field.value}
                     onChange={field.onChange}
                     currentUrl={user?.avatarUrl}
-                    disabled={isSubmitting}
+                    disabled={isLoading}
                   />
                 )}
               />
@@ -150,7 +149,7 @@ function EditUserForm({ userId }: Props) {
                         onBlur={field.onBlur}
                         name={field.name}
                         ref={field.ref}
-                        disabled={isSubmitting}
+                        disabled={isLoading}
                         className="peer sr-only"
                       />
 
@@ -186,7 +185,6 @@ function EditUserForm({ userId }: Props) {
                         type="text"
                         required
                         error={fieldState.error?.message}
-                        disabled={isSubmitting}
                       />
                     )}
                   />
@@ -203,7 +201,6 @@ function EditUserForm({ userId }: Props) {
                         label="Ngày sinh"
                         type="date"
                         error={fieldState.error?.message}
-                        disabled={isSubmitting}
                       />
                     )}
                   />
@@ -217,7 +214,6 @@ function EditUserForm({ userId }: Props) {
                         value={field.value ?? ""}
                         label="Giới tính"
                         error={fieldState.error?.message}
-                        disabled={isSubmitting}
                       >
                         <option value="MALE">Nam</option>
                         <option value="FEMALE">Nữ</option>
@@ -237,7 +233,6 @@ function EditUserForm({ userId }: Props) {
                         label="Chức danh"
                         type="text"
                         error={fieldState.error?.message}
-                        disabled={isSubmitting}
                       />
                     )}
                   />
@@ -252,7 +247,6 @@ function EditUserForm({ userId }: Props) {
                         label="Vai trò"
                         required
                         error={fieldState.error?.message}
-                        disabled={isSubmitting}
                       >
                         {roles?.map((role) => (
                           <option key={role.id} value={role.id}>
@@ -300,7 +294,7 @@ function EditUserForm({ userId }: Props) {
                         value={field.value ?? ""}
                         label="Tỉnh/thành phố"
                         error={fieldState.error?.message}
-                        disabled={isSubmitting || isLoadingProvinces}
+                        disabled={isLoadingProvinces}
                         onChange={(event) => {
                           field.onChange(event);
                           setValue("ward", null, { shouldValidate: true });
@@ -326,7 +320,7 @@ function EditUserForm({ userId }: Props) {
                         value={field.value ?? ""}
                         label="Phường/xã"
                         error={fieldState.error?.message}
-                        disabled={isSubmitting || !selectedProvince}
+                        disabled={!selectedProvince}
                       >
                         <option value="">Chọn phường/xã</option>
 
@@ -350,7 +344,6 @@ function EditUserForm({ userId }: Props) {
                       label="Địa chỉ"
                       type="text"
                       error={fieldState.error?.message}
-                      disabled={isSubmitting}
                     />
                   )}
                 />

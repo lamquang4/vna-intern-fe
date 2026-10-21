@@ -14,6 +14,22 @@ export interface UpdateUserRequest {
   avatar?: File | null;
 }
 
+export interface CreateUserRequest {
+  username: string;
+  fullname: string;
+  password: string;
+  birthDate?: string | null;
+  gender?: Gender | null;
+  position?: string | null;
+  roleId: string;
+  email: string;
+  province?: string | null;
+  ward?: string | null;
+  address?: string | null;
+  isActive: boolean;
+  avatar?: File | null;
+}
+
 // response
 export interface UserDetailResponse {
   username: string;
