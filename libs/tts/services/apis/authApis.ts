@@ -51,6 +51,11 @@ export const authApi = {
       .patch<ApiResponse<null>>(`${BASE}/change-password`, data)
       .then((r) => r.data),
 
+  changeEmail: (data: ChangeEmailRequest) =>
+    axiosInstance
+      .patch<ApiResponse<null>>(`${BASE}/change-email`, data)
+      .then((r) => r.data),
+
   requestChangeEmailOtp: () =>
     axiosInstance
       .post<ApiResponse<null>>(`${BASE}/change-email/request-otp`)
@@ -59,10 +64,5 @@ export const authApi = {
   verifyChangeEmailOtp: (data: VerifyChangeEmailOtpRequest) =>
     axiosInstance
       .post<ApiResponse<null>>(`${BASE}/change-email/verify-otp`, data)
-      .then((r) => r.data),
-
-  changeEmail: (data: ChangeEmailRequest) =>
-    axiosInstance
-      .patch<ApiResponse<null>>(`${BASE}/change-email`, data)
       .then((r) => r.data),
 };

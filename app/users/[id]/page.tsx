@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import EditUserForm from "@/libs/tts/components/users/EditUserForm";
+import LayoutPage from "@/libs/tts/components/layout/LayoutPage";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -8,7 +9,9 @@ type PageProps = {
 export default function Page({ params }: PageProps) {
   return (
     <Suspense>
-      <EditUserPage params={params} />
+      <LayoutPage>
+        <EditUserPage params={params} />
+      </LayoutPage>
     </Suspense>
   );
 }

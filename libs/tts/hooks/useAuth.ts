@@ -86,17 +86,8 @@ export const useForgotPassword = () => {
   >({
     mutationFn: authApi.forgotPassword,
 
-    onSuccess: (res) => {
-      toast.success(
-        res.message ||
-          "Nếu email tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi.",
-      );
-    },
-
     onError: (error) => {
-      toast.error(
-        getErrorMessage(error, "Không thể gửi yêu cầu đặt lại mật khẩu"),
-      );
+      toast.error(getErrorMessage(error, "Quên mật khẩu thất bại"));
     },
   });
 };
@@ -114,7 +105,7 @@ export const useResendForgotPasswordOtp = () => {
     },
 
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Không thể gửi lại OTP"));
+      toast.error(getErrorMessage(error, "Gửi lại OTP thất bại"));
     },
   });
 };
@@ -135,7 +126,7 @@ export const useResetPassword = () => {
     },
 
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Không thể đặt lại mật khẩu"));
+      toast.error(getErrorMessage(error, "Đặt lại mật khẩu thất bại"));
     },
   });
 };
@@ -159,11 +150,14 @@ export const useChangePassword = () => {
     },
 
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Không thể đổi mật khẩu"));
+      toast.error(getErrorMessage(error, "Đổi mật khẩu thất bại"));
     },
   });
 };
 
+// Flow Change email
+
+// Yêu cầu gửi OTP đến email hiện tại (bước 1, cũng dùng cho gửi lại OTP)
 export const useRequestChangeEmailOtp = () => {
   return useMutation<ApiResponse<null>, AxiosError<ErrorResponse>, void>({
     mutationFn: authApi.requestChangeEmailOtp,
@@ -173,11 +167,12 @@ export const useRequestChangeEmailOtp = () => {
     },
 
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Không thể gửi OTP xác thực email"));
+      toast.error(getErrorMessage(error, "Gửi OTP xác thực email thất bại"));
     },
   });
 };
 
+// Xác thực OTP đã gửi đến email hiện tại (bước 2)
 export const useVerifyChangeEmailOtp = () => {
   return useMutation<
     ApiResponse<null>,
@@ -196,7 +191,7 @@ export const useVerifyChangeEmailOtp = () => {
   });
 };
 
-// Change email
+// Đổi email (bước 3): gửi email mới sau khi đã xác thực OTP
 export const useChangeEmail = () => {
   const queryClient = useQueryClient();
 
@@ -216,7 +211,7 @@ export const useChangeEmail = () => {
     },
 
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Không thể đổi email"));
+      toast.error(getErrorMessage(error, "Đổi email thất bại"));
     },
   });
 };
