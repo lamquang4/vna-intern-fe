@@ -50,6 +50,10 @@ function ChangePasswordForm({ onClose }: Props) {
     );
   };
 
+  const handleCancel = () => {
+    reset();
+  };
+
   return (
     <form
       className="flex flex-col flex-1 min-h-0"
@@ -84,7 +88,8 @@ function ChangePasswordForm({ onClose }: Props) {
 
         <div className="flex items-center justify-end gap-3">
           <Button
-            onClick={onClose}
+            disabled={isChangingPassword}
+            onClick={handleCancel}
             className="rounded-lg px-3.5 py-2 font-medium border border-border"
           >
             Hủy bỏ

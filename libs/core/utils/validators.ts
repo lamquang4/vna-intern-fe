@@ -45,6 +45,6 @@ export function validateDateNotFuture(value: string): boolean {
 }
 
 export function validateTaxCode(value: string): boolean {
-  const regex = /^\d?$/;
+  const regex = /^\d{10}$/;
   return regex.test(value.trim());
 }

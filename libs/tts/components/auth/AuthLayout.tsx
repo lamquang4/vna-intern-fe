@@ -12,8 +12,8 @@ function AuthLayout({ children, title }: Props) {
     <section className="w-full">
       <div className="flex justify-center items-center h-screen">
         <div className="relative lg:max-w-[1100px] max-w-[480px] w-full h-auto">
-          <div className="h-full grid grid-cols-1 md:grid-cols-[6fr_4fr] items-center">
-            <div className="hidden md:block">
+          <div className="h-full grid grid-cols-1 lg:grid-cols-[6fr_4fr] items-center">
+            <div className="hidden lg:block">
               <Image
                 src={banner}
                 alt="banner"

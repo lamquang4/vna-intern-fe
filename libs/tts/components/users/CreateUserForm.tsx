@@ -6,14 +6,17 @@ import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
 import { Label } from "@/libs/core/components/ui/Label";
-import { Save } from "lucide-react";
+import { ChevronLeft, Save } from "lucide-react";
 import Link from "next/link";
 import AvatarUpload from "./AvatarUpload";
 import {
   CreateUserData,
   createUserSchema,
 } from "@/libs/shared/tts/schemas/user.schema";
-import { useProvinces, useWards } from "../../hooks/useLocation";
+import {
+  useGetAllProvinces,
+  useGetWardsByProvince,
+} from "../../hooks/useLocation";
 import { useWatch } from "react-hook-form";
 import { useGetAllRoles } from "../../hooks/useRoles";
 import { DEFAULT_PASSWORD } from "@/libs/core/constants/limits";
@@ -26,9 +29,6 @@ function CreateUserForm() {
 
   const { data } = useGetAllRoles();
   const roles = data?.data;
-
-  const { data: provinces = [], isLoading: isFetchingProvinces } =
-    useProvinces();
 
   const {
     register,
@@ -49,20 +49,27 @@ function CreateUserForm() {
       fullname: "",
       password: DEFAULT_PASSWORD,
       email: "",
-      birthDate: null,
-      gender: null,
-      position: null,
+      birthDate: "",
+      gender: "",
+      position: "",
       roleId: "",
-      province: null,
-      ward: null,
-      address: null,
+      province: "",
+      ward: "",
+      address: "",
       isActive: true,
       avatar: null,
     },
   });
 
-  const selectedProvince = useWatch({ control, name: "province" });
-  const wards = useWards(selectedProvince ?? "");
+  const { data: provinces = [], isLoading: isFetchingProvinces } =
+    useGetAllProvinces();
+
+  const selectedProvince = useWatch({
+    control,
+    name: "province",
+  });
+
+  const wards = useGetWardsByProvince(selectedProvince ?? "");
 
   const onSubmit = (data: CreateUserData) => {
     if (isCreating) return;
@@ -73,6 +80,11 @@ function CreateUserForm() {
       },
     });
   };
+
+  const handleCancel = () => {
+    reset();
+  };
+
   return (
     <div className="py-[30px] sm:px-[20px] px-[15px] overflow-y-auto">
       <form
@@ -86,11 +98,12 @@ function CreateUserForm() {
             <Controller
               name="avatar"
               control={control}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <AvatarUpload
                   value={field.value}
                   onChange={field.onChange}
                   disabled={isCreating}
+                  error={fieldState.error?.message}
                 />
               )}
             />
@@ -103,7 +116,7 @@ function CreateUserForm() {
           </div>
 
           <div className="p-[15px] rounded-md flex flex-col gap-[20px] w-full border border-border">
-            <div className="flex flex-col gap-[25px]">
+            <div className="flex flex-col gap-[30px]">
               <h5>Thông tin cá nhân</h5>
 
               <div className="flex gap-[15px] sm:flex-row flex-col">
@@ -179,7 +192,6 @@ function CreateUserForm() {
                   label="Email"
                   type="email"
                   required
-                  autoComplete="off"
                   error={errors.email?.message}
                   {...register("email")}
                 />
@@ -188,7 +200,7 @@ function CreateUserForm() {
 
             <hr className="border-border border-t" />
 
-            <div className="flex flex-col gap-[25px]">
+            <div className="flex flex-col gap-[30px]">
               <h5>Thông tin liên hệ</h5>
 
               <div className="flex gap-[15px] sm:flex-row flex-col">
@@ -215,8 +227,8 @@ function CreateUserForm() {
                   {...register("ward")}
                 >
                   <option value="">Chọn phường/xã</option>
-                  {wards.map((ward) => (
-                    <option key={ward.name} value={ward.name}>
+                  {wards.map((ward, index) => (
+                    <option key={index} value={ward.name}>
                       {ward.name}
                     </option>
                   ))}
@@ -233,22 +245,22 @@ function CreateUserForm() {
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-3">
+          <Button
+            onClick={handleCancel}
+            className="rounded-lg px-3.5 py-2 font-medium border border-border"
+          >
+            Hủy bỏ
+          </Button>
+
           <Button
             disabled={isCreating}
             type="submit"
-            className="w-[75px] rounded-lg py-2 font-medium flex justify-center items-center gap-2 bg-primary text-white"
+            className="rounded-lg px-3.5 py-2 font-medium flex justify-center items-center gap-2 bg-primary text-white"
           >
             <Save size={18} />
             <span>Lưu</span>
           </Button>
-
-          <Link
-            href="/users"
-            className="w-[75px] font-medium py-2 bg-error text-white text-center rounded-lg"
-          >
-            Trở về
-          </Link>
         </div>
       </form>
     </div>

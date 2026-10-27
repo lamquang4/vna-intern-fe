@@ -1,11 +1,10 @@
 import Pagination from "@/libs/core/components/ui/Pagination";
 
-// libs/core/components/list/ListLayout.tsx
 interface Props {
   title: string;
   count?: number;
   actions?: React.ReactNode;
-  children: React.ReactNode; // <DataTable />
+  children: React.ReactNode;
   pagination?: {
     page: number;
     size: number;

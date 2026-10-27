@@ -10,12 +10,15 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import ChangeEmailModal from "../auth/change-email/ChangeEmailModal";
 import {
-  UpdateUserData,
+  updateMeSchema,
   updateUserSchema,
 } from "@/libs/shared/tts/schemas/user.schema";
 import AvatarUpload from "./AvatarUpload";
 import z from "zod";
-import { useProvinces, useWards } from "../../hooks/useLocation";
+import {
+  useGetAllProvinces,
+  useGetWardsByProvince,
+} from "../../hooks/useLocation";
 import { useGetMe, useRequestChangeEmailOtp } from "../../hooks/useAuth";
 import {
   useUpdateMe,
@@ -30,6 +33,8 @@ import { Switch } from "@/libs/core/components/ui/Switch";
 interface Props {
   userId?: string;
 }
+
+const editUserSchema = z.union([updateUserSchema, updateMeSchema]);
 
 function EditUserForm({ userId }: Props) {
   const router = useRouter();
@@ -65,41 +70,42 @@ function EditUserForm({ userId }: Props) {
     }
   }, [isFetchingUser, isAccountPage, user, router]);
 
-  const { register, control, handleSubmit, setValue, resetField } = useForm<
-    z.input<typeof updateUserSchema>,
-    unknown,
-    z.output<typeof updateUserSchema>
-  >({
-    resolver: zodResolver(updateUserSchema),
-    mode: "onBlur",
-    values: {
-      fullname: user?.fullname ?? "",
-      birthDate: user?.birthDate ?? null,
-      gender:
-        user?.gender === "FEMALE" || user?.gender === "MALE"
-          ? user.gender
-          : null,
-      position: user?.position ?? null,
-      roleId: user?.roleId ?? "",
-      province: user?.province ?? null,
-      ward: user?.ward ?? null,
-      address: user?.address ?? null,
-      isActive: user?.isActive ?? false,
-      avatar: null,
-    },
-  });
+  const { register, control, handleSubmit, setValue, resetField, reset } =
+    useForm<
+      z.input<typeof editUserSchema>,
+      unknown,
+      z.output<typeof editUserSchema>
+    >({
+      resolver: zodResolver(editUserSchema),
+      mode: "onBlur",
+      values: {
+        fullname: user?.fullname ?? "",
+        birthDate: user?.birthDate ?? null,
+        gender:
+          user?.gender === "FEMALE" || user?.gender === "MALE"
+            ? user.gender
+            : null,
+        position: user?.position ?? null,
+        roleId: user?.roleId ?? "",
+        province: user?.province ?? null,
+        ward: user?.ward ?? null,
+        address: user?.address ?? null,
+        isActive: user?.isActive ?? false,
+        avatar: null,
+      },
+    });
 
   const { data: provinces = [], isLoading: isFetchingProvinces } =
-    useProvinces();
+    useGetAllProvinces();
 
   const selectedProvince = useWatch({
     control,
     name: "province",
   });
 
-  const wards = useWards(selectedProvince ?? "");
+  const wards = useGetWardsByProvince(selectedProvince ?? "");
 
-  const onSubmit = (data: UpdateUserData) => {
+  const onSubmit = (data: z.output<typeof editUserSchema>) => {
     if (isUpdating) return;
 
     const handleSuccess = () => {
@@ -109,13 +115,13 @@ function EditUserForm({ userId }: Props) {
     };
 
     if (isAccountPage) {
-      const { isActive: _isActive, ...accountData } = data;
-
+      const accountData = updateMeSchema.parse(data);
       updateMeMutation.mutate(accountData, {
         onSuccess: handleSuccess,
       });
     } else {
-      updateUserMutation.mutate(data, {
+      const userData = updateUserSchema.parse(data);
+      updateUserMutation.mutate(userData, {
         onSuccess: handleSuccess,
       });
     }
@@ -133,6 +139,10 @@ function EditUserForm({ userId }: Props) {
     });
   };
 
+  const handleCancel = () => {
+    reset();
+  };
+
   return (
     <>
       <div className="py-[30px] sm:px-[20px] px-[15px] overflow-y-auto">
@@ -147,12 +157,13 @@ function EditUserForm({ userId }: Props) {
               <Controller
                 name="avatar"
                 control={control}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <AvatarUpload
                     value={field.value}
                     onChange={field.onChange}
                     currentUrl={user?.avatarUrl}
                     disabled={isFetchingUser}
+                    error={fieldState.error?.message}
                   />
                 )}
               />
@@ -167,7 +178,7 @@ function EditUserForm({ userId }: Props) {
             </div>
 
             <div className="p-[15px] rounded-md flex flex-col gap-[20px] w-full border border-border">
-              <div className="flex flex-col gap-[25px]">
+              <div className="flex flex-col gap-[30px]">
                 <h5>Thông tin cá nhân</h5>
 
                 <div className="flex gap-[15px] sm:flex-row flex-col">
@@ -287,7 +298,7 @@ function EditUserForm({ userId }: Props) {
 
               <hr className="border-border border-t" />
 
-              <div className="flex flex-col gap-[25px]">
+              <div className="flex flex-col gap-[30px]">
                 <h5>Thông tin liên hệ</h5>
 
                 <div className="flex gap-[15px] sm:flex-row flex-col">
@@ -330,8 +341,8 @@ function EditUserForm({ userId }: Props) {
                       >
                         <option value="">Chọn phường/xã</option>
 
-                        {wards.map((ward) => (
-                          <option key={ward.name} value={ward.name}>
+                        {wards.map((ward, index) => (
+                          <option key={index} value={ward.name}>
                             {ward.name}
                           </option>
                         ))}
@@ -357,22 +368,22 @@ function EditUserForm({ userId }: Props) {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-3">
+            <Button
+              onClick={handleCancel}
+              className="rounded-lg px-3.5 py-2 font-medium border border-border"
+            >
+              Hủy bỏ
+            </Button>
+
             <Button
               disabled={isFetchingUser}
               type="submit"
-              className="w-[75px] rounded-lg py-2 font-medium flex justify-center items-center gap-2 bg-primary text-white"
+              className="rounded-lg px-3.5 py-2 font-medium flex justify-center items-center gap-2 bg-primary text-white"
             >
               <Save size={18} />
               <span>Lưu</span>
             </Button>
-
-            <Link
-              href="/users"
-              className="w-[75px] font-medium py-2 bg-error text-white text-center rounded-lg"
-            >
-              Trở về
-            </Link>
           </div>
         </form>
       </div>

@@ -3,11 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
-import { Image } from "@/libs/core/components/ui/Image";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
-import banner from "@/libs/tts/assets/candidate-banner.png";
-import logo from "@/libs/tts/assets/logo.png";
 import Link from "next/link";
 import { Input } from "@/libs/core/components/ui/Input";
 import { Label } from "@/libs/core/components/ui/Label";
@@ -67,7 +64,7 @@ function LoginForm() {
 
           <div className="flex flex-col gap-3">
             <div className="flex justify-between items-center">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <Input
                   id="remember-box"
                   type="checkbox"

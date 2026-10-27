@@ -33,10 +33,7 @@ export const enterpriseKeys = {
 };
 
 export const useGetEnterprises = (params?: GetEnterprisesParams) => {
-  return useQuery<
-    ApiResponse<PageResponse<EnterpriseResponse>>,
-    AxiosError<ErrorResponse>
-  >({
+  return useQuery<PageResponse<EnterpriseResponse>, AxiosError<ErrorResponse>>({
     queryKey: enterpriseKeys.listParams(params),
     queryFn: () => enterpriseApis.getEnterprises(params),
     placeholderData: keepPreviousData,
@@ -97,28 +94,6 @@ export const useUpdateEnterprise = (enterpriseId: string) => {
 
     onError: (error) => {
       toast.error(getErrorMessage(error, "Cập nhật doanh nghiệp thất bại"));
-    },
-  });
-};
-
-export const useToggleEnterpriseStatus = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<ApiResponse<null>, AxiosError<ErrorResponse>, string>({
-    mutationFn: (enterpriseId) =>
-      enterpriseApis.toggleEnterpriseStatus(enterpriseId),
-
-    onSuccess: (res, enterpriseId) => {
-      queryClient.invalidateQueries({ queryKey: enterpriseKeys.lists() });
-      queryClient.invalidateQueries({
-        queryKey: enterpriseKeys.detail(enterpriseId),
-      });
-
-      toast.success(res.message || "Cập nhật trạng thái thành công");
-    },
-
-    onError: (error) => {
-      toast.error(getErrorMessage(error, "Cập nhật trạng thái thất bại"));
     },
   });
 };

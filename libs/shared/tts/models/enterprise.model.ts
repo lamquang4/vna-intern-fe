@@ -86,3 +86,13 @@ export interface UpdateEnterpriseRequest {
   businessLicense?: File | null; // Giấy phép kinh doanh
   otherDocument?: File | null; // Giấy tờ khác
 }
+
+
+// File
+export type DocumentField = "businessLicense" | "otherDocument";
+
+export interface DocumentRow<TFile = File> {
+  id: DocumentField;
+  name: string;
+  file: TFile | null;
+}

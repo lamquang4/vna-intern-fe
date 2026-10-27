@@ -12,13 +12,13 @@ export const businessTypeKeys = {
   all: ["business-types"] as const,
 };
 
-export const useGetBusinessTypes = () => {
+export const useGetAllBusinessTypes = () => {
   return useQuery<
     ApiResponse<BusinessTypeResponse[]>,
     AxiosError<ErrorResponse>
   >({
     queryKey: businessTypeKeys.all,
-    queryFn: () => businessTypeApis.getBusinessTypes(),
+    queryFn: () => businessTypeApis.getAllBusinessTypes(),
     staleTime: Infinity,
   });
 };

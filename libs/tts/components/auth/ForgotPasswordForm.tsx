@@ -28,7 +28,7 @@ import {
 import AuthLayout from "./AuthLayout";
 
 function ForgotPasswordForm() {
-  const [step, setStep] = useState<"step1" | "step2">("step1");
+  const [step, setStep] = useState<1 | 2>(1);
   // Đếm ngược hết hạn OTP
   const [expireEndTime, setExpireEndTime] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
@@ -127,7 +127,7 @@ function ForgotPasswordForm() {
         form1.reset();
 
         startOtpTimers();
-        setStep("step2");
+        setStep(2);
       },
     });
   };
@@ -158,7 +158,7 @@ function ForgotPasswordForm() {
         <form
           className="flex flex-col gap-6"
           onSubmit={
-            step === "step1"
+            step === 1
               ? form1.handleSubmit(onSubmitStep1)
               : form2.handleSubmit(onSubmitStep2)
           }
@@ -166,7 +166,7 @@ function ForgotPasswordForm() {
           <h3 className="text-primary text-center uppercase">Quên mật khẩu</h3>
 
           <div className="flex flex-col gap-2 items-center">
-            {step === "step1" ? (
+            {step === 1 ? (
               <p>Vui lòng nhập email đã đăng ký tài khoản</p>
             ) : (
               <>
@@ -177,7 +177,7 @@ function ForgotPasswordForm() {
             )}
           </div>
 
-          {step === "step1" ? (
+          {step === 1 ? (
             <FloatingInput
               label="Email"
               error={form1.formState.errors.email?.message}
@@ -219,7 +219,7 @@ function ForgotPasswordForm() {
                   })}
                 />
 
-                {step === "step2" && (
+                {step === 2 && (
                   <div className="flex justify-between items-center">
                     <Button
                       type="button"
@@ -252,14 +252,14 @@ function ForgotPasswordForm() {
 
           <div className="flex flex-col gap-3">
             <Button
-              disabled={isSubmitting || (step === "step2" && isOtpExpired)}
+              disabled={isSubmitting || (step === 2 && isOtpExpired)}
               type="submit"
               className="w-full font-medium rounded-sm px-2 py-2.5 text-center bg-primary text-white"
             >
-              {step === "step1" ? "Gửi xác thực" : "Khôi phục mật khẩu"}
+              {step === 1 ? "Gửi xác thực" : "Khôi phục mật khẩu"}
             </Button>
 
-            {step === "step1" && (
+            {step === 1 && (
               <div className="flex gap-2 justify-center items-center">
                 <span>Bạn đã có tài khoản</span>
 

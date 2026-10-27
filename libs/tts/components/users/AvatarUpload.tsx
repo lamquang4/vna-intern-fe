@@ -12,6 +12,7 @@ interface AvatarUploadProps {
   onChange: (file: File | null) => void;
   currentUrl?: string | null;
   disabled?: boolean;
+  error?: string;
 }
 
 function AvatarUpload({
@@ -19,6 +20,7 @@ function AvatarUpload({
   onChange,
   currentUrl,
   disabled = false,
+  error,
 }: AvatarUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -36,7 +38,9 @@ function AvatarUpload({
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/+$/, "");
   const imageSrc =
     previewUrl ??
-    (currentUrl && backendUrl && !/^(blob:|data:|https?:\/\/|\/\/)/i.test(currentUrl)
+    (currentUrl &&
+    backendUrl &&
+    !/^(blob:|data:|https?:\/\/|\/\/)/i.test(currentUrl)
       ? `${backendUrl}/${currentUrl.replace(/^\/+/, "")}`
       : (currentUrl ?? null));
 
@@ -48,12 +52,14 @@ function AvatarUpload({
   };
 
   return (
-    <div className="flex w-full flex-col items-center justify-center gap-6 rounded-md border border-border py-5">
+    <div
+      className={`flex w-full flex-col items-center justify-center gap-6 rounded-md border border-border py-5`}
+    >
       <div className="relative">
         <Label
           className={`group relative flex h-[200px] w-[200px] items-center justify-center rounded-full border-2 border-dashed border-border p-3 ${
             disabled ? "cursor-not-allowed" : "cursor-pointer"
-          }`}
+          } ${error && "border-error"}`}
         >
           <div className="relative flex h-full w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-full bg-muted text-muted-foreground">
             {imageSrc ? (
@@ -101,6 +107,12 @@ function AvatarUpload({
       <div className="space-y-2 text-center text-muted-foreground">
         <p>*.jpeg, *.jpg, *.png</p>
         <p>Kích thước tối đa 5 MB</p>
+
+        {error && (
+          <p role="alert" className="text-error">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );

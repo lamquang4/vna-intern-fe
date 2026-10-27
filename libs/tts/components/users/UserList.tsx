@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Pencil, KeyRound, Plus, Filter, Trash } from "lucide-react";
+import { Pencil, KeyRound, Filter, Trash, CirclePlus } from "lucide-react";
 import { Button } from "@/libs/core/components/ui/Button";
 import type { UserResponse } from "@/libs/shared/tts/models/user.model";
 import DataTable from "@/libs/core/components/ui/DataTable";
@@ -158,7 +158,6 @@ function UserList() {
           checked={u.isActive}
           onChange={() => handleConfirmDialogToggleStatus(u.userId, u.username)}
           disabled={isTogglingStatus}
-          aria-label="Đổi trạng thái"
         />
       ),
     },
@@ -169,14 +168,12 @@ function UserList() {
         <div className="flex items-center gap-3">
           <Link
             href={`${u.username === account?.username ? "/account" : `/users/${u.userId}`}`}
-            aria-label="Sửa người dùng"
           >
             <Pencil size={22} className="text-edit" />
           </Link>
 
           <Button
             type="button"
-            aria-label="Khởi tạo mật khẩu"
             onClick={() => handleOpenInitialPasswordModal(u.username)}
           >
             <KeyRound size={22} className="text-warning" />
@@ -221,7 +218,7 @@ function UserList() {
               href="/users/create"
               className="rounded-md bg-primary px-2 py-2.5 font-medium text-white flex items-center gap-2"
             >
-              <Plus size={18} strokeWidth={2} /> <span>Thêm mới</span>
+              <CirclePlus size={18} strokeWidth={2} /> <span>Thêm</span>
             </Link>
           </>
         }

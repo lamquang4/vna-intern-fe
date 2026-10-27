@@ -1,4 +1,5 @@
 "use client";
+
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { locationApi } from "../services/apis/locationApi";
@@ -7,7 +8,7 @@ export const locationKeys = {
   provinces: ["location", "provinces"] as const,
 };
 
-export const useProvinces = () =>
+export const useGetAllProvinces = () =>
   useQuery({
     queryKey: locationKeys.provinces,
     queryFn: locationApi.getProvinces,
@@ -15,9 +16,19 @@ export const useProvinces = () =>
     gcTime: Infinity,
   });
 
-// Lấy danh sách phường theo tên tỉnh đã chọn
-export const useWards = (provinceName?: string) => {
-  const { data: provinces } = useProvinces();
+// Lấy tất cả phường/xã, không phụ thuộc tỉnh
+export const useGetAllWards = () => {
+  const { data: provinces } = useGetAllProvinces();
+
+  return useMemo(
+    () => provinces?.flatMap((province) => province.wards) ?? [],
+    [provinces],
+  );
+};
+
+// Lấy danh sách phường/xã theo tỉnh đã chọn
+export const useGetWardsByProvince = (provinceName?: string) => {
+  const { data: provinces } = useGetAllProvinces();
 
   return useMemo(
     () => provinces?.find((p) => p.province === provinceName)?.wards ?? [],

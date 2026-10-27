@@ -16,29 +16,29 @@ export const emailField = z
   .email("Email không hợp lệ")
   .max(MAX_EMAIL_LENGTH, `Email tối đa ${MAX_EMAIL_LENGTH} ký tự`);
 
-export const optionalPhone = z
+export const phoneField = z
   .string()
   .trim()
-  .max(MAX_PHONE_LENGTH, `Số điện thoại tối đa ${MAX_PHONE_LENGTH} số`)
-  .nullish()
-  .transform((v) => (v ? v : null))
-  .refine((v) => v === null || validatePhone(v), "Số điện thoại không hợp lệ");
+  .max(MAX_PHONE_LENGTH, `Số điện thoại tối đa ${MAX_PHONE_LENGTH} ký tự`)
+  .transform((value) => (value === "" ? null : value))
+  .refine(
+    (value) => value === null || validatePhone(value),
+    "Số điện thoại không hợp lệ",
+  );
 
-export const optionalPastDate = (
-  invalidMessage: string,
-  futureMessage: string,
-) =>
+export const pastDateField = (invalidMessage: string, futureMessage: string) =>
   z
     .string()
     .trim()
-    .nullish()
-    .transform((v) => (v ? v : null))
-    .refine((v) => v === null || validateDate(v), invalidMessage)
+    .transform((value) => (value ? value : null))
+    .refine((value) => value === null || validateDate(value), invalidMessage)
     .refine(
-      (v) => v === null || !validateDate(v) || validateDateNotFuture(v),
+      (value) =>
+        value === null || !validateDate(value) || validateDateNotFuture(value),
       futureMessage,
     );
 
+// Optional
 export const optionalText = (max: number, message: string) =>
   z
     .string()

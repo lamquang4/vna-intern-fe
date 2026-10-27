@@ -30,7 +30,7 @@ interface Props {
 }
 
 function ChangeEmailForm({ onClose, email }: Props) {
-  const [step, setStep] = useState<"step1" | "step2">("step1");
+  const [step, setStep] = useState<1 | 2>(1);
 
   // Đếm ngược hết hạn OTP
   const [expireEndTime, setExpireEndTime] = useState<number | null>(null);
@@ -119,7 +119,7 @@ function ChangeEmailForm({ onClose, email }: Props) {
     verifyOtpMutation.mutate(data, {
       onSuccess: () => {
         form1.reset();
-        setStep("step2");
+        setStep(2);
       },
     });
   };
@@ -146,18 +146,23 @@ function ChangeEmailForm({ onClose, email }: Props) {
     });
   };
 
+  const handleCancel = () => {
+    form1.reset();
+    form2.reset();
+  };
+
   return (
     <form
       className="flex flex-col flex-1 min-h-0"
       onSubmit={
-        step === "step1"
+        step === 1
           ? form1.handleSubmit(onSubmitStep1)
           : form2.handleSubmit(onSubmitStep2)
       }
     >
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2 items-center">
-          {step === "step1" ? (
+          {step === 1 ? (
             <>
               <p>Chúng tôi đã gửi mã xác nhận qua email cũ</p>
               <p className="font-medium">{email}</p>
@@ -168,7 +173,7 @@ function ChangeEmailForm({ onClose, email }: Props) {
           )}
         </div>
 
-        {step === "step1" ? (
+        {step === 1 ? (
           <div className="flex flex-col gap-2">
             <FloatingInput
               label="OTP"
@@ -192,7 +197,7 @@ function ChangeEmailForm({ onClose, email }: Props) {
 
             <div className="flex justify-between items-center">
               <Button
-                form={step === "step1" ? "form1" : "form2"}
+                form={step === 1 ? "form1" : "form2"}
                 type="button"
                 onClick={handleResendOtp}
                 disabled={isCooldownActive || isResendingOtp}
@@ -229,16 +234,16 @@ function ChangeEmailForm({ onClose, email }: Props) {
 
         <div className="flex flex-col items-center justify-center gap-3">
           <Button
-            disabled={isSubmitting || (step === "step1" && isOtpExpired)}
+            disabled={isSubmitting || (step === 1 && isOtpExpired)}
             type="submit"
             className="w-full px-3.5 py-2 rounded-lg font-medium bg-primary text-white flex justify-center items-center gap-2"
           >
-            <span>{step === "step1" ? "Xác nhận" : "Lưu"}</span>
-            {step === "step2" && <Save size={20} />}
+            <span>{step === 1 ? "Xác nhận" : "Lưu"}</span>
+            {step === 2 && <Save size={20} />}
           </Button>
 
           <Button
-            onClick={onClose}
+            onClick={handleCancel}
             className="w-full text-center rounded-lg px-3.5 py-2 font-medium border border-border"
           >
             Hủy bỏ

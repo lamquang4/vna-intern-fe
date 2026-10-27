@@ -6,7 +6,7 @@ const BASE = "/business-types";
 
 export const businessTypeApis = {
   // Lấy tất cả loại hình kinh doanh đang hoạt động
-  getBusinessTypes: () =>
+  getAllBusinessTypes: () =>
     axiosInstance
       .get<ApiResponse<BusinessTypeResponse[]>>(BASE)
       .then(({ data }) => data),

@@ -12,13 +12,13 @@ export const businessIndustryKeys = {
   all: ["business-industries"] as const,
 };
 
-export const useGetBusinessIndustries = () => {
+export const useGetAllBusinessIndustries = () => {
   return useQuery<
     ApiResponse<BusinessIndustryResponse[]>,
     AxiosError<ErrorResponse>
   >({
     queryKey: businessIndustryKeys.all,
-    queryFn: () => businessIndustryApis.getBusinessIndustries(),
+    queryFn: () => businessIndustryApis.getAllBusinessIndustries(),
     staleTime: Infinity,
   });
 };

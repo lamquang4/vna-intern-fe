@@ -64,7 +64,7 @@ function ProfileMenu() {
           className="flex cursor-pointer items-center gap-2"
           onClick={handleToggleDropdown}
         >
-          <div className="relative w-[40px] h-[40px] p-1 rounded-full border border-border overflow-hidden">
+          <div className="relative w-[45px] h-[45px] p-1 rounded-full border border-border overflow-hidden">
             <Image
               src={
                 account?.avatarUrl

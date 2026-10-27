@@ -47,6 +47,11 @@ function InitializePasswordForm({ onClose, username }: Props) {
       },
     );
   };
+
+  const handleCancel = () => {
+    reset();
+  };
+
   return (
     <form
       className="flex flex-col flex-1 min-h-0"
@@ -68,7 +73,8 @@ function InitializePasswordForm({ onClose, username }: Props) {
 
           <div className="flex items-center justify-end gap-3">
             <Button
-              onClick={onClose}
+            
+              onClick={handleCancel}
               className="rounded-lg px-3.5 py-2 font-medium border border-border"
             >
               Hủy bỏ
