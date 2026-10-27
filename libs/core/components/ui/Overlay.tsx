@@ -11,7 +11,7 @@ export function Overlay({ onClose, children, className = "" }: OverlayProps) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 ${className}`}
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-black/50 ${className}`}
       onClick={handleClick}
     >
       {children}

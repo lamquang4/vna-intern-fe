@@ -1,5 +1,5 @@
 import { Modal } from "@/libs/core/components/ui/Modal";
-import ChangePasswordForm from "../change-password/ChangePasswordForm";
+import ChangePasswordForm from "./ChangePasswordForm";
 
 interface Props {
   onClose: () => void;
@@ -11,7 +11,7 @@ function ChangePasswordModal({ onClose }: Props) {
       title="Đổi mật khẩu"
       onClose={onClose}
       className="max-w-[420px]"
-      headerClassName="bg-primary text-white"
+      headerClassName="uppercase"
     >
       <ChangePasswordForm onClose={onClose} />
     </Modal>

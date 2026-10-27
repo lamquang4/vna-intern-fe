@@ -3,6 +3,7 @@ import type {
   ChangeEmailRequest,
   ChangePasswordRequest,
   ForgotPasswordRequest,
+  InitializePasswordRequest,
   LoginRequest,
   ResetPasswordRequest,
   VerifyChangeEmailOtpRequest,
@@ -102,3 +103,11 @@ export const changeEmailSchema = z.object({
 }) satisfies z.ZodType<ChangeEmailRequest>;
 
 export type ChangeEmailData = z.infer<typeof changeEmailSchema>;
+
+// ---------- Khởi tạo mật khẩu ----------
+
+export const initializePasswordSchema = z.object({
+  password: passwordField,
+}) satisfies z.ZodType<InitializePasswordRequest>;
+
+export type InitializePasswordData = z.infer<typeof initializePasswordSchema>;

@@ -5,7 +5,6 @@ import z from "zod";
 import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
-import { Input } from "@/libs/core/components/ui/Input";
 import { Label } from "@/libs/core/components/ui/Label";
 import { Save } from "lucide-react";
 import Link from "next/link";
@@ -19,15 +18,16 @@ import { useWatch } from "react-hook-form";
 import { useGetAllRoles } from "../../hooks/useRoles";
 import { DEFAULT_PASSWORD } from "@/libs/core/constants/limits";
 import { useCreateUser } from "../../hooks/useUsers";
+import { Switch } from "@/libs/core/components/ui/Switch";
 
 function CreateUserForm() {
   const createUserMutation = useCreateUser();
-  const isLoading = createUserMutation.isPending;
+  const isCreating = createUserMutation.isPending;
 
   const { data } = useGetAllRoles();
   const roles = data?.data;
 
-  const { data: provinces = [], isLoading: isLoadingProvinces } =
+  const { data: provinces = [], isLoading: isFetchingProvinces } =
     useProvinces();
 
   const {
@@ -35,6 +35,7 @@ function CreateUserForm() {
     control,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<
     z.input<typeof createUserSchema>,
@@ -64,9 +65,13 @@ function CreateUserForm() {
   const wards = useWards(selectedProvince ?? "");
 
   const onSubmit = (data: CreateUserData) => {
-    if (isLoading) return;
+    if (isCreating) return;
 
-    createUserMutation.mutate(data);
+    createUserMutation.mutate(data, {
+      onSuccess: () => {
+        reset();
+      },
+    });
   };
   return (
     <div className="py-[30px] sm:px-[20px] px-[15px] overflow-y-auto">
@@ -85,7 +90,7 @@ function CreateUserForm() {
                 <AvatarUpload
                   value={field.value}
                   onChange={field.onChange}
-                  disabled={isLoading}
+                  disabled={isCreating}
                 />
               )}
             />
@@ -93,19 +98,7 @@ function CreateUserForm() {
             <Label className="flex w-full cursor-pointer items-center justify-between gap-3">
               <h5>Kích hoạt</h5>
 
-              <span className="relative inline-flex">
-                <Input
-                  type="checkbox"
-                  role="switch"
-                  disabled={isLoading}
-                  className="peer sr-only"
-                  {...register("isActive")}
-                />
-
-                <span className="h-6 w-12 rounded-full bg-primary/50 transition-colors peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-disabled:opacity-50" />
-
-                <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-6" />
-              </span>
+              <Switch disabled={isCreating} {...register("isActive")} />
             </Label>
           </div>
 
@@ -201,7 +194,7 @@ function CreateUserForm() {
               <div className="flex gap-[15px] sm:flex-row flex-col">
                 <FloatingSelect
                   label="Tỉnh/thành phố"
-                  disabled={isLoadingProvinces}
+                  disabled={isFetchingProvinces}
                   error={errors.province?.message}
                   {...register("province", {
                     onChange: () => setValue("ward", ""),
@@ -242,18 +235,17 @@ function CreateUserForm() {
 
         <div className="flex items-center justify-center gap-4">
           <Button
-            disabled={isLoading}
+            disabled={isCreating}
             type="submit"
-            variant="primary"
-            className="w-[70px] rounded-lg py-2.5 font-medium flex justify-center items-center gap-2"
+            className="w-[75px] rounded-lg py-2 font-medium flex justify-center items-center gap-2 bg-primary text-white"
           >
-            <Save size={20} />
+            <Save size={18} />
             <span>Lưu</span>
           </Button>
 
           <Link
             href="/users"
-            className="w-[70px] font-medium text-white py-2.5 bg-error text-center rounded-lg"
+            className="w-[75px] font-medium py-2 bg-error text-white text-center rounded-lg"
           >
             Trở về
           </Link>

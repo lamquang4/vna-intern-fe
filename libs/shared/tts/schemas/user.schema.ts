@@ -4,8 +4,6 @@ import type {
   UpdateUserRequest,
 } from "../models/user.model";
 import {
-  validateBirthDate,
-  validateBirthDateNotFuture,
   validateImageSize,
   validateImageType,
   validateUsername,
@@ -17,18 +15,7 @@ import {
   MAX_POSITION_LENGTH,
   MIN_PASSWORD_LENGTH,
 } from "@/libs/core/constants/limits";
-import { emailField, optionalSelect, optionalText } from "./common.schema";
-
-const birthDateField = z
-  .string()
-  .trim()
-  .nullish()
-  .transform((v) => (v ? v : null))
-  .refine((v) => v === null || validateBirthDate(v), "Ngày sinh không hợp lệ")
-  .refine(
-    (v) => v === null || !validateBirthDate(v) || validateBirthDateNotFuture(v),
-    "Ngày sinh không được ở tương lai",
-  );
+import { emailField, optionalPastDate, optionalSelect, optionalText } from "./common.schema";
 
 const avatarField = z
   .instanceof(File)
@@ -36,13 +23,16 @@ const avatarField = z
   .refine(validateImageSize, "Ảnh tối đa 5 MB")
   .nullish();
 
-const baseUserShape = {
+const baseShape = {
   fullname: z
     .string()
     .trim()
     .min(1, "Họ tên không để trống")
     .max(MAX_FULLNAME_LENGTH, `Họ tên tối đa ${MAX_FULLNAME_LENGTH} ký tự`),
-  birthDate: birthDateField,
+  birthDate: optionalPastDate(
+    "Ngày sinh không hợp lệ",
+    "Ngày sinh không được ở tương lai",
+  ),
   gender: z
     .enum(["MALE", "FEMALE"])
     .nullish()
@@ -63,7 +53,7 @@ const baseUserShape = {
 };
 
 export const updateUserSchema = z.object({
-  ...baseUserShape,
+  ...baseShape,
 }) satisfies z.ZodType<UpdateUserRequest>;
 
 export type UpdateUserData = z.infer<typeof updateUserSchema>;
@@ -73,7 +63,7 @@ export const createUserSchema = z.object({
     .string()
     .trim()
     .min(1, "Tên tài khoản không để trống")
-    .refine(validateUsername, "Tên tài khoản gồm 3 chữ cái và 8 chữ số"),
+    .refine(validateUsername, "Tên tài khoản gồm VNA và 8 chữ số"),
   password: z
     .string()
     .min(
@@ -82,7 +72,7 @@ export const createUserSchema = z.object({
     )
     .max(MAX_PASSWORD_LENGTH, `Mật khẩu tối đa ${MAX_PASSWORD_LENGTH} ký tự`),
   email: emailField,
-  ...baseUserShape,
+  ...baseShape,
 }) satisfies z.ZodType<CreateUserRequest>;
 
 export type CreateUserData = z.infer<typeof createUserSchema>;

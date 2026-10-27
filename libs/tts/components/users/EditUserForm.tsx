@@ -4,12 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
-import { Input } from "@/libs/core/components/ui/Input";
 import { Label } from "@/libs/core/components/ui/Label";
 import { Save } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import ChangeEmailModal from "../change-email/ChangeEmailModal";
+import ChangeEmailModal from "../auth/change-email/ChangeEmailModal";
 import {
   UpdateUserData,
   updateUserSchema,
@@ -17,15 +16,16 @@ import {
 import AvatarUpload from "./AvatarUpload";
 import z from "zod";
 import { useProvinces, useWards } from "../../hooks/useLocation";
-import { useMe } from "../../hooks/useAuth";
+import { useGetMe, useRequestChangeEmailOtp } from "../../hooks/useAuth";
 import {
   useUpdateMe,
   useUpdateUser,
-  useUserDetail,
+  useGetUserDetail,
 } from "../../hooks/useUsers";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useGetAllRoles } from "../../hooks/useRoles";
+import { Switch } from "@/libs/core/components/ui/Switch";
 
 interface Props {
   userId?: string;
@@ -33,7 +33,6 @@ interface Props {
 
 function EditUserForm({ userId }: Props) {
   const router = useRouter();
-
   const [modalOpen, setModalOpen] = useState<boolean>(false);
 
   const isAccountPage = !userId;
@@ -41,8 +40,8 @@ function EditUserForm({ userId }: Props) {
   const { data } = useGetAllRoles();
   const roles = data?.data;
 
-  const meQuery = useMe({ enabled: isAccountPage });
-  const userDetailQuery = useUserDetail(userId ?? "");
+  const meQuery = useGetMe({ enabled: isAccountPage });
+  const userDetailQuery = useGetUserDetail(userId ?? "");
 
   const activeQuery = isAccountPage ? meQuery : userDetailQuery;
   const user = activeQuery.data?.data;
@@ -51,23 +50,22 @@ function EditUserForm({ userId }: Props) {
   const updateUserMutation = useUpdateUser(userId ?? "");
   const updateMutation = isAccountPage ? updateMeMutation : updateUserMutation;
 
-  const isLoading = updateMutation.isPending;
-  const isLoadingUser = activeQuery.isLoading;
+  const requestChangeEmailOtp = useRequestChangeEmailOtp();
+
+  const isUpdating = updateMutation.isPending;
+  const isFetchingUser = activeQuery.isLoading;
+  const isRequestingOtp = requestChangeEmailOtp.isPending;
 
   useEffect(() => {
-    if (isLoadingUser || isAccountPage) return;
+    if (isFetchingUser || isAccountPage) return;
 
     if (!user) {
       toast.error("Không tìm thấy người dùng");
       router.replace("/users");
     }
-  }, [isLoadingUser, isAccountPage, user, router]);
+  }, [isFetchingUser, isAccountPage, user, router]);
 
-  const {
-    control,
-    handleSubmit,
-    setValue,
-  } = useForm<
+  const { register, control, handleSubmit, setValue, resetField } = useForm<
     z.input<typeof updateUserSchema>,
     unknown,
     z.output<typeof updateUserSchema>
@@ -91,7 +89,7 @@ function EditUserForm({ userId }: Props) {
     },
   });
 
-  const { data: provinces = [], isLoading: isLoadingProvinces } =
+  const { data: provinces = [], isLoading: isFetchingProvinces } =
     useProvinces();
 
   const selectedProvince = useWatch({
@@ -101,10 +99,38 @@ function EditUserForm({ userId }: Props) {
 
   const wards = useWards(selectedProvince ?? "");
 
-  const onSubmit = async (data: UpdateUserData) => {
-    if (isLoading) return;
+  const onSubmit = (data: UpdateUserData) => {
+    if (isUpdating) return;
 
-    updateMutation.mutate(data);
+    const handleSuccess = () => {
+      resetField("avatar", {
+        defaultValue: null,
+      });
+    };
+
+    if (isAccountPage) {
+      const { isActive: _isActive, ...accountData } = data;
+
+      updateMeMutation.mutate(accountData, {
+        onSuccess: handleSuccess,
+      });
+    } else {
+      updateUserMutation.mutate(data, {
+        onSuccess: handleSuccess,
+      });
+    }
+  };
+
+  const handleRequestChangeEmailOtp = () => {
+    if (isRequestingOtp) {
+      return;
+    }
+
+    requestChangeEmailOtp.mutate(undefined, {
+      onSuccess: () => {
+        setModalOpen(true);
+      },
+    });
   };
 
   return (
@@ -126,40 +152,18 @@ function EditUserForm({ userId }: Props) {
                     value={field.value}
                     onChange={field.onChange}
                     currentUrl={user?.avatarUrl}
-                    disabled={isLoading}
+                    disabled={isFetchingUser}
                   />
                 )}
               />
 
-              <Controller
-                name="isActive"
-                control={control}
-                render={({ field }) => (
-                  <Label className="flex w-full cursor-pointer items-center justify-between gap-3">
-                    <h5>Kích hoạt</h5>
+              {!isAccountPage && (
+                <Label className="flex w-full cursor-pointer items-center justify-between gap-3">
+                  <h5>Kích hoạt</h5>
 
-                    <span className="relative inline-flex">
-                      <Input
-                        type="checkbox"
-                        role="switch"
-                        checked={field.value}
-                        onChange={(event) =>
-                          field.onChange(event.target.checked)
-                        }
-                        onBlur={field.onBlur}
-                        name={field.name}
-                        ref={field.ref}
-                        disabled={isLoading}
-                        className="peer sr-only"
-                      />
-
-                      <span className="h-6 w-12 rounded-full bg-primary/50 transition-colors peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-disabled:opacity-50" />
-
-                      <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-6" />
-                    </span>
-                  </Label>
-                )}
-              />
+                  <Switch disabled={isFetchingUser} {...register("isActive")} />
+                </Label>
+              )}
             </div>
 
             <div className="p-[15px] rounded-md flex flex-col gap-[20px] w-full border border-border">
@@ -170,7 +174,7 @@ function EditUserForm({ userId }: Props) {
                   <FloatingInput
                     label="Tên tài khoản"
                     type="text"
-                    value={user?.username}
+                    value={user?.username ?? ""}
                     required
                     disabled
                   />
@@ -215,6 +219,7 @@ function EditUserForm({ userId }: Props) {
                         label="Giới tính"
                         error={fieldState.error?.message}
                       >
+                        <option value="">Chọn giới tính</option>
                         <option value="MALE">Nam</option>
                         <option value="FEMALE">Nữ</option>
                       </FloatingSelect>
@@ -262,7 +267,7 @@ function EditUserForm({ userId }: Props) {
                   <FloatingInput
                     label="Email"
                     type="text"
-                    value={user?.email}
+                    value={user?.email ?? ""}
                     disabled
                     containerClassName="flex-1"
                   />
@@ -271,7 +276,8 @@ function EditUserForm({ userId }: Props) {
                     <Button
                       type="button"
                       className="text-primary font-medium"
-                      onClick={() => setModalOpen(true)}
+                      onClick={handleRequestChangeEmailOtp}
+                      disabled={isRequestingOtp || isFetchingUser}
                     >
                       Thay đổi
                     </Button>
@@ -294,7 +300,7 @@ function EditUserForm({ userId }: Props) {
                         value={field.value ?? ""}
                         label="Tỉnh/thành phố"
                         error={fieldState.error?.message}
-                        disabled={isLoadingProvinces}
+                        disabled={isFetchingProvinces}
                         onChange={(event) => {
                           field.onChange(event);
                           setValue("ward", null, { shouldValidate: true });
@@ -353,18 +359,17 @@ function EditUserForm({ userId }: Props) {
 
           <div className="flex items-center justify-center gap-4">
             <Button
-              disabled={isLoading}
+              disabled={isFetchingUser}
               type="submit"
-              variant="primary"
-              className="w-[70px] rounded-lg py-2.5 font-medium flex justify-center items-center gap-2"
+              className="w-[75px] rounded-lg py-2 font-medium flex justify-center items-center gap-2 bg-primary text-white"
             >
-              <Save size={20} />
+              <Save size={18} />
               <span>Lưu</span>
             </Button>
 
             <Link
               href="/users"
-              className="w-[70px] font-medium text-white py-2.5 bg-error text-center rounded-lg"
+              className="w-[75px] font-medium py-2 bg-error text-white text-center rounded-lg"
             >
               Trở về
             </Link>
@@ -372,7 +377,12 @@ function EditUserForm({ userId }: Props) {
         </form>
       </div>
 
-      {modalOpen && <ChangeEmailModal onClose={() => setModalOpen(false)} />}
+      {modalOpen && (
+        <ChangeEmailModal
+          onClose={() => setModalOpen(false)}
+          email={user?.email ?? ""}
+        />
+      )}
     </>
   );
 }

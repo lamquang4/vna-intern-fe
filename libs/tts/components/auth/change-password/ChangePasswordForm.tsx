@@ -6,7 +6,7 @@ import {
   ChangePasswordData,
   changePasswordSchema,
 } from "@/libs/shared/tts/schemas/auth.schema";
-import { useChangePassword } from "../../hooks/useAuth";
+import { useChangePassword } from "../../../hooks/useAuth";
 
 interface Props {
   onClose: () => void;
@@ -15,7 +15,7 @@ interface Props {
 function ChangePasswordForm({ onClose }: Props) {
   const changePasswordMutation = useChangePassword();
 
-  const isLoading = changePasswordMutation.isPending;
+  const isChangingPassword = changePasswordMutation.isPending;
 
   const {
     register,
@@ -33,7 +33,7 @@ function ChangePasswordForm({ onClose }: Props) {
   });
 
   const onSubmit = (data: ChangePasswordData) => {
-    if (isLoading) return;
+    if (isChangingPassword) return;
 
     changePasswordMutation.mutate(
       {
@@ -55,8 +55,8 @@ function ChangePasswordForm({ onClose }: Props) {
       className="flex flex-col flex-1 min-h-0"
       onSubmit={handleSubmit(onSubmit)}
     >
-      <div className="flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-6.5 pt-8">
+      <div className="flex flex-col gap-8 pt-4">
+        <div className="flex flex-col gap-6">
           <FloatingInput
             label="Mật khẩu cũ"
             type="password"
@@ -80,25 +80,23 @@ function ChangePasswordForm({ onClose }: Props) {
             error={errors.confirmNewPassword?.message}
             {...register("confirmNewPassword")}
           />
+        </div>
 
-          <div className="flex items-center justify-center gap-3">
-            <Button
-              disabled={isLoading}
-              type="submit"
-              variant="primary"
-              className="w-full rounded-lg px-2 py-2.5 font-medium"
-            >
-              Lưu
-            </Button>
+        <div className="flex items-center justify-end gap-3">
+          <Button
+            onClick={onClose}
+            className="rounded-lg px-3.5 py-2 font-medium border border-border"
+          >
+            Hủy bỏ
+          </Button>
 
-            <Button
-              variant="danger"
-              onClick={onClose}
-              className="w-full rounded-lg px-2 py-2.5 font-medium"
-            >
-              Hủy bỏ
-            </Button>
-          </div>
+          <Button
+            disabled={isChangingPassword}
+            type="submit"
+            className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
+          >
+            Áp dụng
+          </Button>
         </div>
       </div>
     </form>

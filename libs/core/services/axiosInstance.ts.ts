@@ -36,8 +36,8 @@ const doRefresh = async (): Promise<string> => {
   if (!refreshToken) throw new Error("Không có refresh token");
 
   const { data } = await axiosPublic.post<ApiResponse<RefreshTokenResponse>>(
-    "/auth/refresh-token",
-    { refresh_token: refreshToken },
+    "/auth/refresh",
+    { refreshToken: refreshToken },
   );
 
   // BE áp dụng refresh token rotation, mỗi lần refresh

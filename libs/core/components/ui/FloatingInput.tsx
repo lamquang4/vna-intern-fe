@@ -66,7 +66,7 @@ export function FloatingInput({
             aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground"
           >
-            {showPassword ? <Eye size={22} /> : <EyeOff size={22} />}
+            {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
           </Button>
         )}
       </div>
