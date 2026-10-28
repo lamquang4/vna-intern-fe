@@ -1,8 +1,10 @@
 "use client";
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { Button } from "@/libs/core/components/ui/Button";
+import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
 import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
 import { useGetAllBusinessIndustries } from "@/libs/tts/hooks/useBusinessIndustries";
@@ -15,13 +17,22 @@ import {
   UpdateEnterpriseData,
   updateEnterpriseSchema,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
-import { ArrowUpToLine, Eye, Trash } from "lucide-react";
+import { ArrowUpToLine, Trash } from "lucide-react";
 import type { TableColumn } from "@/libs/core/models/component.model";
 import DataTable from "@/libs/core/components/ui/DataTable";
 import { ALLOWED_DOCUMENT_MIME_TYPES } from "@/libs/core/constants/limits";
-import { DocumentRow } from "@/libs/shared/tts/models/enterprise.model";
+import type {
+  DocumentRow,
+  DocumentField,
+  EnterpriseDetailResponse,
+  FileResponse,
+} from "@/libs/shared/tts/models/enterprise.model";
 import { FileUpload } from "../FileUpload";
 import { useGetEnterpriseDetail } from "@/libs/tts/hooks/useEnterprises";
+import FilePreview from "../FilePreview";
+import {
+  getFileName,
+} from "@/libs/tts/utils/filePreviewUtil";
 
 interface Props {
   onContinue: (
@@ -30,12 +41,22 @@ interface Props {
       businessTypeName: string;
       businessIndustryName: string;
     },
+    existingFiles: Pick<
+      EnterpriseDetailResponse,
+      "businessLicense" | "otherDocument"
+    >,
   ) => void;
   initialData: UpdateEnterpriseData | null;
   enterpriseId: string;
 }
 
+type EnterpriseDocumentRow = DocumentRow<File | FileResponse>;
+
 function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
+  const [documentToDelete, setDocumentToDelete] = useState<{
+    id: DocumentField;
+    name: string;
+  } | null>(null);
   const { data: businessIndustryData } = useGetAllBusinessIndustries();
   const businessIndustries = businessIndustryData?.data;
 
@@ -75,9 +96,9 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
       businessLocation: enterprise?.businessLocation ?? "",
       representative: enterprise?.representative ?? "",
       representativePhone: enterprise?.representativePhone ?? "",
-      businessLicense: null,
-      otherDocument: null,
       ...initialData,
+      businessLicense: initialData?.businessLicense,
+      otherDocument: initialData?.otherDocument,
     },
   });
 
@@ -100,52 +121,68 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
   const otherDocument = useWatch({ control, name: "otherDocument" });
 
   const onSubmit = (data: UpdateEnterpriseData) => {
-    onContinue(data, {
-      businessTypeName:
-        businessTypes?.find(
-          (item) => item.businessTypeId === data.businessTypeId,
-        )?.name ?? "—",
-
-      businessIndustryName:
-        businessIndustries?.find(
-          (item) => item.businessIndustryId === data.businessIndustryId,
-        )?.name ?? "—",
-    });
+    onContinue(
+      data,
+      {
+        businessTypeName:
+          businessTypes?.find(
+            (item) => item.businessTypeId === data.businessTypeId,
+          )?.name ?? "",
+        businessIndustryName:
+          businessIndustries?.find(
+            (item) => item.businessIndustryId === data.businessIndustryId,
+          )?.name ?? "",
+      },
+      {
+        businessLicense:
+          data.businessLicense === undefined
+            ? (enterprise?.businessLicense ?? null)
+            : null,
+        otherDocument:
+          data.otherDocument === undefined
+            ? (enterprise?.otherDocument ?? null)
+            : null,
+      },
+    );
   };
 
-  const documents: DocumentRow[] = [
+  const documents: EnterpriseDocumentRow[] = [
     {
       id: "businessLicense",
       name: "Giấy phép kinh doanh",
-      file: businessLicense ?? null,
+      file:
+        businessLicense === undefined
+          ? (enterprise?.businessLicense ?? null)
+          : businessLicense,
     },
     {
       id: "otherDocument",
       name: "Giấy tờ khác",
-      file: otherDocument ?? null,
+      file:
+        otherDocument === undefined
+          ? (enterprise?.otherDocument ?? null)
+          : otherDocument,
     },
   ];
 
-  const handlePreview = (file: File | null) => {
-    if (!file) return;
-
-    const url = URL.createObjectURL(file);
-    window.open(url, "_blank", "noopener,noreferrer");
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  const handleSelectDocument = (id: DocumentRow["id"], file: File) => {
+    setValue(id, file, { shouldDirty: true, shouldValidate: true });
   };
 
-  const handleSelectDocument = (id: DocumentRow["id"], file: File) =>
-    setValue(id, file, { shouldDirty: true, shouldValidate: true });
+  const handleConfirmRemoveDocument = () => {
+    if (!documentToDelete) return;
 
-  const handleRemoveDocument = (id: DocumentRow["id"]) =>
+    const { id } = documentToDelete;
     setValue(id, null, { shouldDirty: true, shouldValidate: true });
+    setDocumentToDelete(null);
+  };
 
-  const columns: TableColumn<DocumentRow>[] = [
+  const columns: TableColumn<EnterpriseDocumentRow>[] = [
     { key: "name", header: "Loại tài liệu", cell: (row) => row.name },
     {
       key: "fileName",
       header: "Tên file",
-      cell: (row) => row.file?.name ?? "Chưa chọn tệp",
+      cell: (row) => (!row.file ? "Chưa chọn tệp" : getFileName(row.file)),
     },
     {
       key: "fileInfo",
@@ -158,13 +195,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
       header: "Hành động",
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            disabled={!row.file}
-            onClick={() => handlePreview(row.file)}
-          >
-            <Eye size={22} className="text-muted-foreground" />
-          </Button>
+          <FilePreview file={row.file} />
 
           <FileUpload
             accept={ALLOWED_DOCUMENT_MIME_TYPES.join(",")}
@@ -173,13 +204,21 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
             <ArrowUpToLine size={22} className="text-success" />
           </FileUpload>
 
-          <Button
-            type="button"
-            disabled={!row.file}
-            onClick={() => handleRemoveDocument(row.id)}
-          >
-            <Trash size={22} className="text-error" />
-          </Button>
+          {row.file && (
+            <Button
+              type="button"
+              onClick={() => {
+                if (row.file) {
+                  setDocumentToDelete({
+                    id: row.id,
+                    name: row.name,
+                  });
+                }
+              }}
+            >
+              <Trash size={22} className="text-error" />
+            </Button>
+          )}
         </div>
       ),
     },
@@ -190,10 +229,11 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
   };
 
   return (
-    <form
-      className="flex flex-col gap-6 w-full"
-      onSubmit={handleSubmit(onSubmit)}
-    >
+    <>
+      <form
+        className="flex flex-col gap-6 w-full"
+        onSubmit={handleSubmit(onSubmit)}
+      >
       <div className="flex flex-col gap-[20px] w-full">
         <div className="flex flex-col gap-[30px]">
           <h5>Thông tin doanh nghiệp</h5>
@@ -418,7 +458,18 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
           Tiếp tục
         </Button>
       </div>
-    </form>
+      </form>
+      {documentToDelete && (
+        <ConfirmDialog
+          title="Xác nhận xóa tài liệu"
+          description={`Bạn có chắc chắn muốn xóa ${documentToDelete.name}?`}
+          confirmText="Xóa"
+          cancelText="Hủy bỏ"
+          onConfirm={handleConfirmRemoveDocument}
+          onClose={() => setDocumentToDelete(null)}
+        />
+      )}
+    </>
   );
 }
 

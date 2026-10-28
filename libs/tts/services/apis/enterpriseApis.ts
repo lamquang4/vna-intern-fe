@@ -13,14 +13,22 @@ import {
 import { GetEnterprisesParams } from "@/libs/shared/tts/models/params.model";
 
 const BASE = "/enterprises";
+const DOCUMENT_FIELDS = new Set(["businessLicense", "otherDocument"]);
 
 const toEnterpriseFormData = (
   data: CreateEnterpriseRequest | UpdateEnterpriseRequest,
+  includeNullDocumentFields = false,
 ): FormData => {
   const formData = new FormData();
 
   Object.entries(data).forEach(([key, value]) => {
-    if (value === null || value === undefined) return;
+    if (value === undefined) return;
+    if (value === null) {
+      if (includeNullDocumentFields && DOCUMENT_FIELDS.has(key)) {
+        formData.append(key, "null");
+      }
+      return;
+    }
 
     if (value instanceof File) {
       formData.append(key, value);
@@ -58,7 +66,7 @@ export const enterpriseApis = {
     axiosInstance
       .put<ApiResponse<null>>(
         `${BASE}/${enterpriseId}`,
-        toEnterpriseFormData(data),
+        toEnterpriseFormData(data, true),
       )
       .then(({ data }) => data),
 };

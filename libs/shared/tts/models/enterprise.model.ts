@@ -87,8 +87,6 @@ export interface UpdateEnterpriseRequest {
   otherDocument?: File | null; // Giấy tờ khác
 }
 
-
-// File
 export type DocumentField = "businessLicense" | "otherDocument";
 
 export interface DocumentRow<TFile = File> {
