@@ -6,8 +6,7 @@ import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
 import { Label } from "@/libs/core/components/ui/Label";
-import { ChevronLeft, Save } from "lucide-react";
-import Link from "next/link";
+import { Save } from "lucide-react";
 import AvatarUpload from "./AvatarUpload";
 import {
   CreateUserData,
