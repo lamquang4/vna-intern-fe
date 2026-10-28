@@ -88,8 +88,13 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
     control,
     name: "province",
   });
+  const selectedOperatingProvince = useWatch({
+    control,
+    name: "operatingProvince",
+  });
 
   const wards = useGetWardsByProvince(selectedProvince ?? "");
+  const operatingWards = useGetWardsByProvince(selectedOperatingProvince ?? "");
 
   const businessLicense = useWatch({ control, name: "businessLicense" });
   const otherDocument = useWatch({ control, name: "otherDocument" });
@@ -328,7 +333,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
               disabled={isFetchingProvinces}
               error={errors.operatingProvince?.message}
               {...register("operatingProvince", {
-                onChange: () => setValue("ward", ""),
+                onChange: () => setValue("operatingWard", ""),
               })}
             >
               <option value="">Chọn tỉnh/thành phố</option>
@@ -341,12 +346,12 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
 
             <FloatingSelect
               label="Phường/xã hoạt động KD"
-              disabled={!selectedProvince}
+              disabled={!selectedOperatingProvince}
               error={errors.operatingWard?.message}
               {...register("operatingWard")}
             >
               <option value="">Chọn phường/xã</option>
-              {wards.map((ward) => (
+              {operatingWards.map((ward) => (
                 <option key={ward.name} value={ward.name}>
                   {ward.name}
                 </option>

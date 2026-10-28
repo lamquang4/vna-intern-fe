@@ -4,13 +4,14 @@ import type { CreateEnterpriseData } from "@/libs/shared/tts/schemas/enterprise.
 import { useCreateEnterprise } from "@/libs/tts/hooks/useEnterprises";
 import CreateEnterpriseForm from "./CreateEnterpriseForm";
 import EnterpriseInfoReview from "../EnterpriseInfoReview";
+import AccountInfoReview from "./AccountInfoReview";
 
 interface Props {
   onClose: () => void;
 }
 
 function CreateEnterpriseModal({ onClose }: Props) {
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [formData, setFormData] = useState<CreateEnterpriseData | null>(null);
   const [names, setNames] = useState({
     businessTypeName: "",
@@ -32,46 +33,51 @@ function CreateEnterpriseModal({ onClose }: Props) {
     setStep(1);
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (!formData) return;
 
-    await createEnterpriseMutation.mutateAsync(formData);
-    onClose();
+    createEnterpriseMutation.mutate(formData, {
+      onSuccess: () => {
+        setStep(3);
+      },
+    });
   };
 
   return (
     <Modal
-      title="Thêm mới doanh nghiệp"
-      headerClassName="uppercase border border-border"
+      title={step !== 3 ? "Thêm doanh nghiệp" : "Thông tin tài khoản"}
+      headerClassName={`${step !== 3 ? "uppercase border border-border" : "uppercase bg-primary text-white"}`}
       onClose={onClose}
-      className="max-w-[900px] h-[90%]"
+      className={`${step !== 3 ? "max-w-[900px] h-[90%]" : "max-w-[400px]"}`}
     >
-      <div className="py-4 flex-wrap flex items-center justify-center lg:gap-8 gap-5">
-        <div className="flex gap-2 items-center">
-          <div
-            className={`size-6.5 rounded-full flex items-center justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground text-white"}`}
-          >
-            1
+      {step !== 3 && (
+        <div className="py-4 flex-wrap flex items-center justify-center lg:gap-8 gap-5">
+          <div className="flex gap-2 items-center">
+            <div
+              className={`size-6.5 rounded-full flex items-center justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground text-white"}`}
+            >
+              1
+            </div>
+            <span>Thông tin doanh nghiệp</span>
           </div>
-          <span>Thông tin doanh nghiệp</span>
-        </div>
 
-        <div className="flex gap-2 items-center">
-          <div
-            className={`size-6.5 rounded-full flex items-center justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground text-white"}`}
-          >
-            2
+          <div className="flex gap-2 items-center">
+            <div
+              className={`size-6.5 rounded-full flex items-center justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground text-white"}`}
+            >
+              2
+            </div>
+            <span>Xác nhận đăng ký</span>
           </div>
-          <span>Xác nhận đăng ký</span>
         </div>
-      </div>
+      )}
 
       {step === 1 ? (
         <CreateEnterpriseForm
           onContinue={handleContinue}
           initialData={formData}
         />
-      ) : (
+      ) : step === 2 ? (
         formData && (
           <EnterpriseInfoReview
             data={formData}
@@ -82,6 +88,11 @@ function CreateEnterpriseModal({ onClose }: Props) {
             isLoading={createEnterpriseMutation.isPending}
           />
         )
+      ) : (
+        <AccountInfoReview
+          taxCode={formData?.taxCode || ""}
+          onClose={onClose}
+        />
       )}
     </Modal>
   );

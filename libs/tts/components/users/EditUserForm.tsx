@@ -6,7 +6,6 @@ import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
 import { Label } from "@/libs/core/components/ui/Label";
 import { Save } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import ChangeEmailModal from "../auth/change-email/ChangeEmailModal";
 import {

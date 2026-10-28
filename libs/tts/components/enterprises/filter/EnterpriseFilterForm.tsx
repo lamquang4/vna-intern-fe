@@ -145,7 +145,7 @@ function EnterpriseFilterForm({ onClose }: Props) {
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-between gap-3">
           <Button
             type="button"
             onClick={handleClear}
