@@ -3,6 +3,9 @@ import { Modal } from "@/libs/core/components/ui/Modal";
 import type {
   UpdateEnterpriseData,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
+import type {
+  EnterpriseDetailResponse,
+} from "@/libs/shared/tts/models/enterprise.model";
 import { useUpdateEnterprise } from "@/libs/tts/hooks/useEnterprises";
 import EnterpriseInfoReview from "../EnterpriseInfoReview";
 import EditEnterpriseForm from "./EditEnterpriseForm";
@@ -19,15 +22,20 @@ function EditEnterpriseModal({ onClose, enterpriseId }: Props) {
     businessTypeName: "",
     businessIndustryName: "",
   });
+  const [existingFiles, setExistingFiles] = useState<
+    Pick<EnterpriseDetailResponse, "businessLicense" | "otherDocument">
+  >({ businessLicense: null, otherDocument: null });
 
   const updateEnterpriseMutation = useUpdateEnterprise(enterpriseId);
 
   const handleContinue = (
     data: UpdateEnterpriseData,
     selectedNames: typeof names,
+    files: typeof existingFiles,
   ) => {
     setFormData(data);
     setNames(selectedNames);
+    setExistingFiles(files);
     setStep(2);
   };
 
@@ -79,6 +87,7 @@ function EditEnterpriseModal({ onClose, enterpriseId }: Props) {
         formData && (
           <EnterpriseInfoReview
             data={formData}
+            existingFiles={existingFiles}
             businessTypeName={names.businessTypeName}
             businessIndustryName={names.businessIndustryName}
             onBack={handleBack}

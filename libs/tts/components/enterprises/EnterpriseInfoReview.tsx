@@ -1,18 +1,27 @@
 "use client";
-import { Eye } from "lucide-react";
 import { Button } from "@/libs/core/components/ui/Button";
 import type {
   CreateEnterpriseData,
   UpdateEnterpriseData,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
-import type { DocumentRow } from "@/libs/shared/tts/models/enterprise.model";
+import type {
+  DocumentRow,
+  EnterpriseDetailResponse,
+  FileResponse,
+} from "@/libs/shared/tts/models/enterprise.model";
 import type { TableColumn } from "@/libs/core/models/component.model";
 import DataTable from "@/libs/core/components/ui/DataTable";
 import { InfoItem } from "@/libs/core/components/ui/InfoItem";
 import { format, parseISO } from "date-fns";
+import FilePreview from "./FilePreview";
+import { getFileName } from "@/libs/tts/utils/filePreviewUtil";
 
 interface Props {
   data: CreateEnterpriseData | UpdateEnterpriseData;
+  existingFiles?: Pick<
+    EnterpriseDetailResponse,
+    "businessLicense" | "otherDocument"
+  >;
   businessTypeName: string;
   businessIndustryName: string;
   taxCode?: string;
@@ -23,6 +32,7 @@ interface Props {
 
 function EnterpriseInfoReview({
   data,
+  existingFiles,
   businessTypeName,
   businessIndustryName,
   taxCode,
@@ -30,30 +40,22 @@ function EnterpriseInfoReview({
   onConfirm,
   isLoading,
 }: Props) {
-  const handlePreview = (file: File | null) => {
-    if (!file) return;
-
-    const url = URL.createObjectURL(file);
-
-    window.open(url, "_blank", "noopener,noreferrer");
-
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  };
-
-  const documents: DocumentRow[] = [
+  const documents: DocumentRow<File | FileResponse>[] = [
     {
       id: "businessLicense",
       name: "Giấy phép kinh doanh",
-      file: data.businessLicense ?? null,
+      file:
+        data.businessLicense ?? existingFiles?.businessLicense ?? null,
     },
     {
       id: "otherDocument",
       name: "Giấy tờ khác",
-      file: data.otherDocument ?? null,
+      file:
+        data.otherDocument ?? existingFiles?.otherDocument ?? null,
     },
   ];
 
-  const columns: TableColumn<DocumentRow>[] = [
+  const columns: TableColumn<DocumentRow<File | FileResponse>>[] = [
     {
       key: "name",
       header: "Loại tài liệu",
@@ -62,7 +64,10 @@ function EnterpriseInfoReview({
     {
       key: "fileName",
       header: "Tên file",
-      cell: (row) => row.file?.name ?? "Chưa chọn tệp",
+      cell: (row) =>
+        !row.file
+          ? "Chưa chọn tệp"
+          : getFileName(row.file),
     },
     {
       key: "fileInfo",
@@ -76,13 +81,7 @@ function EnterpriseInfoReview({
       header: "Hành động",
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            disabled={!row.file}
-            onClick={() => handlePreview(row.file)}
-          >
-            <Eye size={22} className="text-muted-foreground" />
-          </Button>
+          <FilePreview file={row.file} />
         </div>
       ),
     },

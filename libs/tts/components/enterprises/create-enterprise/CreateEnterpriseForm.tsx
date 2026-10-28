@@ -15,12 +15,13 @@ import {
   CreateEnterpriseData,
   createEnterpriseSchema,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
-import { ArrowUpToLine, Eye, Trash } from "lucide-react";
+import { ArrowUpToLine, Trash } from "lucide-react";
 import type { TableColumn } from "@/libs/core/models/component.model";
 import DataTable from "@/libs/core/components/ui/DataTable";
 import { ALLOWED_DOCUMENT_MIME_TYPES } from "@/libs/core/constants/limits";
 import { DocumentRow } from "@/libs/shared/tts/models/enterprise.model";
 import { FileUpload } from "../FileUpload";
+import FilePreview from "../FilePreview";
 
 interface Props {
   onContinue: (
@@ -121,14 +122,6 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
     },
   ];
 
-  const handlePreview = (file: File | null) => {
-    if (!file) return;
-
-    const url = URL.createObjectURL(file);
-    window.open(url, "_blank", "noopener,noreferrer");
-    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-  };
-
   const handleSelectDocument = (id: DocumentRow["id"], file: File) =>
     setValue(id, file, { shouldDirty: true, shouldValidate: true });
 
@@ -153,13 +146,7 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
       header: "Hành động",
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            disabled={!row.file}
-            onClick={() => handlePreview(row.file)}
-          >
-            <Eye size={22} className="text-muted-foreground" />
-          </Button>
+          <FilePreview file={row.file} />
 
           <FileUpload
             accept={ALLOWED_DOCUMENT_MIME_TYPES.join(",")}
@@ -168,13 +155,15 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
             <ArrowUpToLine size={22} className="text-success" />
           </FileUpload>
 
-          <Button
-            type="button"
-            disabled={!row.file}
-            onClick={() => handleRemoveDocument(row.id)}
-          >
-            <Trash size={22} className="text-error" />
-          </Button>
+          {row.file && (
+            <Button
+              type="button"
+              disabled={!row.file}
+              onClick={() => handleRemoveDocument(row.id)}
+            >
+              <Trash size={22} className="text-error" />
+            </Button>
+          )}
         </div>
       ),
     },
