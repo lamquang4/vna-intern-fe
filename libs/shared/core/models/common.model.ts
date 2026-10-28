@@ -1,5 +1,6 @@
 export interface PageResponse<T> {
-  content: T[];
+  message: string;
+  data: T[];
   page: number;
   size: number;
   totalElements: number;
@@ -8,7 +9,7 @@ export interface PageResponse<T> {
 
 export interface ApiResponse<T> {
   success: boolean;
-  message?: string;
+  message: string;
   data: T;
 }
 
@@ -21,4 +22,9 @@ export interface ErrorResponse {
   statusCode: number;
   message: string | string[];
   error?: string;
+}
+
+export interface PageParams {
+  page?: number;
+  size?: number;
 }

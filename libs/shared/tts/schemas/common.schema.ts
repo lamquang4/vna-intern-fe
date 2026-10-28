@@ -1,5 +1,13 @@
 import { z } from "zod";
-import { MAX_EMAIL_LENGTH } from "@/libs/core/constants/limits";
+import {
+  MAX_EMAIL_LENGTH,
+  MAX_PHONE_LENGTH,
+} from "@/libs/core/constants/limits";
+import {
+  validateDate,
+  validateDateNotFuture,
+  validatePhone,
+} from "@/libs/core/utils/validators";
 
 export const emailField = z
   .string()
@@ -8,6 +16,29 @@ export const emailField = z
   .email("Email không hợp lệ")
   .max(MAX_EMAIL_LENGTH, `Email tối đa ${MAX_EMAIL_LENGTH} ký tự`);
 
+export const phoneField = z
+  .string()
+  .trim()
+  .max(MAX_PHONE_LENGTH, `Số điện thoại tối đa ${MAX_PHONE_LENGTH} ký tự`)
+  .transform((value) => (value === "" ? null : value))
+  .refine(
+    (value) => value === null || validatePhone(value),
+    "Số điện thoại không hợp lệ",
+  );
+
+export const pastDateField = (invalidMessage: string, futureMessage: string) =>
+  z
+    .string()
+    .trim()
+    .transform((value) => (value ? value : null))
+    .refine((value) => value === null || validateDate(value), invalidMessage)
+    .refine(
+      (value) =>
+        value === null || !validateDate(value) || validateDateNotFuture(value),
+      futureMessage,
+    );
+
+// Optional
 export const optionalText = (max: number, message: string) =>
   z
     .string()

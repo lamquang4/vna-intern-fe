@@ -16,11 +16,13 @@ import type {
   ChangePasswordRequest,
   VerifyChangeEmailOtpRequest,
   ChangeEmailRequest,
+  InitializePasswordRequest,
 } from "@/libs/shared/tts/models/auth.model";
 import type { UserDetailResponse } from "@/libs/shared/tts/models/user.model";
 import { authApi } from "../services/apis/authApis";
 import { jwtUtil } from "@/libs/core/utils/jwtUtil";
 import { getErrorMessage } from "@/libs/core/utils/errorUtil";
+import { cookieUtil } from "@/libs/core/utils/cookieUtil";
 
 export const authKeys = {
   all: ["auth"] as const,
@@ -134,6 +136,7 @@ export const useResetPassword = () => {
 // Change password
 export const useChangePassword = () => {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   return useMutation<
     ApiResponse<null>,
@@ -147,6 +150,7 @@ export const useChangePassword = () => {
       queryClient.clear();
 
       toast.success(res.message || "Đổi mật khẩu thành công");
+      router.replace("/");
     },
 
     onError: (error) => {
@@ -216,11 +220,33 @@ export const useChangeEmail = () => {
   });
 };
 
-export const useMe = (options?: { enabled?: boolean }) => {
+export const useGetMe = (options?: { enabled?: boolean }) => {
   return useQuery<ApiResponse<UserDetailResponse>, AxiosError<ErrorResponse>>({
     queryKey: authKeys.me(),
     queryFn: authApi.getMe,
-    retry: false,
     enabled: options?.enabled ?? true,
+  });
+};
+
+// Khởi tạo mật khẩu
+export const useInitializePassword = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<null>,
+    AxiosError<ErrorResponse>,
+    InitializePasswordRequest
+  >({
+    mutationFn: (body) => authApi.initializePassword(body),
+
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: authKeys.me() });
+
+      toast.success(res.message || "Khởi tạo mật khẩu thành công");
+    },
+
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Khởi tạo mật khẩu thất bại"));
+    },
   });
 };

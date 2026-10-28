@@ -12,6 +12,7 @@ import type {
   ResetPasswordRequest,
   ResendForgotPasswordOtpRequest,
   VerifyChangeEmailOtpRequest,
+  InitializePasswordRequest,
 } from "@/libs/shared/tts/models/auth.model";
 import type { UserDetailResponse } from "@/libs/shared/tts/models/user.model";
 
@@ -64,5 +65,10 @@ export const authApi = {
   verifyChangeEmailOtp: (data: VerifyChangeEmailOtpRequest) =>
     axiosInstance
       .post<ApiResponse<null>>(`${BASE}/change-email/verify-otp`, data)
+      .then((r) => r.data),
+
+  initializePassword: (data: InitializePasswordRequest) =>
+    axiosInstance
+      .post<ApiResponse<null>>(`${BASE}/initialize-password`, data)
       .then((r) => r.data),
 };

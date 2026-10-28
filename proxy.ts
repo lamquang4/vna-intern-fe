@@ -3,7 +3,7 @@ import { jwtDecode } from "jwt-decode";
 import { COOKIE_KEYS } from "@/libs/core/constants/cookie";
 
 // Chưa đăng nhập thì không được vào
-const PRIVATE_ROUTES = ["/account", "/users", "/roles"];
+const PRIVATE_ROUTES = ["/account", "/users", "/enterprises"];
 
 // Đã đăng nhập thì không cần vào
 const PUBLIC_ONLY_ROUTES = ["/", "/forgot-password"];
@@ -53,6 +53,6 @@ export const config = {
     "/forgot-password/:path*",
     "/account/:path*",
     "/users/:path*",
-    "/roles/:path*",
+    "/enterprises/:path*",
   ],
 };

@@ -50,8 +50,8 @@ const menuData: MenuGroup[] = [
         label: "Hệ thống",
         key: "1a",
         children: [
-          { label: "Tài khoản", path: "/" },
-          { label: "Quản lý doanh nghiệp", path: "/" },
+          { label: "Người dùng", path: "/users" },
+          { label: "Doanh nghiệp", path: "/enterprises" },
           { label: "Ký báo cáo", path: "/" },
         ],
       },

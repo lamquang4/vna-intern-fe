@@ -1,14 +1,15 @@
-import NextImage, { type ImageProps } from "next/image";
+import type { ComponentPropsWithoutRef } from "react";
 
-export function Image({ alt, src, unoptimized, ...props }: ImageProps) {
-  const isSvg = typeof src === "string" && src.toLowerCase().endsWith(".svg");
+/* eslint-disable @next/next/no-img-element */
 
+type ImageSource = string | { src: string };
+
+type Props = Omit<ComponentPropsWithoutRef<"img">, "src"> & {
+  src: ImageSource;
+};
+
+export function Image({ alt, src, ...props }: Props) {
   return (
-    <NextImage
-      src={src}
-      alt={alt}
-      unoptimized={unoptimized ?? isSvg}
-      {...props}
-    />
+    <img src={typeof src === "string" ? src : src.src} alt={alt} {...props} />
   );
 }

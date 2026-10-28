@@ -2,7 +2,7 @@
 
 // response
 export interface RoleResponse {
-  id: number;
+  id: string;
   role: string; // mã vai trò
   name: string;
 }

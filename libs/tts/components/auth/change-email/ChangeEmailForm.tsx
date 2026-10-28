@@ -19,17 +19,18 @@ import {
 import { validateOtpDigit } from "@/libs/core/utils/validators";
 import {
   useChangeEmail,
-  useMe,
   useRequestChangeEmailOtp,
   useVerifyChangeEmailOtp,
-} from "../../hooks/useAuth";
+} from "../../../hooks/useAuth";
+import { Save } from "lucide-react";
 
 interface Props {
   onClose: () => void;
+  email: string;
 }
 
-function ChangeEmailForm({ onClose }: Props) {
-  const [step, setStep] = useState<"step1" | "step2">("step1");
+function ChangeEmailForm({ onClose, email }: Props) {
+  const [step, setStep] = useState<1 | 2>(1);
 
   // Đếm ngược hết hạn OTP
   const [expireEndTime, setExpireEndTime] = useState<number | null>(null);
@@ -43,17 +44,12 @@ function ChangeEmailForm({ onClose }: Props) {
   const verifyOtpMutation = useVerifyChangeEmailOtp();
   const changeEmailMutation = useChangeEmail();
 
-  const { data } = useMe();
-  const account = data?.data;
-
-  const email = account?.email;
-
-  const isLoading =
+  const isSubmitting =
     requestOtpMutation.isPending ||
     verifyOtpMutation.isPending ||
     changeEmailMutation.isPending;
 
-  const isLoadingResendOtp = requestOtpMutation.isPending;
+  const isResendingOtp = requestOtpMutation.isPending;
 
   const isCooldownActive = cooldownEndTime !== null && cooldownTimeLeft > 0;
   const isOtpExpired = expireEndTime !== null && timeLeft <= 0;
@@ -118,18 +114,18 @@ function ChangeEmailForm({ onClose }: Props) {
   }, [cooldownEndTime]);
 
   const onSubmitStep1 = (data: VerifyChangeEmailOtpData) => {
-    if (isLoading || isOtpExpired) return;
+    if (isSubmitting || isOtpExpired) return;
 
     verifyOtpMutation.mutate(data, {
       onSuccess: () => {
         form1.reset();
-        setStep("step2");
+        setStep(2);
       },
     });
   };
 
   const onSubmitStep2 = (data: ChangeEmailData) => {
-    if (isLoading) return;
+    if (isSubmitting) return;
 
     changeEmailMutation.mutate(data, {
       onSuccess: () => {
@@ -139,8 +135,8 @@ function ChangeEmailForm({ onClose }: Props) {
     });
   };
 
-  const onResendOtp = () => {
-    if (isCooldownActive || isLoadingResendOtp) return;
+  const handleResendOtp = () => {
+    if (isCooldownActive || isResendingOtp) return;
 
     requestOtpMutation.mutate(undefined, {
       onSuccess: () => {
@@ -150,30 +146,35 @@ function ChangeEmailForm({ onClose }: Props) {
     });
   };
 
+  const handleCancel = () => {
+    form1.reset();
+    form2.reset();
+  };
+
   return (
     <form
       className="flex flex-col flex-1 min-h-0"
       onSubmit={
-        step === "step1"
+        step === 1
           ? form1.handleSubmit(onSubmitStep1)
           : form2.handleSubmit(onSubmitStep2)
       }
     >
-      <div className="flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2 items-center">
-            {step === "step1" ? (
-              <>
-                <p>Chúng tôi đã gửi mã xác nhận qua email cũ</p>
-                <p className="font-medium">{email}</p>
-                <p>Bạn vui lòng kiểm tra và điền mã xác thực</p>
-              </>
-            ) : (
-              <p>Vui lòng nhập email mới</p>
-            )}
-          </div>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2 items-center">
+          {step === 1 ? (
+            <>
+              <p>Chúng tôi đã gửi mã xác nhận qua email cũ</p>
+              <p className="font-medium">{email}</p>
+              <p>Bạn vui lòng kiểm tra và điền mã xác thực</p>
+            </>
+          ) : (
+            <p>Vui lòng nhập email mới</p>
+          )}
+        </div>
 
-          {step === "step1" ? (
+        {step === 1 ? (
+          <div className="flex flex-col gap-2">
             <FloatingInput
               label="OTP"
               type="text"
@@ -193,65 +194,60 @@ function ChangeEmailForm({ onClose }: Props) {
                 },
               })}
             />
-          ) : (
-            <FloatingInput
-              label="Email mới"
-              type="text"
-              required
-              error={form2.formState.errors.newEmail?.message}
-              {...form2.register("newEmail")}
-            />
-          )}
 
-          <div className="flex flex-col gap-3">
-            {step === "step1" && (
-              <div className="flex justify-between items-center">
-                <Button
-                  form={step === "step1" ? "form1" : "form2"}
-                  type="button"
-                  onClick={onResendOtp}
-                  disabled={isCooldownActive || isLoadingResendOtp}
-                  className={`font-medium transition-all ${
-                    !isCooldownActive && !isLoadingResendOtp
-                      ? "text-primary cursor-pointer"
-                      : "text-muted-foreground cursor-not-allowed"
-                  }`}
-                >
-                  Gửi lại mã
-                </Button>
+            <div className="flex justify-between items-center">
+              <Button
+                form={step === 1 ? "form1" : "form2"}
+                type="button"
+                onClick={handleResendOtp}
+                disabled={isCooldownActive || isResendingOtp}
+                className={`font-medium transition-all ${
+                  !isCooldownActive && !isResendingOtp
+                    ? "text-primary cursor-pointer"
+                    : "text-muted-foreground cursor-not-allowed"
+                }`}
+              >
+                Gửi lại mã
+              </Button>
 
-                {timeLeft > 0 ? (
-                  <span>
-                    Hết hạn sau:
-                    <span className="text-primary font-medium">
-                      {formatDuration(timeLeft)}
-                    </span>
+              {timeLeft > 0 ? (
+                <span>
+                  Hết hạn sau:
+                  <span className="ml-1 font-medium text-primary">
+                    {formatDuration(timeLeft)}
                   </span>
-                ) : (
-                  <span className="text-error font-medium">Đã hết hạn</span>
-                )}
-              </div>
-            )}
-
-            <div className="flex items-center justify-center gap-3">
-              <Button
-                disabled={isLoading || (step === "step1" && isOtpExpired)}
-                type="submit"
-                variant="primary"
-                className="w-full rounded-lg px-2 py-2.5 font-medium"
-              >
-                {step === "step1" ? "Xác nhận" : "Lưu"}
-              </Button>
-
-              <Button
-                variant="danger"
-                onClick={onClose}
-                className="w-full rounded-lg px-2 py-2.5 font-medium"
-              >
-                Hủy bỏ
-              </Button>
+                </span>
+              ) : (
+                <span className="text-error font-medium">Đã hết hạn</span>
+              )}
             </div>
           </div>
+        ) : (
+          <FloatingInput
+            label="Email mới"
+            type="text"
+            required
+            error={form2.formState.errors.newEmail?.message}
+            {...form2.register("newEmail")}
+          />
+        )}
+
+        <div className="flex flex-col items-center justify-center gap-3">
+          <Button
+            disabled={isSubmitting || (step === 1 && isOtpExpired)}
+            type="submit"
+            className="w-full px-3.5 py-2 rounded-lg font-medium bg-primary text-white flex justify-center items-center gap-2"
+          >
+            <span>{step === 1 ? "Xác nhận" : "Lưu"}</span>
+            {step === 2 && <Save size={20} />}
+          </Button>
+
+          <Button
+            onClick={handleCancel}
+            className="w-full text-center rounded-lg px-3.5 py-2 font-medium border border-border"
+          >
+            Hủy bỏ
+          </Button>
         </div>
       </div>
     </form>

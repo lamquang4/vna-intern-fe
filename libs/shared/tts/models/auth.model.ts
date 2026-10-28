@@ -38,17 +38,16 @@ export interface ChangeEmailRequest {
   newEmail: string;
 }
 
-// refresh token
-export interface RefreshTokenRequest {
-  refreshToken: string;
+export interface InitializePasswordRequest {
+  password: string;
 }
 
 // response
 export interface LoginResponse {
   accessToken: string;
+  expiresIn: number;
   refreshToken: string;
   tokenType: "Bearer";
-  expiresIn: number;
   user: {
     id: string;
     username: string;

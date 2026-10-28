@@ -4,14 +4,14 @@ import { KeyRound, LogOut, UserRound } from "lucide-react";
 import DropdownMenu from "@/libs/core/components/ui/DropdownMenu";
 import { Image } from "@/libs/core/components/ui/Image";
 import userAvatar from "@/libs/tts/assets/user.png";
-import ChangePasswordModal from "../../change-password/ChangePasswordModal";
-import { useLogout, useMe } from "@/libs/tts/hooks/useAuth";
+import ChangePasswordModal from "../../auth/change-password/ChangePasswordModal";
+import { useLogout, useGetMe } from "@/libs/tts/hooks/useAuth";
 
 function ProfileMenu() {
   const [dropDownOpen, setDropDownOpen] = useState<boolean>(false);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
 
-  const { data } = useMe();
+  const { data } = useGetMe();
   const account = data?.data;
 
   const logoutMutation = useLogout();
@@ -64,11 +64,15 @@ function ProfileMenu() {
           className="flex cursor-pointer items-center gap-2"
           onClick={handleToggleDropdown}
         >
-          <div className="w-[40px] h-[40px] p-1 rounded-full border border-border overflow-hidden">
+          <div className="relative w-[45px] h-[45px] p-1 rounded-full border border-border overflow-hidden">
             <Image
-              src={account?.avatarUrl || userAvatar}
+              src={
+                account?.avatarUrl
+                  ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${account?.avatarUrl}`
+                  : userAvatar
+              }
               alt="user"
-              className="w-full h-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
               loading="eager"
             />
           </div>

@@ -9,12 +9,12 @@
   --border: #d1d5db;
   /* Error */
   --error: #ff4842;
-  --error-background: #ffe7d9;
-  --error-foreground: #7a0c2e;
   /* Success */
   --success: #54d62c;
-  --success-background: #e9fcd4;
-  --success-foreground: #08660d;
+  /* Warning */
+  --warning: #f5b301;
+  /* Edit */
+  --edit: #3b82f6;
   /* Sidebar */
   --sidebar: #14317f;
   --sidebar-foreground: #ffffff;
@@ -30,11 +30,9 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-error: var(--error);
-  --color-error-background: var(--error-background);
-  --color-error-foreground: var(--error-foreground);
   --color-success: var(--success);
-  --color-success-background: var(--success-background);
-  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-edit: var(--edit);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
 }

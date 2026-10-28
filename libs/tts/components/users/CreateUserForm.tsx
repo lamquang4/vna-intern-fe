@@ -5,36 +5,36 @@ import z from "zod";
 import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
-import { Input } from "@/libs/core/components/ui/Input";
 import { Label } from "@/libs/core/components/ui/Label";
 import { Save } from "lucide-react";
-import Link from "next/link";
 import AvatarUpload from "./AvatarUpload";
 import {
   CreateUserData,
   createUserSchema,
 } from "@/libs/shared/tts/schemas/user.schema";
-import { useProvinces, useWards } from "../../hooks/useLocation";
+import {
+  useGetAllProvinces,
+  useGetWardsByProvince,
+} from "../../hooks/useLocation";
 import { useWatch } from "react-hook-form";
 import { useGetAllRoles } from "../../hooks/useRoles";
 import { DEFAULT_PASSWORD } from "@/libs/core/constants/limits";
 import { useCreateUser } from "../../hooks/useUsers";
+import { Switch } from "@/libs/core/components/ui/Switch";
 
 function CreateUserForm() {
   const createUserMutation = useCreateUser();
-  const isLoading = createUserMutation.isPending;
+  const isCreating = createUserMutation.isPending;
 
   const { data } = useGetAllRoles();
   const roles = data?.data;
-
-  const { data: provinces = [], isLoading: isLoadingProvinces } =
-    useProvinces();
 
   const {
     register,
     control,
     handleSubmit,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<
     z.input<typeof createUserSchema>,
@@ -48,26 +48,42 @@ function CreateUserForm() {
       fullname: "",
       password: DEFAULT_PASSWORD,
       email: "",
-      birthDate: null,
-      gender: null,
-      position: null,
+      birthDate: "",
+      gender: "",
+      position: "",
       roleId: "",
-      province: null,
-      ward: null,
-      address: null,
+      province: "",
+      ward: "",
+      address: "",
       isActive: true,
       avatar: null,
     },
   });
 
-  const selectedProvince = useWatch({ control, name: "province" });
-  const wards = useWards(selectedProvince ?? "");
+  const { data: provinces = [], isLoading: isFetchingProvinces } =
+    useGetAllProvinces();
+
+  const selectedProvince = useWatch({
+    control,
+    name: "province",
+  });
+
+  const wards = useGetWardsByProvince(selectedProvince ?? "");
 
   const onSubmit = (data: CreateUserData) => {
-    if (isLoading) return;
+    if (isCreating) return;
 
-    createUserMutation.mutate(data);
+    createUserMutation.mutate(data, {
+      onSuccess: () => {
+        reset();
+      },
+    });
   };
+
+  const handleCancel = () => {
+    reset();
+  };
+
   return (
     <div className="py-[30px] sm:px-[20px] px-[15px] overflow-y-auto">
       <form
@@ -81,11 +97,12 @@ function CreateUserForm() {
             <Controller
               name="avatar"
               control={control}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <AvatarUpload
                   value={field.value}
                   onChange={field.onChange}
-                  disabled={isLoading}
+                  disabled={isCreating}
+                  error={fieldState.error?.message}
                 />
               )}
             />
@@ -93,24 +110,12 @@ function CreateUserForm() {
             <Label className="flex w-full cursor-pointer items-center justify-between gap-3">
               <h5>Kích hoạt</h5>
 
-              <span className="relative inline-flex">
-                <Input
-                  type="checkbox"
-                  role="switch"
-                  disabled={isLoading}
-                  className="peer sr-only"
-                  {...register("isActive")}
-                />
-
-                <span className="h-6 w-12 rounded-full bg-primary/50 transition-colors peer-checked:bg-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-disabled:opacity-50" />
-
-                <span className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform peer-checked:translate-x-6" />
-              </span>
+              <Switch disabled={isCreating} {...register("isActive")} />
             </Label>
           </div>
 
           <div className="p-[15px] rounded-md flex flex-col gap-[20px] w-full border border-border">
-            <div className="flex flex-col gap-[25px]">
+            <div className="flex flex-col gap-[30px]">
               <h5>Thông tin cá nhân</h5>
 
               <div className="flex gap-[15px] sm:flex-row flex-col">
@@ -186,7 +191,6 @@ function CreateUserForm() {
                   label="Email"
                   type="email"
                   required
-                  autoComplete="off"
                   error={errors.email?.message}
                   {...register("email")}
                 />
@@ -195,13 +199,13 @@ function CreateUserForm() {
 
             <hr className="border-border border-t" />
 
-            <div className="flex flex-col gap-[25px]">
+            <div className="flex flex-col gap-[30px]">
               <h5>Thông tin liên hệ</h5>
 
               <div className="flex gap-[15px] sm:flex-row flex-col">
                 <FloatingSelect
                   label="Tỉnh/thành phố"
-                  disabled={isLoadingProvinces}
+                  disabled={isFetchingProvinces}
                   error={errors.province?.message}
                   {...register("province", {
                     onChange: () => setValue("ward", ""),
@@ -222,8 +226,8 @@ function CreateUserForm() {
                   {...register("ward")}
                 >
                   <option value="">Chọn phường/xã</option>
-                  {wards.map((ward) => (
-                    <option key={ward.name} value={ward.name}>
+                  {wards.map((ward, index) => (
+                    <option key={index} value={ward.name}>
                       {ward.name}
                     </option>
                   ))}
@@ -240,23 +244,22 @@ function CreateUserForm() {
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-3">
           <Button
-            disabled={isLoading}
-            type="submit"
-            variant="primary"
-            className="w-[70px] rounded-lg py-2.5 font-medium flex justify-center items-center gap-2"
+            onClick={handleCancel}
+            className="rounded-lg px-3.5 py-2 font-medium border border-border"
           >
-            <Save size={20} />
-            <span>Lưu</span>
+            Hủy bỏ
           </Button>
 
-          <Link
-            href="/users"
-            className="w-[70px] font-medium text-white py-2.5 bg-error text-center rounded-lg"
+          <Button
+            disabled={isCreating}
+            type="submit"
+            className="rounded-lg px-3.5 py-2 font-medium flex justify-center items-center gap-2 bg-primary text-white"
           >
-            Trở về
-          </Link>
+            <Save size={18} />
+            <span>Lưu</span>
+          </Button>
         </div>
       </form>
     </div>
