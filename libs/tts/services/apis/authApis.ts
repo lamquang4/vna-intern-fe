@@ -67,8 +67,8 @@ export const authApi = {
       .post<ApiResponse<null>>(`${BASE}/change-email/verify-otp`, data)
       .then((r) => r.data),
 
-  initializePassword: (data: InitializePasswordRequest) =>
+  initializePassword: (userId: string, data: InitializePasswordRequest) =>
     axiosInstance
-      .post<ApiResponse<null>>(`${BASE}/initialize-password`, data)
+      .post<ApiResponse<null>>(`${BASE}/${userId}/initialize-password`, data)
       .then((r) => r.data),
 };

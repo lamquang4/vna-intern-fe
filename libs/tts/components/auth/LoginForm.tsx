@@ -48,6 +48,7 @@ function LoginForm() {
 
           <FloatingInput
             label="Tên tài khoản"
+            placeholder="Nhập tên tài khoản"
             type="text"
             required
             error={errors.username?.message}
@@ -56,6 +57,7 @@ function LoginForm() {
 
           <FloatingInput
             label="Mật khẩu"
+            placeholder="Nhập mật khẩu"
             type="password"
             required
             error={errors.password?.message}

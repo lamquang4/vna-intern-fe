@@ -25,8 +25,7 @@ import { validateTaxCode } from "@/libs/core/utils/validators";
 const taxCodeField = z
   .string()
   .trim()
-  .min(1, "Mã số thuế không để trống")
-  .refine((value) => validateTaxCode(value), "Mã số thuế gồm 10 số");
+  .refine((value) => validateTaxCode(value), "Mã số thuế gồm 10 hoặc 13 số");
 
 const documentField = z
   .instanceof(File)
@@ -116,7 +115,7 @@ const baseShape = {
 // ---------- Tạo doanh nghiệp ----------
 
 export const createEnterpriseSchema = z.object({
-  taxCode: taxCodeField,
+  taxCode: taxCodeField.min(1, "Mã số thuế không để trống"),
   ...baseShape,
 }) satisfies z.ZodType<CreateEnterpriseRequest>;
 

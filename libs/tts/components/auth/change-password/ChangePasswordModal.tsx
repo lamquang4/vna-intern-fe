@@ -11,7 +11,7 @@ function ChangePasswordModal({ onClose }: Props) {
       title="Đổi mật khẩu"
       onClose={onClose}
       className="max-w-[420px]"
-      headerClassName="uppercase"
+      headerClassName="uppercase bg-primary text-white"
     >
       <ChangePasswordForm onClose={onClose} />
     </Modal>

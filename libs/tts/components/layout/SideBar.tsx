@@ -1,6 +1,12 @@
 import { memo, useState, type ReactNode } from "react";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
-import { ChevronDown, ChevronUp, Settings } from "lucide-react";
+import {
+  BuildingComplex,
+  ChevronDown,
+  ChevronUp,
+  Settings,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/libs/core/components/ui/Button";
 import { Image } from "@/libs/core/components/ui/Image";
@@ -44,24 +50,24 @@ interface MenuGroup {
 
 const menuData: MenuGroup[] = [
   {
+    title: "Hệ thống",
     items: [
       {
-        icon: <Settings size={20} />,
-        label: "Hệ thống",
+        icon: <UsersRound size={20} strokeWidth={2} />,
+        label: "Người dùng",
         key: "1a",
         children: [
-          { label: "Người dùng", path: "/users" },
-          { label: "Doanh nghiệp", path: "/enterprises" },
-          { label: "Ký báo cáo", path: "/" },
+          { label: "Danh sách người dùng", path: "/users" },
+          { label: "Thêm người dùng", path: "/users/create" },
         ],
       },
       {
-        icon: <Settings size={20} />,
-        label: "Tai nạn lao động",
+        icon: <BuildingComplex size={20} strokeWidth={2} />,
+        label: "Doanh nghiệp",
         key: "2a",
         children: [
-          { label: "Danh mục chung", path: "/" },
-          { label: "TNLĐ theo HĐLĐ", path: "/" },
+          { label: "Danh sách doanh nghiệp", path: "/enterprises" },
+          { label: "Thêm doanh nghiệp", path: "/enterprises/create" },
         ],
       },
     ],
@@ -100,12 +106,13 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
             </p>
           </div>
 
-          <ul className="flex flex-col gap-[15px] font-normal sm:px-[20px] px-[15px]">
+          <ul className="flex flex-col font-normal px-[15px]">
             {menuData.map((group, groupIndex) => (
               <div key={groupIndex} className="flex flex-col gap-[10px]">
                 <p className="uppercase">{group.title}</p>
+
                 {group.items.map((item, index) => (
-                  <li key={index}>
+                  <li key={index} className="flex flex-col gap-[10px]">
                     {item.children ? (
                       <>
                         <div
@@ -117,12 +124,12 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
                             )
                               ? ""
                               : ""
-                          } rounded-lg py-3 w-full cursor-pointer flex justify-between items-center`}
+                          } rounded-lg p-3 w-full cursor-pointer flex justify-between items-center`}
                         >
                           <p className="flex items-center gap-[10px]">
                             {item.icon} {item.label}
                           </p>
-                          <Button>
+                          <Button type="button">
                             {openMenus[item.key] ||
                             item.children.some(
                               (child) => pathname === child.path,
@@ -133,8 +140,9 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
                             )}
                           </Button>
                         </div>
+
                         <ul
-                          className={`max-h-0 overflow-hidden invisible transition-all duration-600 ease-in-out pl-[25px] ${
+                          className={`max-h-0 overflow-hidden invisible transition-all duration-600 ease-in-out pl-[30px] flex flex-col gap-[10px] ${
                             openMenus[item.key] ||
                             item.children.some(
                               (child) => pathname === child.path,
@@ -146,13 +154,13 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
                           {item.children.map((child, childIndex) => (
                             <li
                               key={childIndex}
-                              className={`rounded-lg w-full cursor-pointer my-[5px] ${
-                                pathname === child.path ? "" : " "
+                              className={`rounded-lg w-full cursor-pointer p-3 ${
+                                pathname === child.path
+                                  ? "bg-white text-sidebar"
+                                  : ""
                               }`}
                             >
-                              <Link href={child.path} className="py-3">
-                                {child.label}
-                              </Link>
+                              <Link href={child.path}>{child.label}</Link>
                             </li>
                           ))}
                         </ul>
@@ -161,7 +169,7 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
                       <Link
                         href={item.path}
                         className={`${
-                          pathname === item.path ? "text-white  " : " "
+                          pathname === item.path ? "text-white" : ""
                         } rounded-lg p-3 w-full cursor-pointer flex justify-between items-center`}
                       >
                         <p className="flex items-center gap-[10px]">

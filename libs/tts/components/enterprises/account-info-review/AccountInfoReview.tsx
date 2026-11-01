@@ -2,7 +2,7 @@ import { Button } from "@/libs/core/components/ui/Button";
 
 interface Props {
   taxCode: string;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 function AccountInfoReview({ taxCode, onClose }: Props) {
@@ -23,6 +23,7 @@ function AccountInfoReview({ taxCode, onClose }: Props) {
 
         <div className="flex items-center justify-center gap-3">
           <Button
+            type="button"
             onClick={onClose}
             className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
           >

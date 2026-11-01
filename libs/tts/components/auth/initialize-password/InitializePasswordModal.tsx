@@ -4,9 +4,10 @@ import InitializePasswordForm from "./InitializePasswordForm";
 interface Props {
   onClose: () => void;
   username: string;
+  userId: string;
 }
 
-function InitializePasswordModal({ onClose, username }: Props) {
+function InitializePasswordModal({ onClose, username, userId }: Props) {
   return (
     <Modal
       title="Khởi tạo mật khẩu"
@@ -14,7 +15,11 @@ function InitializePasswordModal({ onClose, username }: Props) {
       className="max-w-[420px]"
       headerClassName="bg-primary text-white uppercase"
     >
-      <InitializePasswordForm onClose={onClose} username={username} />
+      <InitializePasswordForm
+        onClose={onClose}
+        username={username}
+        userId={userId}
+      />
     </Modal>
   );
 }

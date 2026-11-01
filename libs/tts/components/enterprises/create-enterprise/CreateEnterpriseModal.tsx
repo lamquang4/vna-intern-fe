@@ -4,7 +4,7 @@ import type { CreateEnterpriseData } from "@/libs/shared/tts/schemas/enterprise.
 import { useCreateEnterprise } from "@/libs/tts/hooks/useEnterprises";
 import CreateEnterpriseForm from "./CreateEnterpriseForm";
 import EnterpriseInfoReview from "../EnterpriseInfoReview";
-import AccountInfoReview from "./AccountInfoReview";
+import AccountInfoReview from "../account-info-review/AccountInfoReview";
 
 interface Props {
   onClose: () => void;
@@ -13,19 +13,19 @@ interface Props {
 function CreateEnterpriseModal({ onClose }: Props) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [formData, setFormData] = useState<CreateEnterpriseData | null>(null);
-  const [names, setNames] = useState({
-    businessTypeName: "",
-    businessIndustryName: "",
-  });
+  const [businessTypeName, setBusinessTypeName] = useState("");
+  const [businessIndustryName, setBusinessIndustryName] = useState("");
 
   const createEnterpriseMutation = useCreateEnterprise();
 
   const handleContinue = (
     data: CreateEnterpriseData,
-    selectedNames: typeof names,
+    businessTypeName: string,
+    businessIndustryName: string,
   ) => {
     setFormData(data);
-    setNames(selectedNames);
+    setBusinessTypeName(businessTypeName);
+    setBusinessIndustryName(businessIndustryName);
     setStep(2);
   };
 
@@ -51,7 +51,7 @@ function CreateEnterpriseModal({ onClose }: Props) {
       className={`${step !== 3 ? "max-w-[900px] h-[90%]" : "max-w-[400px]"}`}
     >
       {step !== 3 && (
-        <div className="py-4 flex-wrap flex items-center justify-center lg:gap-8 gap-5">
+        <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
           <div className="flex gap-2 items-center">
             <div
               className={`size-6.5 rounded-full flex items-center justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground text-white"}`}
@@ -81,8 +81,8 @@ function CreateEnterpriseModal({ onClose }: Props) {
         formData && (
           <EnterpriseInfoReview
             data={formData}
-            businessTypeName={names.businessTypeName}
-            businessIndustryName={names.businessIndustryName}
+            businessTypeName={businessTypeName}
+            businessIndustryName={businessIndustryName}
             onBack={handleBack}
             onConfirm={handleConfirm}
             isLoading={createEnterpriseMutation.isPending}

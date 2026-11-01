@@ -16,9 +16,8 @@ import {
   useGetEnterprises,
 } from "../../hooks/useEnterprises";
 import { EnterpriseResponse } from "@/libs/shared/tts/models/enterprise.model";
-import CreateEnterpriseModal from "./create-enterprise/CreateEnterpriseModal";
 import { useToggleUserStatus } from "../../hooks/useUsers";
-import EditEnterpriseModal from "./edit-enterprise/EditEnterpriseModal";
+import Link from "next/link";
 
 function EnterpriseList() {
   const searchParams = useSearchParams();
@@ -26,13 +25,10 @@ function EnterpriseList() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [toggleStatusId, setToggleStatusId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const [modalCreateOpen, setModalCreateOpen] = useState<boolean>(false);
-  const [editingEnterpriseId, setEditingEnterpriseId] = useState<string | null>(
-    null,
-  );
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
   const [username, setUsername] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
 
   const FILTER_KEYS = [
     "name",
@@ -112,12 +108,31 @@ function EnterpriseList() {
     });
   };
 
-  const handleOpenInitialPasswordModal = (username: string) => {
+  const handleOpenInitialPasswordModal = (username: string, userId: string) => {
     setModalOpen(true);
     setUsername(username);
+    setUserId(userId);
   };
 
   const columns: TableColumn<EnterpriseResponse>[] = [
+    {
+      key: "actions",
+      header: "Hành động",
+      cell: (u) => (
+        <div className="flex items-center gap-3">
+          <Link href={`/enterprises/${u.enterpriseId}`}>
+            <Pencil size={22} className="text-edit" />
+          </Link>
+
+          <Button
+            type="button"
+            onClick={() => handleOpenInitialPasswordModal(u.taxCode, u.userId)}
+          >
+            <KeyRound size={22} className="text-warning" />
+          </Button>
+        </div>
+      ),
+    },
     {
       key: "taxCode",
       header: "Mã số thuế",
@@ -145,27 +160,6 @@ function EnterpriseList() {
           onChange={() => handleConfirmDialogToggleStatus(u.userId)}
           disabled={isTogglingStatus}
         />
-      ),
-    },
-    {
-      key: "actions",
-      header: "Hành động",
-      cell: (u) => (
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            onClick={() => setEditingEnterpriseId(u.enterpriseId)}
-          >
-            <Pencil size={22} className="text-edit" />
-          </Button>
-
-          <Button
-            type="button"
-            onClick={() => handleOpenInitialPasswordModal(u.taxCode)}
-          >
-            <KeyRound size={22} className="text-warning" />
-          </Button>
-        </div>
       ),
     },
   ];
@@ -201,12 +195,12 @@ function EnterpriseList() {
               </span>
             </Button>
 
-            <Button
-              onClick={() => setModalCreateOpen(true)}
+            <Link
+              href="/enterprises/create"
               className="rounded-md bg-primary px-2 py-2.5 font-medium text-white flex items-center gap-2"
             >
               <CirclePlus size={18} strokeWidth={2} /> <span>Thêm</span>
-            </Button>
+            </Link>
           </>
         }
         pagination={{ page, size, totalElements, totalPages }}
@@ -225,6 +219,7 @@ function EnterpriseList() {
         <InitializePasswordModal
           onClose={() => setModalOpen(false)}
           username={username}
+          userId={userId}
         />
       )}
 
@@ -254,17 +249,6 @@ function EnterpriseList() {
 
       {filterOpen && (
         <EnterpriseFilterModal onClose={() => setFilterOpen(false)} />
-      )}
-
-      {modalCreateOpen && (
-        <CreateEnterpriseModal onClose={() => setModalCreateOpen(false)} />
-      )}
-
-      {editingEnterpriseId && (
-        <EditEnterpriseModal
-          enterpriseId={editingEnterpriseId}
-          onClose={() => setEditingEnterpriseId(null)}
-        />
       )}
     </>
   );

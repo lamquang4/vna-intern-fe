@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format, parseISO } from "date-fns";
 import z from "zod";
 import { Button } from "@/libs/core/components/ui/Button";
 import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
@@ -10,53 +11,40 @@ import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
 import { useGetAllBusinessIndustries } from "@/libs/tts/hooks/useBusinessIndustries";
 import { useGetAllBusinessTypes } from "@/libs/tts/hooks/useBusinessTypes";
 import {
-  useGetAllProvinces,
-  useGetWardsByProvince,
+  useGetHCMProvince,
+  useGetHCMWards,
 } from "@/libs/tts/hooks/useLocation";
 import {
   UpdateEnterpriseData,
   updateEnterpriseSchema,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
-import { ArrowUpToLine, Trash } from "lucide-react";
-import type { TableColumn } from "@/libs/core/models/component.model";
-import DataTable from "@/libs/core/components/ui/DataTable";
-import { ALLOWED_DOCUMENT_MIME_TYPES } from "@/libs/core/constants/limits";
 import type {
-  DocumentRow,
   DocumentField,
+  DocumentRow,
   EnterpriseDetailResponse,
-  FileResponse,
 } from "@/libs/shared/tts/models/enterprise.model";
-import { FileUpload } from "../FileUpload";
+import type { PreviewFile } from "@/libs/tts/utils/filePreviewUtil";
+import DocumentsField from "../DocumentsField";
 import { useGetEnterpriseDetail } from "@/libs/tts/hooks/useEnterprises";
-import FilePreview from "../FilePreview";
-import {
-  getFileName,
-} from "@/libs/tts/utils/filePreviewUtil";
 
 interface Props {
   onContinue: (
     data: UpdateEnterpriseData,
-    names: {
-      businessTypeName: string;
-      businessIndustryName: string;
-    },
+    businessTypeName: string,
+    businessIndustryName: string,
     existingFiles: Pick<
       EnterpriseDetailResponse,
       "businessLicense" | "otherDocument"
     >,
+    taxCode: string,
   ) => void;
   initialData: UpdateEnterpriseData | null;
   enterpriseId: string;
 }
 
-type EnterpriseDocumentRow = DocumentRow<File | FileResponse>;
-
 function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
-  const [documentToDelete, setDocumentToDelete] = useState<{
-    id: DocumentField;
-    name: string;
-  } | null>(null);
+  const [documentToDelete, setDocumentToDelete] =
+    useState<DocumentRow<PreviewFile> | null>(null);
   const { data: businessIndustryData } = useGetAllBusinessIndustries();
   const businessIndustries = businessIndustryData?.data;
 
@@ -65,6 +53,24 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
 
   const { data: enterpriseData } = useGetEnterpriseDetail(enterpriseId);
   const enterprise = enterpriseData?.data;
+
+  const serverValues = {
+    name: enterprise?.name ?? "",
+    licenseIssueDate: enterprise?.licenseIssueDate ?? "",
+    businessTypeId: enterprise?.businessTypeId ?? "",
+    businessIndustryId: enterprise?.businessIndustryId ?? "",
+    province: enterprise?.province ?? "",
+    ward: enterprise?.ward ?? "",
+    address: enterprise?.address ?? "",
+    foreignName: enterprise?.foreignName ?? "",
+    email: enterprise?.email ?? "",
+    officePhone: enterprise?.officePhone ?? "",
+    operatingProvince: enterprise?.operatingProvince ?? "",
+    operatingWard: enterprise?.operatingWard ?? "",
+    businessLocation: enterprise?.businessLocation ?? "",
+    representative: enterprise?.representative ?? "",
+    representativePhone: enterprise?.representativePhone ?? "",
+  };
 
   const {
     register,
@@ -81,29 +87,14 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
     resolver: zodResolver(updateEnterpriseSchema),
     mode: "onBlur",
     values: {
-      name: enterprise?.name ?? "",
-      licenseIssueDate: enterprise?.licenseIssueDate ?? "",
-      businessTypeId: enterprise?.businessTypeId ?? "",
-      businessIndustryId: enterprise?.businessIndustryId ?? "",
-      province: enterprise?.province ?? "",
-      ward: enterprise?.ward ?? "",
-      address: enterprise?.address ?? "",
-      foreignName: enterprise?.foreignName ?? "",
-      email: enterprise?.email ?? "",
-      officePhone: enterprise?.officePhone ?? "",
-      operatingProvince: enterprise?.operatingProvince ?? "",
-      operatingWard: enterprise?.operatingWard ?? "",
-      businessLocation: enterprise?.businessLocation ?? "",
-      representative: enterprise?.representative ?? "",
-      representativePhone: enterprise?.representativePhone ?? "",
+      ...serverValues,
       ...initialData,
       businessLicense: initialData?.businessLicense,
       otherDocument: initialData?.otherDocument,
     },
   });
 
-  const { data: provinces = [], isLoading: isFetchingProvinces } =
-    useGetAllProvinces();
+  const { data: province, isLoading: isFetchingProvince } = useGetHCMProvince();
 
   const selectedProvince = useWatch({
     control,
@@ -114,25 +105,40 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
     name: "operatingProvince",
   });
 
-  const wards = useGetWardsByProvince(selectedProvince ?? "");
-  const operatingWards = useGetWardsByProvince(selectedOperatingProvince ?? "");
+  const wards = useGetHCMWards();
 
   const businessLicense = useWatch({ control, name: "businessLicense" });
   const otherDocument = useWatch({ control, name: "otherDocument" });
 
+  const businessTypeOptions = (businessTypes ?? []).map((type) => ({
+    value: type.businessTypeId,
+    label: `${type.code} - ${type.name}`,
+  }));
+
+  const businessIndustryOptions = (businessIndustries ?? []).map(
+    (industry) => ({
+      value: industry.businessIndustryId,
+      label: `${industry.code} - ${industry.name}`,
+    }),
+  );
+
+  const provinceOptions = province
+    ? [{ value: province.province, label: province.province }]
+    : [];
+
+  const wardOptions = wards.map((ward) => ({
+    value: ward.name,
+    label: ward.name,
+  }));
+
   const onSubmit = (data: UpdateEnterpriseData) => {
     onContinue(
       data,
-      {
-        businessTypeName:
-          businessTypes?.find(
-            (item) => item.businessTypeId === data.businessTypeId,
-          )?.name ?? "",
-        businessIndustryName:
-          businessIndustries?.find(
-            (item) => item.businessIndustryId === data.businessIndustryId,
-          )?.name ?? "",
-      },
+      businessTypes?.find((item) => item.businessTypeId === data.businessTypeId)
+        ?.name ?? "",
+      businessIndustries?.find(
+        (item) => item.businessIndustryId === data.businessIndustryId,
+      )?.name ?? "",
       {
         businessLicense:
           data.businessLicense === undefined
@@ -143,10 +149,11 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
             ? (enterprise?.otherDocument ?? null)
             : null,
       },
+      enterprise?.taxCode ?? "",
     );
   };
 
-  const documents: EnterpriseDocumentRow[] = [
+  const documents: DocumentRow<PreviewFile>[] = [
     {
       id: "businessLicense",
       name: "Giấy phép kinh doanh",
@@ -165,7 +172,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
     },
   ];
 
-  const handleSelectDocument = (id: DocumentRow["id"], file: File) => {
+  const handleSelectDocument = (id: DocumentField, file: File) => {
     setValue(id, file, { shouldDirty: true, shouldValidate: true });
   };
 
@@ -177,55 +184,8 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
     setDocumentToDelete(null);
   };
 
-  const columns: TableColumn<EnterpriseDocumentRow>[] = [
-    { key: "name", header: "Loại tài liệu", cell: (row) => row.name },
-    {
-      key: "fileName",
-      header: "Tên file",
-      cell: (row) => (!row.file ? "Chưa chọn tệp" : getFileName(row.file)),
-    },
-    {
-      key: "fileInfo",
-      header: "Dung lượng",
-      cell: (row) =>
-        row.file ? `${(row.file.size / 1024).toFixed(1)} KB` : "",
-    },
-    {
-      key: "actions",
-      header: "Hành động",
-      cell: (row) => (
-        <div className="flex items-center gap-3">
-          <FilePreview file={row.file} />
-
-          <FileUpload
-            accept={ALLOWED_DOCUMENT_MIME_TYPES.join(",")}
-            onSelect={(file) => handleSelectDocument(row.id, file)}
-          >
-            <ArrowUpToLine size={22} className="text-success" />
-          </FileUpload>
-
-          {row.file && (
-            <Button
-              type="button"
-              onClick={() => {
-                if (row.file) {
-                  setDocumentToDelete({
-                    id: row.id,
-                    name: row.name,
-                  });
-                }
-              }}
-            >
-              <Trash size={22} className="text-error" />
-            </Button>
-          )}
-        </div>
-      ),
-    },
-  ];
-
   const handleCancel = () => {
-    reset();
+    reset(serverValues);
   };
 
   return (
@@ -234,231 +194,268 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
         className="flex flex-col gap-6 w-full"
         onSubmit={handleSubmit(onSubmit)}
       >
-      <div className="flex flex-col gap-[20px] w-full">
-        <div className="flex flex-col gap-[30px]">
-          <h5>Thông tin doanh nghiệp</h5>
+        <div className="flex flex-col gap-[20px] w-full">
+          <div className="flex flex-col gap-[30px]">
+            <h5>Thông tin doanh nghiệp</h5>
 
-          <div className="flex gap-[15px] sm:flex-row flex-col">
-            <FloatingInput
-              label="Tên doanh nghiệp"
-              type="text"
-              required
-              error={errors.name?.message}
-              {...register("name")}
-            />
+            <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-3">
+              <FloatingInput
+                label="Tên doanh nghiệp"
+                placeholder="Nhập tên doanh nghiệp"
+                type="text"
+                required
+                error={errors.name?.message}
+                {...register("name")}
+              />
 
-            <FloatingInput
-              label="Mã số thuế"
-              type="text"
-              required
-              disabled
-              value={enterprise?.taxCode ?? ""}
-            />
+              <FloatingInput
+                label="Mã số thuế"
+                placeholder="Nhập mã số thuế"
+                type="text"
+                required
+                disabled
+                value={enterprise?.taxCode ?? ""}
+              />
 
-            <FloatingSelect
-              required
-              label="Loại hình kinh doanh"
-              error={errors.businessTypeId?.message}
-              {...register("businessTypeId")}
-            >
-              <option value="">Tất cả loại hình kinh doanh</option>
-              {businessTypes?.map((type) => (
-                <option key={type.businessTypeId} value={type.businessTypeId}>
-                  {type.code} {type.name}
-                </option>
-              ))}
-            </FloatingSelect>
+              <Controller
+                name="businessTypeId"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <FloatingSelect
+                    required
+                    label="Loại hình kinh doanh"
+                    placeholder="Chọn loại hình kinh doanh"
+                    options={businessTypeOptions}
+                    name={field.name}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-3">
+              <Controller
+                name="businessIndustryId"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <FloatingSelect
+                    required
+                    label="Ngành nghề kinh doanh"
+                    placeholder="Chọn ngành nghề kinh doanh"
+                    options={businessIndustryOptions}
+                    name={field.name}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                name="licenseIssueDate"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <FloatingInput
+                    label="Ngày cấp GPKD"
+                    type="date"
+                    dateValue={field.value ? parseISO(field.value) : null}
+                    onDateChange={(date) => {
+                      field.onChange(date ? format(date, "yyyy-MM-dd") : null);
+                      field.onBlur();
+                    }}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                name="province"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <FloatingSelect
+                    required
+                    label="Tỉnh/thành phố"
+                    placeholder="Chọn tỉnh/thành phố"
+                    disabled={isFetchingProvince}
+                    options={provinceOptions}
+                    name={field.name}
+                    value={field.value}
+                    onChange={(val) => {
+                      field.onChange(val);
+                      setValue("ward", "");
+                    }}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-3">
+              <Controller
+                name="ward"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <FloatingSelect
+                    required
+                    label="Phường/xã"
+                    placeholder="Chọn phường/xã"
+                    disabled={!selectedProvince}
+                    options={wardOptions}
+                    name={field.name}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+
+              <FloatingInput
+                label="Địa chỉ"
+                placeholder="Nhập địa chỉ"
+                type="text"
+                error={errors.address?.message}
+                {...register("address")}
+              />
+            </div>
           </div>
 
-          <div className="flex gap-[15px] sm:flex-row flex-col">
-            <FloatingSelect
-              label="Ngành nghề kinh doanh"
-              error={errors.businessIndustryId?.message}
-              {...register("businessIndustryId")}
-              required
-            >
-              <option value="">Tất cả ngành nghề kinh doanh</option>
-              {businessIndustries?.map((industry) => (
-                <option
-                  key={industry.businessIndustryId}
-                  value={industry.businessIndustryId}
-                >
-                  {industry.code} {industry.name}
-                </option>
-              ))}
-            </FloatingSelect>
+          <hr className="border-border border-t" />
 
-            <FloatingInput
-              label="Ngày cấp GPKD"
-              type="date"
-              error={errors.licenseIssueDate?.message}
-              {...register("licenseIssueDate")}
-            />
+          <div className="flex flex-col gap-[30px]">
+            <h5>Thông tin liên hệ</h5>
 
-            <FloatingSelect
-              required
-              label="Tỉnh/thành phố"
-              disabled={isFetchingProvinces}
-              error={errors.province?.message}
-              {...register("province", {
-                onChange: () => setValue("ward", ""),
-              })}
-            >
-              <option value="">Chọn tỉnh/thành phố</option>
-              {provinces.map((province) => (
-                <option key={province.id} value={province.province}>
-                  {province.province}
-                </option>
-              ))}
-            </FloatingSelect>
+            <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-3">
+              <FloatingInput
+                label="Tên viết bằng tiếng nước ngoài"
+                placeholder="Nhập tên viết bằng tiếng nước ngoài"
+                type="text"
+                error={errors.foreignName?.message}
+                {...register("foreignName")}
+              />
+
+              <FloatingInput
+                label="Email"
+                placeholder="Nhập email"
+                type="text"
+                required
+                error={errors.email?.message}
+                {...register("email")}
+              />
+
+              <FloatingInput
+                label="Số điện thoại cơ quan"
+                placeholder="Nhập số điện thoại cơ quan"
+                type="text"
+                error={errors.officePhone?.message}
+                {...register("officePhone")}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-3">
+              <Controller
+                name="operatingProvince"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <FloatingSelect
+                    label="Tỉnh/thành phố hoạt động KD"
+                    placeholder="Chọn tỉnh/thành phố"
+                    disabled={isFetchingProvince}
+                    options={provinceOptions}
+                    name={field.name}
+                    value={field.value}
+                    onChange={(val) => {
+                      field.onChange(val);
+                      setValue("operatingWard", "");
+                    }}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+
+              <Controller
+                name="operatingWard"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <FloatingSelect
+                    label="Phường/xã hoạt động KD"
+                    placeholder="Chọn phường/xã"
+                    disabled={!selectedOperatingProvince}
+                    options={wardOptions}
+                    name={field.name}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-3">
+              <FloatingInput
+                label="Địa chỉ kinh doanh"
+                placeholder="Nhập địa chỉ kinh doanh"
+                type="text"
+                error={errors.businessLocation?.message}
+                {...register("businessLocation")}
+              />
+
+              <FloatingInput
+                label="Người đứng đầu kinh doanh"
+                placeholder="Nhập người đứng đầu kinh doanh"
+                type="text"
+                error={errors.representative?.message}
+                {...register("representative")}
+              />
+
+              <FloatingInput
+                label="SĐT liên hệ người đứng đầu"
+                placeholder="Nhập SĐT liên hệ người đứng đầu"
+                type="text"
+                error={errors.representativePhone?.message}
+                {...register("representativePhone")}
+              />
+            </div>
           </div>
 
-          <div className="flex gap-[15px] sm:flex-row flex-col">
-            <FloatingSelect
-              required
-              label="Phường/xã"
-              disabled={!selectedProvince}
-              error={errors.ward?.message}
-              {...register("ward")}
-            >
-              <option value="">Chọn phường/xã</option>
-              {wards.map((ward) => (
-                <option key={ward.name} value={ward.name}>
-                  {ward.name}
-                </option>
-              ))}
-            </FloatingSelect>
+          <hr className="border-border border-t" />
 
-            <FloatingInput
-              label="Địa chỉ"
-              type="text"
-              error={errors.address?.message}
-              {...register("address")}
+          <div className="flex flex-col gap-[30px]">
+            <h5>File đính kèm</h5>
+            <DocumentsField
+              documents={documents}
+              onSelect={handleSelectDocument}
+              onRemove={(row) => setDocumentToDelete(row)}
             />
           </div>
         </div>
 
-        <hr className="border-border border-t" />
+        <div className="flex items-center justify-center gap-3">
+          <Button
+            type="button"
+            onClick={handleCancel}
+            className="rounded-lg px-3.5 py-2 font-medium border border-border"
+          >
+            Hủy bỏ
+          </Button>
 
-        <div className="flex flex-col gap-[30px]">
-          <h5>Thông tin liên hệ</h5>
-
-          <div className="flex gap-[15px] sm:flex-row flex-col">
-            <FloatingInput
-              label="Tên viết bằng tiếng nước ngoài"
-              type="text"
-              error={errors.foreignName?.message}
-              {...register("foreignName")}
-            />
-
-            <FloatingInput
-              label="Email"
-              type="text"
-              required
-              error={errors.email?.message}
-              {...register("email")}
-            />
-
-            <FloatingInput
-              label="Số điện thoại cơ quan"
-              type="text"
-              error={errors.officePhone?.message}
-              {...register("officePhone")}
-            />
-          </div>
-
-          <div className="flex gap-[15px] sm:flex-row flex-col">
-            <FloatingSelect
-              label="Tỉnh/thành phố hoạt động KD"
-              disabled={isFetchingProvinces}
-              error={errors.operatingProvince?.message}
-              {...register("operatingProvince", {
-                onChange: () => setValue("operatingWard", ""),
-              })}
-            >
-              <option value="">Chọn tỉnh/thành phố</option>
-              {provinces.map((province) => (
-                <option key={province.id} value={province.province}>
-                  {province.province}
-                </option>
-              ))}
-            </FloatingSelect>
-
-            <FloatingSelect
-              label="Phường/xã hoạt động KD"
-              disabled={!selectedOperatingProvince}
-              error={errors.operatingWard?.message}
-              {...register("operatingWard")}
-            >
-              <option value="">Chọn phường/xã</option>
-              {operatingWards.map((ward) => (
-                <option key={ward.name} value={ward.name}>
-                  {ward.name}
-                </option>
-              ))}
-            </FloatingSelect>
-          </div>
-
-          <div className="flex gap-[15px] sm:flex-row flex-col">
-            <FloatingInput
-              label="Địa chỉ kinh doanh"
-              type="text"
-              error={errors.businessLocation?.message}
-              {...register("businessLocation")}
-            />
-
-            <FloatingInput
-              label="Người đứng đầu kinh doanh"
-              type="text"
-              error={errors.representative?.message}
-              {...register("representative")}
-            />
-
-            <FloatingInput
-              label="SĐT liên hệ người đứng đầu"
-              type="text"
-              error={errors.representativePhone?.message}
-              {...register("representativePhone")}
-            />
-          </div>
+          <Button
+            type="submit"
+            className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
+          >
+            Tiếp tục
+          </Button>
         </div>
-
-        <hr className="border-border border-t" />
-
-        <div className="flex flex-col gap-[30px]">
-          <h5>File đính kèm</h5>
-          <DataTable
-            columns={columns}
-            data={documents}
-            getRowId={(row) => row.id}
-          />
-          {documents.map((document) => {
-            const error = errors[document.id]?.message;
-            return error ? (
-              <p key={document.id} className="text-error">
-                {document.name}: {error}
-              </p>
-            ) : null;
-          })}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center gap-3">
-        <Button
-          onClick={handleCancel}
-          className="rounded-lg px-3.5 py-2 font-medium border border-border"
-        >
-          Hủy bỏ
-        </Button>
-
-        <Button
-          type="submit"
-          className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
-        >
-          Tiếp tục
-        </Button>
-      </div>
       </form>
+
       {documentToDelete && (
         <ConfirmDialog
           title="Xác nhận xóa tài liệu"

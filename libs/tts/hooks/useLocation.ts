@@ -5,33 +5,20 @@ import { useQuery } from "@tanstack/react-query";
 import { locationApi } from "../services/apis/locationApi";
 
 export const locationKeys = {
-  provinces: ["location", "provinces"] as const,
+  hcmProvince: ["location", "province", "hcm"] as const,
 };
 
-export const useGetAllProvinces = () =>
+export const useGetHCMProvince = () =>
   useQuery({
-    queryKey: locationKeys.provinces,
-    queryFn: locationApi.getProvinces,
+    queryKey: locationKeys.hcmProvince,
+    queryFn: locationApi.getHoChiMinhProvince,
     staleTime: Infinity,
     gcTime: Infinity,
   });
 
-// Lấy tất cả phường/xã, không phụ thuộc tỉnh
-export const useGetAllWards = () => {
-  const { data: provinces } = useGetAllProvinces();
+export const useGetHCMWards = () => {
+  const { data: province } = useGetHCMProvince();
 
-  return useMemo(
-    () => provinces?.flatMap((province) => province.wards) ?? [],
-    [provinces],
-  );
+  return useMemo(() => province?.wards ?? [], [province]);
 };
 
-// Lấy danh sách phường/xã theo tỉnh đã chọn
-export const useGetWardsByProvince = (provinceName?: string) => {
-  const { data: provinces } = useGetAllProvinces();
-
-  return useMemo(
-    () => provinces?.find((p) => p.province === provinceName)?.wards ?? [],
-    [provinces, provinceName],
-  );
-};
