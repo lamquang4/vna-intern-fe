@@ -5,11 +5,14 @@ import { twMerge } from "tailwind-merge";
 import { Input, type InputProps } from "./Input";
 import { Label } from "./Label";
 import { Button } from "./Button";
+import { DateField } from "./DateField";
 
-export interface FloatingInputProps extends Omit<InputProps, "placeholder"> {
+export interface FloatingInputProps extends InputProps {
   label: string;
   required?: boolean;
-  containerClassName?: string;
+  dateValue?: Date | null;
+  onDateChange?: (date: Date | null) => void;
+  dateFormat?: string;
 }
 
 export function FloatingInput({
@@ -17,41 +20,54 @@ export function FloatingInput({
   required,
   error,
   type = "text",
-  className,
-  containerClassName,
   disabled,
+  placeholder = " ",
+  dateValue,
+  onDateChange,
+  dateFormat,
   ...props
 }: FloatingInputProps) {
   const errorMessage = typeof error === "string" ? error : undefined;
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const isPassword = type === "password";
   const inputType = isPassword && showPassword ? "text" : type;
 
   return (
-    <div className={twMerge("w-full", containerClassName)}>
-      <div className="relative">
-        <Input
-          {...props}
-          placeholder=" "
-          type={inputType}
-          disabled={disabled}
-          error={error}
-          className={twMerge(
-            "peer px-3 py-2 w-full rounded-md",
-            isPassword && "pr-12",
-            className,
-          )}
-        />
+    <div className={twMerge("w-full")}>
+      <div className="group relative">
+        {type === "date" ? (
+          <DateField
+            value={dateValue}
+            onChange={onDateChange}
+            error={error}
+            disabled={disabled}
+            format={dateFormat}
+            placeholder={placeholder.trim() || undefined}
+          />
+        ) : (
+          <Input
+            {...props}
+            placeholder={placeholder}
+            type={inputType}
+            disabled={disabled}
+            error={error}
+            className={twMerge(
+              "px-3 py-2 w-full rounded-md",
+              isPassword && "pr-12",
+            )}
+          />
+        )}
 
         <Label
           required={required}
+          error={!!error}
           className={twMerge(
             "pointer-events-none absolute left-2 top-0 -translate-y-1/2",
-            "bg-background px-1.5 leading-none whitespace-nowrap",
-            "text-muted-foreground transition-colors",
-            "peer-focus:text-primary",
-            error && "text-error peer-focus:text-error",
+            "bg-background px-1.5 leading-none whitespace-nowrap transition-colors",
+            error
+              ? "text-error"
+              : "text-muted-foreground group-focus-within:text-primary",
           )}
         >
           {label}
@@ -72,7 +88,7 @@ export function FloatingInput({
       </div>
 
       {errorMessage && (
-        <small className="mt-1 block px-1 text-error">{errorMessage}</small>
+        <small className="mt-1 block text-error">{errorMessage}</small>
       )}
     </div>
   );

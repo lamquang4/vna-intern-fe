@@ -1,27 +1,26 @@
+"use client";
 import { useState } from "react";
-import { Modal } from "@/libs/core/components/ui/Modal";
-import type {
-  UpdateEnterpriseData,
-} from "@/libs/shared/tts/schemas/enterprise.schema";
-import type {
-  EnterpriseDetailResponse,
-} from "@/libs/shared/tts/models/enterprise.model";
-import { useUpdateEnterprise } from "@/libs/tts/hooks/useEnterprises";
 import EnterpriseInfoReview from "../EnterpriseInfoReview";
 import EditEnterpriseForm from "./EditEnterpriseForm";
+import { EnterpriseDetailResponse } from "@/libs/shared/tts/models/enterprise.model";
+import { UpdateEnterpriseData } from "@/libs/shared/tts/schemas/enterprise.schema";
+import { useUpdateEnterprise } from "@/libs/tts/hooks/useEnterprises";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 
 interface Props {
   enterpriseId: string;
-  onClose: () => void;
 }
 
-function EditEnterpriseModal({ onClose, enterpriseId }: Props) {
+function EditEnterpriseContainer({ enterpriseId }: Props) {
+  const router = useRouter();
+
   const [step, setStep] = useState<1 | 2>(1);
   const [formData, setFormData] = useState<UpdateEnterpriseData | null>(null);
-  const [names, setNames] = useState({
-    businessTypeName: "",
-    businessIndustryName: "",
-  });
+  const [businessTypeName, setBusinessTypeName] = useState<string>("");
+  const [businessIndustryName, setBusinessIndustryName] = useState<string>("");
+  const [taxCode, setTaxCode] = useState<string>("");
   const [existingFiles, setExistingFiles] = useState<
     Pick<EnterpriseDetailResponse, "businessLicense" | "otherDocument">
   >({ businessLicense: null, otherDocument: null });
@@ -30,12 +29,16 @@ function EditEnterpriseModal({ onClose, enterpriseId }: Props) {
 
   const handleContinue = (
     data: UpdateEnterpriseData,
-    selectedNames: typeof names,
+    businessTypeName: string,
+    businessIndustryName: string,
     files: typeof existingFiles,
+    selectedTaxCode: string,
   ) => {
     setFormData(data);
-    setNames(selectedNames);
+    setBusinessTypeName(businessTypeName);
+    setBusinessIndustryName(businessIndustryName);
     setExistingFiles(files);
+    setTaxCode(selectedTaxCode);
     setStep(2);
   };
 
@@ -43,21 +46,27 @@ function EditEnterpriseModal({ onClose, enterpriseId }: Props) {
     setStep(1);
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (!formData) return;
 
-    await updateEnterpriseMutation.mutateAsync(formData);
-    onClose();
+    updateEnterpriseMutation.mutate(formData, {
+      onSuccess: () => router.push("/enterprises"),
+    });
   };
-
   return (
-    <Modal
-      title="Chỉnh sửa doanh nghiệp"
-      headerClassName="uppercase border border-border"
-      onClose={onClose}
-      className="max-w-[900px] h-[90%]"
-    >
-      <div className="py-4 flex-wrap flex items-center justify-center lg:gap-8 gap-5">
+    <div className="py-[30px] sm:px-[20px] px-[15px] flex flex-col gap-6 overflow-y-auto">
+      <div className="flex justify-between items-center gap-4 flex-wrap">
+        <h3>Chi tiết doanh nghiệp</h3>
+
+        <Link
+          href="/enterprises"
+          className="flex items-center font-medium gap-1 text-muted-foreground hover:text-primary px-3 py-2"
+        >
+          <ChevronLeft size={20} /> <span>Trở về</span>
+        </Link>
+      </div>
+
+      <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
         <div className="flex gap-2 items-center">
           <div
             className={`size-6.5 rounded-full flex items-center justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground text-white"}`}
@@ -88,16 +97,17 @@ function EditEnterpriseModal({ onClose, enterpriseId }: Props) {
           <EnterpriseInfoReview
             data={formData}
             existingFiles={existingFiles}
-            businessTypeName={names.businessTypeName}
-            businessIndustryName={names.businessIndustryName}
+            businessTypeName={businessTypeName}
+            businessIndustryName={businessIndustryName}
+            taxCode={taxCode}
             onBack={handleBack}
             onConfirm={handleConfirm}
             isLoading={updateEnterpriseMutation.isPending}
           />
         )
       )}
-    </Modal>
+    </div>
   );
 }
 
-export default EditEnterpriseModal;
+export default EditEnterpriseContainer;

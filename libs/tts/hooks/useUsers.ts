@@ -24,6 +24,7 @@ import { userApis } from "../services/apis/userApis";
 import { getErrorMessage } from "@/libs/core/utils/errorUtil";
 import { authKeys } from "./useAuth";
 import { GetUsersParams } from "@/libs/shared/tts/models/params.model";
+import { enterpriseKeys } from "./useEnterprises";
 
 export const userKeys = {
   all: ["users"] as const,
@@ -157,6 +158,7 @@ export const useToggleUserStatus = () => {
     onSuccess: (res, userId) => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
+      queryClient.invalidateQueries({ queryKey: enterpriseKeys.lists() });
 
       toast.success(res.message || "Cập nhật trạng thái thành công");
     },

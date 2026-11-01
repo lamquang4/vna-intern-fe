@@ -225,23 +225,20 @@ export const useGetMe = (options?: { enabled?: boolean }) => {
     queryKey: authKeys.me(),
     queryFn: authApi.getMe,
     enabled: options?.enabled ?? true,
+    staleTime: Infinity,
   });
 };
 
 // Khởi tạo mật khẩu
-export const useInitializePassword = () => {
-  const queryClient = useQueryClient();
-
+export const useInitializePassword = (userId: string) => {
   return useMutation<
     ApiResponse<null>,
     AxiosError<ErrorResponse>,
     InitializePasswordRequest
   >({
-    mutationFn: (body) => authApi.initializePassword(body),
+    mutationFn: (body) => authApi.initializePassword(userId, body),
 
     onSuccess: (res) => {
-      queryClient.invalidateQueries({ queryKey: authKeys.me() });
-
       toast.success(res.message || "Khởi tạo mật khẩu thành công");
     },
 

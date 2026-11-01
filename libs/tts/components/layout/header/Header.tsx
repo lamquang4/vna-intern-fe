@@ -12,6 +12,7 @@ function Header({ onToggleMenu }: Props) {
     <header className="sticky top-0 z-10 flex w-full bg-white border-border items-center border-b">
       <div className="w-full flex justify-between items-center sm:px-[20px] py-3.5 px-[15px]">
         <Button
+          type="button"
           onClick={onToggleMenu}
           className="w-8.5 h-8.5 rounded-lg justify-center items-center flex bg-sidebar text-sidebar-foreground"
         >

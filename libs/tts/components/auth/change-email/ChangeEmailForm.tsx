@@ -7,6 +7,8 @@ import {
   OTP_EXPIRE_SECONDS,
   OTP_LENGTH,
   OTP_RESEND_COOLDOWN_SECONDS,
+  ROLE_ADMIN,
+  ROLE_ENTERPRISE,
 } from "@/libs/core/constants/limits";
 import { formatDuration } from "@/libs/core/utils/formatters";
 import { useEffect, useState } from "react";
@@ -19,6 +21,7 @@ import {
 import { validateOtpDigit } from "@/libs/core/utils/validators";
 import {
   useChangeEmail,
+  useGetMe,
   useRequestChangeEmailOtp,
   useVerifyChangeEmailOtp,
 } from "../../../hooks/useAuth";
@@ -27,9 +30,10 @@ import { Save } from "lucide-react";
 interface Props {
   onClose: () => void;
   email: string;
+  roleCode: string;
 }
 
-function ChangeEmailForm({ onClose, email }: Props) {
+function ChangeEmailForm({ onClose, email, roleCode }: Props) {
   const [step, setStep] = useState<1 | 2>(1);
 
   // Đếm ngược hết hạn OTP
@@ -54,6 +58,14 @@ function ChangeEmailForm({ onClose, email }: Props) {
   const isCooldownActive = cooldownEndTime !== null && cooldownTimeLeft > 0;
   const isOtpExpired = expireEndTime !== null && timeLeft <= 0;
 
+  const { data, isLoading: isFetchingMe } = useGetMe();
+  const account = data?.data;
+
+  // Admin đổi email Doanh nghiệp: bỏ qua OTP, vào thẳng bước nhập email mới
+  const canSkipOtp =
+    account?.roleCode === ROLE_ADMIN && roleCode === ROLE_ENTERPRISE;
+  const currentStep = canSkipOtp ? 2 : step;
+
   const form1 = useForm<VerifyChangeEmailOtpData>({
     resolver: zodResolver(verifyChangeEmailOtpSchema),
     mode: "onBlur",
@@ -77,9 +89,10 @@ function ChangeEmailForm({ onClose, email }: Props) {
   };
 
   useEffect(() => {
+    if (isFetchingMe || canSkipOtp) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     startOtpTimers();
-  }, []);
+  }, [isFetchingMe, canSkipOtp]);
 
   // Đếm ngược hết hạn OTP
   useEffect(() => {
@@ -151,18 +164,20 @@ function ChangeEmailForm({ onClose, email }: Props) {
     form2.reset();
   };
 
+  if (isFetchingMe) return null;
+
   return (
     <form
       className="flex flex-col flex-1 min-h-0"
       onSubmit={
-        step === 1
+        currentStep === 1
           ? form1.handleSubmit(onSubmitStep1)
           : form2.handleSubmit(onSubmitStep2)
       }
     >
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2 items-center">
-          {step === 1 ? (
+          {currentStep === 1 ? (
             <>
               <p>Chúng tôi đã gửi mã xác nhận qua email cũ</p>
               <p className="font-medium">{email}</p>
@@ -173,13 +188,14 @@ function ChangeEmailForm({ onClose, email }: Props) {
           )}
         </div>
 
-        {step === 1 ? (
+        {currentStep === 1 ? (
           <div className="flex flex-col gap-2">
             <FloatingInput
               label="OTP"
               type="text"
               inputMode="numeric"
               autoComplete="one-time-code"
+              placeholder="Nhập mã otp"
               maxLength={OTP_LENGTH}
               error={form1.formState.errors.otpCode?.message}
               {...form1.register("otpCode", {
@@ -197,7 +213,7 @@ function ChangeEmailForm({ onClose, email }: Props) {
 
             <div className="flex justify-between items-center">
               <Button
-                form={step === 1 ? "form1" : "form2"}
+                form={currentStep === 1 ? "form1" : "form2"}
                 type="button"
                 onClick={handleResendOtp}
                 disabled={isCooldownActive || isResendingOtp}
@@ -226,6 +242,7 @@ function ChangeEmailForm({ onClose, email }: Props) {
           <FloatingInput
             label="Email mới"
             type="text"
+            placeholder="Nhập email mới"
             required
             error={form2.formState.errors.newEmail?.message}
             {...form2.register("newEmail")}
@@ -234,15 +251,16 @@ function ChangeEmailForm({ onClose, email }: Props) {
 
         <div className="flex flex-col items-center justify-center gap-3">
           <Button
-            disabled={isSubmitting || (step === 1 && isOtpExpired)}
+            disabled={isSubmitting || (currentStep === 1 && isOtpExpired)}
             type="submit"
             className="w-full px-3.5 py-2 rounded-lg font-medium bg-primary text-white flex justify-center items-center gap-2"
           >
-            <span>{step === 1 ? "Xác nhận" : "Lưu"}</span>
-            {step === 2 && <Save size={20} />}
+            {currentStep === 2 && <Save size={20} />}
+            <span>{currentStep === 1 ? "Xác nhận" : "Lưu"}</span>
           </Button>
 
           <Button
+            type="button"
             onClick={handleCancel}
             className="w-full text-center rounded-lg px-3.5 py-2 font-medium border border-border"
           >

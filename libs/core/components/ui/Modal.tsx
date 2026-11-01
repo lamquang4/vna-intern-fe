@@ -38,7 +38,7 @@ export function Modal({
           >
             <h4>{title}</h4>
 
-            <Button onClick={onClose}>
+            <Button type="button" onClick={onClose}>
               <X size={22} />
             </Button>
           </div>

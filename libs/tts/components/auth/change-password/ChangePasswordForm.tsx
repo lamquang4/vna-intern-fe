@@ -63,6 +63,7 @@ function ChangePasswordForm({ onClose }: Props) {
         <div className="flex flex-col gap-6">
           <FloatingInput
             label="Mật khẩu cũ"
+            placeholder="Nhập mật khẩu cũ"
             type="password"
             required
             error={errors.currentPassword?.message}
@@ -71,6 +72,7 @@ function ChangePasswordForm({ onClose }: Props) {
 
           <FloatingInput
             label="Mật khẩu mới"
+            placeholder="Nhập mật khẩu mới"
             type="password"
             required
             error={errors.newPassword?.message}
@@ -79,6 +81,7 @@ function ChangePasswordForm({ onClose }: Props) {
 
           <FloatingInput
             label="Nhập lại mật khẩu mới"
+            placeholder="Nhập lại mật khẩu mới"
             type="password"
             required
             error={errors.confirmNewPassword?.message}
@@ -88,6 +91,7 @@ function ChangePasswordForm({ onClose }: Props) {
 
         <div className="flex items-center justify-end gap-3">
           <Button
+            type="button"
             disabled={isChangingPassword}
             onClick={handleCancel}
             className="rounded-lg px-3.5 py-2 font-medium border border-border"

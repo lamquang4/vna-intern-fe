@@ -12,10 +12,11 @@ import { Save } from "lucide-react";
 interface Props {
   onClose: () => void;
   username: string;
+  userId: string;
 }
 
-function InitializePasswordForm({ onClose, username }: Props) {
-  const initializePasswordMutation = useInitializePassword();
+function InitializePasswordForm({ onClose, username, userId }: Props) {
+  const initializePasswordMutation = useInitializePassword(userId);
 
   const isInitializingPassword = initializePasswordMutation.isPending;
 
@@ -65,6 +66,7 @@ function InitializePasswordForm({ onClose, username }: Props) {
 
           <FloatingInput
             label="Mật khẩu"
+            placeholder="Nhập lại mật khẩu"
             type="password"
             required
             error={errors.password?.message}
@@ -73,7 +75,7 @@ function InitializePasswordForm({ onClose, username }: Props) {
 
           <div className="flex items-center justify-end gap-3">
             <Button
-            
+              type="button"
               onClick={handleCancel}
               className="rounded-lg px-3.5 py-2 font-medium border border-border"
             >
@@ -85,7 +87,7 @@ function InitializePasswordForm({ onClose, username }: Props) {
               type="submit"
               className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white flex items-center gap-2"
             >
-              <span>Lưu</span> <Save size={20} />
+              <Save size={20} /> <span>Lưu</span>
             </Button>
           </div>
         </div>

@@ -18,7 +18,7 @@ export interface FileResponse {
   fileName: string; // "giay-phep-kinh-doanh.pdf"
   contentType: string; // "application/pdf", "image/png", ...
   size: number; // bytes
-  url: string; // link xem/tải file
+  url: string;
 }
 
 export interface EnterpriseDetailResponse {
@@ -87,6 +87,7 @@ export interface UpdateEnterpriseRequest {
   otherDocument?: File | null; // Giấy tờ khác
 }
 
+// Cho Form trên FE
 export type DocumentField = "businessLicense" | "otherDocument";
 
 export interface DocumentRow<TFile = File> {

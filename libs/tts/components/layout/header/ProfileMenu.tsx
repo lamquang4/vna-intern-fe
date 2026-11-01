@@ -49,10 +49,6 @@ function ProfileMenu() {
     },
   ];
 
-  if (!account) {
-    return null;
-  }
-
   return (
     <>
       <div

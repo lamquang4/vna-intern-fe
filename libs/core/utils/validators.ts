@@ -3,6 +3,8 @@ import {
   ALLOWED_IMAGE_MIME_TYPES,
   MAX_IMAGE_SIZE,
   OTP_LENGTH,
+  ROLE_ADMIN,
+  ROLE_ENTERPRISE,
 } from "../constants/limits";
 
 export function validateUsername(value: string): boolean {
@@ -45,6 +47,18 @@ export function validateDateNotFuture(value: string): boolean {
 }
 
 export function validateTaxCode(value: string): boolean {
-  const regex = /^\d{10}$/;
+  const regex = /^\d{10}(-?\d{3})?$/;
   return regex.test(value.trim());
+}
+
+export function getRequiredRoleCode(username: string): string | null {
+  const value = username.trim();
+
+  // VNA + 8 số -> chỉ được vai trò SỞ
+  if (validateUsername(value)) return ROLE_ADMIN;
+
+  // Mã số thuế 10 số hoặc 13 số -> chỉ được DOANH NGHIỆP
+  if (validateTaxCode(value)) return ROLE_ENTERPRISE;
+
+  return null;
 }

@@ -30,6 +30,7 @@ function UserList() {
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
   const [username, setUsername] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
 
   const FILTER_KEYS = [
     "fullname",
@@ -130,7 +131,7 @@ function UserList() {
     });
   };
 
-  const handleOpenInitialPasswordModal = (username: string) => {
+  const handleOpenInitialPasswordModal = (username: string, userId: string) => {
     if (username === account?.username) {
       toast.error("Không được khởi tạo mật khẩu của chính tài khoản mình");
       return;
@@ -138,9 +139,30 @@ function UserList() {
 
     setModalOpen(true);
     setUsername(username);
+    setUserId(userId);
   };
 
   const columns: TableColumn<UserResponse>[] = [
+    {
+      key: "actions",
+      header: "Hành động",
+      cell: (u) => (
+        <div className="flex items-center gap-3">
+          <Link
+            href={`${u.username === account?.username ? "/account" : `/users/${u.userId}`}`}
+          >
+            <Pencil size={22} className="text-edit" />
+          </Link>
+
+          <Button
+            type="button"
+            onClick={() => handleOpenInitialPasswordModal(u.username, u.userId)}
+          >
+            <KeyRound size={22} className="text-warning" />
+          </Button>
+        </div>
+      ),
+    },
     { key: "username", header: "Số tài khoản", cell: (u) => u.username },
     {
       key: "fullname",
@@ -159,26 +181,6 @@ function UserList() {
           onChange={() => handleConfirmDialogToggleStatus(u.userId, u.username)}
           disabled={isTogglingStatus}
         />
-      ),
-    },
-    {
-      key: "actions",
-      header: "Hành động",
-      cell: (u) => (
-        <div className="flex items-center gap-3">
-          <Link
-            href={`${u.username === account?.username ? "/account" : `/users/${u.userId}`}`}
-          >
-            <Pencil size={22} className="text-edit" />
-          </Link>
-
-          <Button
-            type="button"
-            onClick={() => handleOpenInitialPasswordModal(u.username)}
-          >
-            <KeyRound size={22} className="text-warning" />
-          </Button>
-        </div>
       ),
     },
   ];
@@ -238,6 +240,7 @@ function UserList() {
         <InitializePasswordModal
           onClose={() => setModalOpen(false)}
           username={username}
+          userId={userId}
         />
       )}
 

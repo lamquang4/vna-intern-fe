@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
@@ -7,18 +7,30 @@ import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
 import { Funnel, FunnelX } from "lucide-react";
 import { useGetAllBusinessIndustries } from "@/libs/tts/hooks/useBusinessIndustries";
 import { useGetAllBusinessTypes } from "@/libs/tts/hooks/useBusinessTypes";
-import { useGetAllWards } from "@/libs/tts/hooks/useLocation";
+import { useGetHCMWards } from "@/libs/tts/hooks/useLocation";
+import { STATUS_OPTIONS } from "@/libs/core/constants/options";
 
 interface Props {
   onClose: () => void;
 }
+
+const EMPTY_FILTERS = {
+  name: "",
+  taxCode: "",
+  businessType: "",
+  businessIndustry: "",
+  ward: "",
+  isActive: "",
+};
+
+type Filters = typeof EMPTY_FILTERS;
 
 function EnterpriseFilterForm({ onClose }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const wards = useGetAllWards();
+  const wards = useGetHCMWards();
 
   const { data: businessIndustryData } = useGetAllBusinessIndustries();
   const businessIndustries = businessIndustryData?.data;
@@ -26,21 +38,35 @@ function EnterpriseFilterForm({ onClose }: Props) {
   const { data: businessTypeData } = useGetAllBusinessTypes();
   const businessTypes = businessTypeData?.data;
 
-  const [filters, setFilters] = useState({
-    name: searchParams.get("name") ?? "",
-    taxCode: searchParams.get("taxCode") ?? "",
-    businessType: searchParams.get("businessType") ?? "",
-    businessIndustry: searchParams.get("businessIndustry") ?? "",
-    ward: searchParams.get("ward") ?? "",
-    isActive: searchParams.get("isActive") ?? "",
+  const { register, control, handleSubmit, reset } = useForm<Filters>({
+    defaultValues: {
+      name: searchParams.get("name") ?? "",
+      taxCode: searchParams.get("taxCode") ?? "",
+      businessType: searchParams.get("businessType") ?? "",
+      businessIndustry: searchParams.get("businessIndustry") ?? "",
+      ward: searchParams.get("ward") ?? "",
+      isActive: searchParams.get("isActive") ?? "",
+    },
   });
 
-  const handleChange =
-    (key: keyof typeof filters) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-      setFilters((prev) => ({ ...prev, [key]: e.target.value }));
+  const businessTypeOptions = (businessTypes ?? []).map((type) => ({
+    value: type.name,
+    label: `${type.code} - ${type.name}`,
+  }));
 
-  const applyFilters = (values: typeof filters) => {
+  const businessIndustryOptions = (businessIndustries ?? []).map(
+    (industry) => ({
+      value: industry.name,
+      label: `${industry.code} - ${industry.name}`,
+    }),
+  );
+
+  const wardOptions = (wards ?? []).map((ward) => ({
+    value: ward.name,
+    label: ward.name,
+  }));
+
+  const applyFilters = (values: Filters) => {
     const params = new URLSearchParams(searchParams.toString());
 
     Object.entries(values).forEach(([key, value]) => {
@@ -53,95 +79,92 @@ function EnterpriseFilterForm({ onClose }: Props) {
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    applyFilters(filters);
-  };
-
   const handleClear = () => {
-    const empty = {
-      name: "",
-      taxCode: "",
-      businessType: "",
-      businessIndustry: "",
-      ward: "",
-      isActive: "",
-    };
-    setFilters(empty);
-    applyFilters(empty);
+    reset(EMPTY_FILTERS);
+    applyFilters(EMPTY_FILTERS);
   };
 
   return (
-    <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit}>
+    <form
+      className="flex flex-col flex-1 min-h-0"
+      onSubmit={handleSubmit(applyFilters)}
+    >
       <div className="flex flex-col gap-8 pt-4">
         <div className="flex flex-col gap-6">
           <div className="flex gap-[15px] sm:flex-row flex-col">
             <FloatingInput
               label="Tên doanh nghiệp"
+              placeholder="Nhập tên doanh nghiệp"
               type="text"
-              value={filters.name}
-              onChange={handleChange("name")}
+              {...register("name")}
             />
+
             <FloatingInput
               label="Mã số thuế"
+              placeholder="Nhập mã số thuế"
               type="text"
-              value={filters.taxCode}
-              onChange={handleChange("taxCode")}
+              {...register("taxCode")}
             />
           </div>
 
           <div className="flex gap-[15px] sm:flex-row flex-col">
-            <FloatingSelect
-              label="Loại hình kinh doanh"
-              value={filters.businessType}
-              onChange={handleChange("businessType")}
-            >
-              <option value="">Tất cả loại hình kinh doanh</option>
-              {businessTypes?.map((type) => (
-                <option key={type.businessTypeId} value={type.name}>
-                  {type.code} {type.name}
-                </option>
-              ))}
-            </FloatingSelect>
+            <Controller
+              name="businessType"
+              control={control}
+              render={({ field }) => (
+                <FloatingSelect
+                  label="Loại hình kinh doanh"
+                  placeholder="Tất cả loại hình kinh doanh"
+                  options={businessTypeOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
 
-            <FloatingSelect
-              label="Ngành nghề kinh doanh"
-              value={filters.businessIndustry}
-              onChange={handleChange("businessIndustry")}
-            >
-              <option value="">Tất cả ngành nghề kinh doanh</option>
-              {businessIndustries?.map((industry) => (
-                <option key={industry.businessIndustryId} value={industry.name}>
-                  {industry.code} {industry.name}
-                </option>
-              ))}
-            </FloatingSelect>
+            <Controller
+              name="businessIndustry"
+              control={control}
+              render={({ field }) => (
+                <FloatingSelect
+                  label="Ngành nghề kinh doanh"
+                  placeholder="Tất cả ngành nghề kinh doanh"
+                  options={businessIndustryOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
           </div>
 
           <div className="flex gap-[15px] sm:flex-row flex-col">
-            <FloatingSelect
-              label="Phường/xã"
-              value={filters.ward}
-              onChange={handleChange("ward")}
-            >
-              <option value="">Tất cả phường/xã</option>
+            <Controller
+              name="ward"
+              control={control}
+              render={({ field }) => (
+                <FloatingSelect
+                  label="Phường/xã"
+                  placeholder="Tất cả phường/xã"
+                  options={wardOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
 
-              {wards?.map((ward, index) => (
-                <option key={index} value={ward.name}>
-                  {ward.name}
-                </option>
-              ))}
-            </FloatingSelect>
-
-            <FloatingSelect
-              label="Trạng thái"
-              value={filters.isActive}
-              onChange={handleChange("isActive")}
-            >
-              <option value="">Tất cả trạng thái</option>
-              <option value="true">Hoạt động</option>
-              <option value="false">Ngừng hoạt động</option>
-            </FloatingSelect>
+            <Controller
+              name="isActive"
+              control={control}
+              render={({ field }) => (
+                <FloatingSelect
+                  label="Trạng thái"
+                  placeholder="Tất cả trạng thái"
+                  options={STATUS_OPTIONS}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
           </div>
         </div>
 
@@ -149,16 +172,16 @@ function EnterpriseFilterForm({ onClose }: Props) {
           <Button
             type="button"
             onClick={handleClear}
-            className="rounded-lg bg-error px-3.5 py-2 font-medium text-white flex items-center gap-2"
+            className="rounded-lg bg-error px-3 py-2.5 font-medium text-white flex items-center gap-2"
           >
-            <span>Xóa bộ lọc</span> <FunnelX size={20} />
+            <FunnelX size={20} /> <span>Xóa bộ lọc</span>
           </Button>
 
           <Button
             type="submit"
-            className="rounded-lg bg-primary px-3.5 py-2 font-medium text-white flex items-center gap-2"
+            className="rounded-lg bg-primary px-3 py-2.5 font-medium text-white flex items-center gap-2"
           >
-            <span>Áp dụng</span> <Funnel size={20} />
+            <Funnel size={20} /> <span>Áp dụng</span>
           </Button>
         </div>
       </div>

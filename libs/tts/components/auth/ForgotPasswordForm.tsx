@@ -180,6 +180,7 @@ function ForgotPasswordForm() {
           {step === 1 ? (
             <FloatingInput
               label="Email"
+              placeholder="Nhập email"
               error={form1.formState.errors.email?.message}
               {...form1.register("email")}
             />
@@ -187,12 +188,14 @@ function ForgotPasswordForm() {
             <>
               <FloatingInput
                 label="Mật khẩu mới"
+                placeholder="Nhập mật khẩu mới"
                 type="password"
                 error={form2.formState.errors.newPassword?.message}
                 {...form2.register("newPassword")}
               />
               <FloatingInput
                 label="Nhập lại mật khẩu mới"
+                placeholder="Nhập lại mật khẩu mới"
                 type="password"
                 error={form2.formState.errors.confirmNewPassword?.message}
                 {...form2.register("confirmNewPassword")}
@@ -202,6 +205,7 @@ function ForgotPasswordForm() {
                 <FloatingInput
                   label="OTP"
                   type="text"
+                  placeholder="Nhập mã otp"
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   maxLength={OTP_LENGTH}

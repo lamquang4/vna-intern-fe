@@ -50,7 +50,7 @@ function Pagination({ totalPages, page, size, totalElements }: Props) {
   }
 
   return (
-    <div className="flex items-center justify-center flex-wrap py-4 sm:px-[20px] px-[15px] w-full gap-4">
+    <div className="flex items-center justify-end flex-wrap py-4 sm:px-[20px] px-[15px] w-full gap-4">
       <nav className="isolate inline-flex gap-0.5" aria-label="Pagination">
         <Button
           type="button"
@@ -79,6 +79,7 @@ function Pagination({ totalPages, page, size, totalElements }: Props) {
 
           return (
             <Button
+              type="button"
               key={pageNumber}
               onClick={() => goToPage(pageNumber as number)}
               className={`h-8.5 w-8.5 flex justify-center items-center border border-border ${
@@ -91,6 +92,7 @@ function Pagination({ totalPages, page, size, totalElements }: Props) {
         })}
 
         <Button
+          type="button"
           disabled={page >= totalPages}
           onClick={() => page < totalPages && goToPage(page + 1)}
           className="h-8.5 w-8.5 inline-flex justify-center items-center gap-x-2 border border-border hover:bg-muted"

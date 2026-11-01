@@ -14,7 +14,7 @@ export function Switch(props: SwitchProps) {
         className="peer sr-only"
       />
 
-      <span className="h-5 w-10 rounded-full bg-primary/50 transition-colors peer-checked:bg-primary" />
+      <span className="h-5 w-10 rounded-full bg-muted-foreground/50 transition-colors peer-checked:bg-primary" />
 
       <span className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
     </Label>

@@ -1,15 +1,27 @@
 "use client";
-import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
 import { useGetAllRoles } from "../../../hooks/useRoles";
 import { Funnel, FunnelX } from "lucide-react";
+import { STATUS_OPTIONS } from "@/libs/core/constants/options";
 
 interface Props {
   onClose: () => void;
 }
+
+const EMPTY_FILTERS = {
+  fullname: "",
+  username: "",
+  email: "",
+  position: "",
+  roleName: "",
+  isActive: "",
+};
+
+type Filters = typeof EMPTY_FILTERS;
 
 function UserFilterForm({ onClose }: Props) {
   const router = useRouter();
@@ -19,21 +31,24 @@ function UserFilterForm({ onClose }: Props) {
   const { data } = useGetAllRoles();
   const roles = data?.data;
 
-  const [filters, setFilters] = useState({
-    fullname: searchParams.get("fullname") ?? "",
-    username: searchParams.get("username") ?? "",
-    email: searchParams.get("email") ?? "",
-    position: searchParams.get("position") ?? "",
-    roleName: searchParams.get("roleName") ?? "",
-    isActive: searchParams.get("isActive") ?? "",
+  const { register, control, handleSubmit, reset } = useForm<Filters>({
+    defaultValues: {
+      fullname: searchParams.get("fullname") ?? "",
+      username: searchParams.get("username") ?? "",
+      email: searchParams.get("email") ?? "",
+      position: searchParams.get("position") ?? "",
+      roleName: searchParams.get("roleName") ?? "",
+      isActive: searchParams.get("isActive") ?? "",
+    },
   });
 
-  const handleChange =
-    (key: keyof typeof filters) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-      setFilters((prev) => ({ ...prev, [key]: e.target.value }));
+  // ===== Options cho FloatingSelect =====
+  const roleOptions = (roles ?? []).map((role) => ({
+    value: role.name,
+    label: role.name,
+  }));
 
-  const applyFilters = (values: typeof filters) => {
+  const applyFilters = (values: Filters) => {
     const params = new URLSearchParams(searchParams.toString());
 
     Object.entries(values).forEach(([key, value]) => {
@@ -46,81 +61,76 @@ function UserFilterForm({ onClose }: Props) {
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    applyFilters(filters);
-  };
-
   const handleClear = () => {
-    const empty = {
-      fullname: "",
-      username: "",
-      email: "",
-      position: "",
-      roleName: "",
-      isActive: "",
-    };
-    setFilters(empty);
-    applyFilters(empty);
+    reset(EMPTY_FILTERS);
+    applyFilters(EMPTY_FILTERS);
   };
 
   return (
-    <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit}>
+    <form
+      className="flex flex-col flex-1 min-h-0"
+      onSubmit={handleSubmit(applyFilters)}
+    >
       <div className="flex flex-col gap-8 pt-4">
         <div className="flex flex-col gap-6">
           <div className="flex gap-[15px] sm:flex-row flex-col">
             <FloatingInput
               label="Họ tên"
+              placeholder="Nhập họ tên"
               type="text"
-              value={filters.fullname}
-              onChange={handleChange("fullname")}
+              {...register("fullname")}
             />
             <FloatingInput
               label="Tài khoản"
+              placeholder="Nhập tài khoản"
               type="text"
-              value={filters.username}
-              onChange={handleChange("username")}
+              {...register("username")}
             />
           </div>
 
           <div className="flex gap-[15px] sm:flex-row flex-col">
             <FloatingInput
               label="Email"
+              placeholder="Nhập email"
               type="text"
-              value={filters.email}
-              onChange={handleChange("email")}
+              {...register("email")}
             />
             <FloatingInput
               label="Chức danh"
+              placeholder="Nhập chức danh"
               type="text"
-              value={filters.position}
-              onChange={handleChange("position")}
+              {...register("position")}
             />
           </div>
 
           <div className="flex gap-[15px] sm:flex-row flex-col">
-            <FloatingSelect
-              label="Vai trò"
-              value={filters.roleName}
-              onChange={handleChange("roleName")}
-            >
-              <option value="">Tất cả vai trò</option>
-              {roles?.map((role) => (
-                <option key={role.id} value={role.name}>
-                  {role.name}
-                </option>
-              ))}
-            </FloatingSelect>
+            <Controller
+              name="roleName"
+              control={control}
+              render={({ field }) => (
+                <FloatingSelect
+                  label="Vai trò"
+                  placeholder="Tất cả vai trò"
+                  options={roleOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
 
-            <FloatingSelect
-              label="Trạng thái"
-              value={filters.isActive}
-              onChange={handleChange("isActive")}
-            >
-              <option value="">Tất cả trạng thái</option>
-              <option value="true">Hoạt động</option>
-              <option value="false">Ngừng hoạt động</option>
-            </FloatingSelect>
+            <Controller
+              name="isActive"
+              control={control}
+              render={({ field }) => (
+                <FloatingSelect
+                  label="Trạng thái"
+                  placeholder="Tất cả trạng thái"
+                  options={STATUS_OPTIONS}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
           </div>
         </div>
 
@@ -128,16 +138,16 @@ function UserFilterForm({ onClose }: Props) {
           <Button
             type="button"
             onClick={handleClear}
-            className="rounded-lg bg-error px-3.5 py-2 font-medium text-white flex items-center gap-2"
+            className="rounded-lg bg-error px-3 py-2.5 font-medium text-white flex items-center gap-2"
           >
-            <span>Xóa bộ lọc</span> <FunnelX size={20} />
+            <FunnelX size={20} /> <span>Xóa bộ lọc</span>
           </Button>
 
           <Button
             type="submit"
-            className="rounded-lg bg-primary px-3.5 py-2 font-medium text-white flex items-center gap-2"
+            className="rounded-lg bg-primary px-3 py-2.5 font-medium text-white flex items-center gap-2"
           >
-            <span>Áp dụng</span> <Funnel size={20} />
+            <Funnel size={20} /> <span>Áp dụng</span>
           </Button>
         </div>
       </div>

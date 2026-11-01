@@ -1,20 +1,17 @@
 "use client";
+import { format, parseISO } from "date-fns";
 import { Button } from "@/libs/core/components/ui/Button";
+import type {
+  DocumentRow,
+  EnterpriseDetailResponse,
+} from "@/libs/shared/tts/models/enterprise.model";
 import type {
   CreateEnterpriseData,
   UpdateEnterpriseData,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
-import type {
-  DocumentRow,
-  EnterpriseDetailResponse,
-  FileResponse,
-} from "@/libs/shared/tts/models/enterprise.model";
-import type { TableColumn } from "@/libs/core/models/component.model";
-import DataTable from "@/libs/core/components/ui/DataTable";
-import { InfoItem } from "@/libs/core/components/ui/InfoItem";
-import { format, parseISO } from "date-fns";
-import FilePreview from "./FilePreview";
-import { getFileName } from "@/libs/tts/utils/filePreviewUtil";
+import { type PreviewFile } from "@/libs/tts/utils/filePreviewUtil";
+import { InfoItem } from "./InfoItem";
+import DocumentsField from "./DocumentsField";
 
 interface Props {
   data: CreateEnterpriseData | UpdateEnterpriseData;
@@ -40,57 +37,29 @@ function EnterpriseInfoReview({
   onConfirm,
   isLoading,
 }: Props) {
-  const documents: DocumentRow<File | FileResponse>[] = [
+  const documents: DocumentRow<PreviewFile>[] = [
     {
       id: "businessLicense",
       name: "Giấy phép kinh doanh",
       file:
-        data.businessLicense ?? existingFiles?.businessLicense ?? null,
+        data.businessLicense === undefined
+          ? (existingFiles?.businessLicense ?? null)
+          : data.businessLicense,
     },
     {
       id: "otherDocument",
       name: "Giấy tờ khác",
       file:
-        data.otherDocument ?? existingFiles?.otherDocument ?? null,
-    },
-  ];
-
-  const columns: TableColumn<DocumentRow<File | FileResponse>>[] = [
-    {
-      key: "name",
-      header: "Loại tài liệu",
-      cell: (row) => row.name,
-    },
-    {
-      key: "fileName",
-      header: "Tên file",
-      cell: (row) =>
-        !row.file
-          ? "Chưa chọn tệp"
-          : getFileName(row.file),
-    },
-    {
-      key: "fileInfo",
-      header: "Dung lượng",
-      cell: (row) =>
-        row.file ? `${(row.file.size / 1024).toFixed(1)} KB` : "",
-    },
-
-    {
-      key: "actions",
-      header: "Hành động",
-      cell: (row) => (
-        <div className="flex items-center gap-3">
-          <FilePreview file={row.file} />
-        </div>
-      ),
+        data.otherDocument === undefined
+          ? (existingFiles?.otherDocument ?? null)
+          : data.otherDocument,
     },
   ];
 
   return (
     <div className="flex flex-col gap-6 w-full">
       <div className="flex flex-col gap-[20px] w-full">
-        <div className="flex flex-col gap-[30px]">
+        <div className="flex flex-col gap-[20px]">
           <h5>Thông tin doanh nghiệp</h5>
 
           <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-3">
@@ -121,7 +90,7 @@ function EnterpriseInfoReview({
 
         <hr className="border-border border-t" />
 
-        <div className="flex flex-col gap-[30px]">
+        <div className="flex flex-col gap-[20px]">
           <h5>Thông tin liên hệ</h5>
 
           <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-3">
@@ -158,14 +127,10 @@ function EnterpriseInfoReview({
 
         <hr className="border-border border-t" />
 
-        <div className="flex flex-col gap-[30px]">
+        <div className="flex flex-col gap-[20px]">
           <h5>File đính kèm</h5>
 
-          <DataTable
-            columns={columns}
-            data={documents}
-            getRowId={(row) => row.id}
-          />
+          <DocumentsField documents={documents} />
         </div>
       </div>
 
