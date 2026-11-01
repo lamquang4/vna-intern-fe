@@ -3,9 +3,9 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import { Input, type InputProps } from "./Input";
-import { Label } from "./Label";
 import { Button } from "./Button";
 import { DateField } from "./DateField";
+import { FloatingFieldset } from "./FloatingFieldset";
 
 export interface FloatingInputProps extends InputProps {
   label: string;
@@ -27,23 +27,31 @@ export function FloatingInput({
   dateFormat,
   ...props
 }: FloatingInputProps) {
-  const errorMessage = typeof error === "string" ? error : undefined;
   const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const isPassword = type === "password";
   const inputType = isPassword && showPassword ? "text" : type;
 
   return (
-    <div className={twMerge("w-full")}>
-      <div className="group relative">
+    <FloatingFieldset
+      label={label}
+      required={required}
+      error={error}
+      disabled={disabled}
+    >
+      <div className="relative -mt-1">
         {type === "date" ? (
           <DateField
             value={dateValue}
             onChange={onDateChange}
+            onBlur={props.onBlur}
             error={error}
             disabled={disabled}
             format={dateFormat}
             placeholder={placeholder.trim() || undefined}
+            className={twMerge(
+              "rounded-none border-0 bg-transparent focus:border-0"
+            )}
           />
         ) : (
           <Input
@@ -53,25 +61,11 @@ export function FloatingInput({
             disabled={disabled}
             error={error}
             className={twMerge(
-              "px-3 py-2 w-full rounded-md",
-              isPassword && "pr-12",
+              "block w-full rounded-none border-0 bg-transparent px-3 py-2 focus:border-0",
+              isPassword && "pr-10"
             )}
           />
         )}
-
-        <Label
-          required={required}
-          error={!!error}
-          className={twMerge(
-            "pointer-events-none absolute left-2 top-0 -translate-y-1/2",
-            "bg-background px-1.5 leading-none whitespace-nowrap transition-colors",
-            error
-              ? "text-error"
-              : "text-muted-foreground group-focus-within:text-primary",
-          )}
-        >
-          {label}
-        </Label>
 
         {isPassword && (
           <Button
@@ -80,16 +74,12 @@ export function FloatingInput({
             disabled={disabled}
             onClick={() => setShowPassword((prev) => !prev)}
             aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-            className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground"
+            className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground"
           >
             {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
           </Button>
         )}
       </div>
-
-      {errorMessage && (
-        <small className="mt-1 block text-error">{errorMessage}</small>
-      )}
-    </div>
+    </FloatingFieldset>
   );
 }

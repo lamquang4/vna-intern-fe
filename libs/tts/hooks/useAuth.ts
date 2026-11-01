@@ -22,7 +22,6 @@ import type { UserDetailResponse } from "@/libs/shared/tts/models/user.model";
 import { authApi } from "../services/apis/authApis";
 import { jwtUtil } from "@/libs/core/utils/jwtUtil";
 import { getErrorMessage } from "@/libs/core/utils/errorUtil";
-import { cookieUtil } from "@/libs/core/utils/cookieUtil";
 
 export const authKeys = {
   all: ["auth"] as const,

@@ -1,9 +1,5 @@
 "use client";
-import {
-  forwardRef,
-  type ChangeEvent,
-  type FocusEventHandler,
-} from "react";
+import { forwardRef, type ChangeEvent, type FocusEventHandler } from "react";
 import DatePicker from "react-datepicker";
 import { CalendarDays } from "lucide-react";
 import { twMerge } from "tailwind-merge";
@@ -61,7 +57,7 @@ export function DateField({
         placeholderText={placeholder}
         strictParsing
         disabled={disabled}
-        wrapperClassName="w-full"
+        wrapperClassName="block w-full"
         popperClassName="!z-50"
         showMonthDropdown
         showYearDropdown
@@ -70,13 +66,16 @@ export function DateField({
           <DateTrigger
             error={error}
             onBlur={onBlur}
-            className={twMerge("px-3 py-2 pr-10 w-full rounded-md", className)}
+            className={twMerge(
+              "block w-full rounded-md px-3 py-2 pr-10",
+              className,
+            )}
           />
         }
       />
       <CalendarDays
         size={20}
-        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
       />
     </div>
   );
