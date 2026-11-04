@@ -31,9 +31,7 @@ export function FloatingFieldset({
         <legend
           className={twMerge(
             "ml-2 px-1 leading-4 whitespace-nowrap transition-colors",
-            error
-              ? "text-error"
-              : "text-muted-foreground group-focus-within:text-primary",
+            error ? "text-error" : "group-focus-within:text-primary",
           )}
         >
           {label}

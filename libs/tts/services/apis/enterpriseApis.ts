@@ -8,6 +8,7 @@ import {
   DeleteEnterpriseRequest,
   EnterpriseDetailResponse,
   EnterpriseResponse,
+  UpdateEnterpriseMeRequest,
   UpdateEnterpriseRequest,
 } from "@/libs/shared/tts/models/enterprise.model";
 import { GetEnterprisesParams } from "@/libs/shared/tts/models/params.model";
@@ -16,7 +17,10 @@ const BASE = "/enterprises";
 const DOCUMENT_FIELDS = new Set(["businessLicense", "otherDocument"]);
 
 const toEnterpriseFormData = (
-  data: CreateEnterpriseRequest | UpdateEnterpriseRequest,
+  data:
+    | CreateEnterpriseRequest
+    | UpdateEnterpriseRequest
+    | UpdateEnterpriseMeRequest,
   includeNullDocumentFields = false,
 ): FormData => {
   const formData = new FormData();
@@ -64,9 +68,18 @@ export const enterpriseApis = {
 
   updateEnterprise: (enterpriseId: string, data: UpdateEnterpriseRequest) =>
     axiosInstance
-      .put<ApiResponse<null>>(
-        `${BASE}/${enterpriseId}`,
-        toEnterpriseFormData(data, true),
-      )
+      .put<
+        ApiResponse<null>
+      >(`${BASE}/${enterpriseId}`, toEnterpriseFormData(data, true))
+      .then(({ data }) => data),
+
+  getEnterpriseMe: () =>
+    axiosInstance
+      .get<ApiResponse<EnterpriseDetailResponse>>(`${BASE}/me`)
+      .then(({ data }) => data),
+
+  updateEnterpriseMe: (data: UpdateEnterpriseMeRequest) =>
+    axiosInstance
+      .put<ApiResponse<null>>(`${BASE}/me`, toEnterpriseFormData(data, true))
       .then(({ data }) => data),
 };

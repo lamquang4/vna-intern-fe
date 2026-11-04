@@ -4,8 +4,8 @@ import DatePicker from "react-datepicker";
 import { CalendarDays } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import "react-datepicker/dist/react-datepicker.css";
-import { Input, type InputProps } from "./Input";
-import { formatDateInput } from "../../utils/formatters";
+import { Input, type InputProps } from "../Input";
+import { formatDateInput } from "../../../utils/formatters";
 
 export interface DateFieldProps {
   value?: Date | null;
@@ -67,7 +67,7 @@ export function DateField({
             error={error}
             onBlur={onBlur}
             className={twMerge(
-              "block w-full rounded-md px-3 py-2 pr-10",
+              "block w-full rounded-md px-3 py-1.5 pr-10",
               className,
             )}
           />

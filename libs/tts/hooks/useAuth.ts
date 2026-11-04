@@ -10,11 +10,11 @@ import type {
 import type {
   LoginRequest,
   LoginResponse,
-  ForgotPasswordRequest,
+  EmailOtpRequest,
   ResetPasswordRequest,
-  ResendForgotPasswordOtpRequest,
   ChangePasswordRequest,
   VerifyChangeEmailOtpRequest,
+  VerifyRegisterEnterpriseEmailOtpRequest,
   ChangeEmailRequest,
   InitializePasswordRequest,
 } from "@/libs/shared/tts/models/auth.model";
@@ -22,6 +22,8 @@ import type { UserDetailResponse } from "@/libs/shared/tts/models/user.model";
 import { authApi } from "../services/apis/authApis";
 import { jwtUtil } from "@/libs/core/utils/jwtUtil";
 import { getErrorMessage } from "@/libs/core/utils/errorUtil";
+import { userKeys } from "./useUsers";
+import { enterpriseKeys } from "./useEnterprises";
 
 export const authKeys = {
   all: ["auth"] as const,
@@ -79,30 +81,51 @@ export const useLogout = () => {
   });
 };
 
-export const useForgotPassword = () => {
+// Khởi tạo mật khẩu
+export const useInitializePassword = (userId: string) => {
   return useMutation<
     ApiResponse<null>,
     AxiosError<ErrorResponse>,
-    ForgotPasswordRequest
+    InitializePasswordRequest
   >({
-    mutationFn: authApi.forgotPassword,
+    mutationFn: (body) => authApi.initializePassword(userId, body),
+
+    onSuccess: (res) => {
+      toast.success(res.message || "Khởi tạo mật khẩu thành công");
+    },
 
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Quên mật khẩu thất bại"));
+      toast.error(getErrorMessage(error, "Khởi tạo mật khẩu thất bại"));
     },
   });
 };
 
-export const useResendForgotPasswordOtp = () => {
+// Gửi OTP đến email
+export const useSendOtp = () => {
   return useMutation<
     ApiResponse<null>,
     AxiosError<ErrorResponse>,
-    ResendForgotPasswordOtpRequest
+    EmailOtpRequest
   >({
-    mutationFn: authApi.resendForgotPasswordOtp,
+    mutationFn: authApi.sendOtp,
 
-    onSuccess: (res) => {
-      toast.success(res.message || "Gửi lại OTP thành công");
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Gửi OTP thất bại"));
+    },
+  });
+};
+
+// Gửi lại OTP
+export const useResendOtp = () => {
+  return useMutation<
+    ApiResponse<null>,
+    AxiosError<ErrorResponse>,
+    EmailOtpRequest
+  >({
+    mutationFn: authApi.sendOtp,
+
+    onSuccess: () => {
+      toast.success("Gửi lại OTP thành công");
     },
 
     onError: (error) => {
@@ -111,28 +134,7 @@ export const useResendForgotPasswordOtp = () => {
   });
 };
 
-export const useResetPassword = () => {
-  const router = useRouter();
-
-  return useMutation<
-    ApiResponse<null>,
-    AxiosError<ErrorResponse>,
-    ResetPasswordRequest
-  >({
-    mutationFn: (body) => authApi.resetPassword(body),
-
-    onSuccess: (res) => {
-      toast.success(res.message || "Đặt lại mật khẩu thành công");
-      router.replace("/");
-    },
-
-    onError: (error) => {
-      toast.error(getErrorMessage(error, "Đặt lại mật khẩu thất bại"));
-    },
-  });
-};
-
-// Change password
+// Flow quên mật khẩu
 export const useChangePassword = () => {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -158,24 +160,28 @@ export const useChangePassword = () => {
   });
 };
 
-// Flow Change email
+export const useResetPassword = () => {
+  const router = useRouter();
 
-// Yêu cầu gửi OTP đến email hiện tại (bước 1, cũng dùng cho gửi lại OTP)
-export const useRequestChangeEmailOtp = () => {
-  return useMutation<ApiResponse<null>, AxiosError<ErrorResponse>, void>({
-    mutationFn: authApi.requestChangeEmailOtp,
+  return useMutation<
+    ApiResponse<null>,
+    AxiosError<ErrorResponse>,
+    ResetPasswordRequest
+  >({
+    mutationFn: (body) => authApi.resetPassword(body),
 
     onSuccess: (res) => {
-      toast.success(res.message || "Gửi OTP xác thực email thành công");
+      toast.success(res.message || "Đặt lại mật khẩu thành công");
+      router.replace("/");
     },
 
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Gửi OTP xác thực email thất bại"));
+      toast.error(getErrorMessage(error, "Đặt lại mật khẩu thất bại"));
     },
   });
 };
 
-// Xác thực OTP đã gửi đến email hiện tại (bước 2)
+// Change email
 export const useVerifyChangeEmailOtp = () => {
   return useMutation<
     ApiResponse<null>,
@@ -194,8 +200,7 @@ export const useVerifyChangeEmailOtp = () => {
   });
 };
 
-// Đổi email (bước 3): gửi email mới sau khi đã xác thực OTP
-export const useChangeEmail = () => {
+export const useChangeEmail = (userId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation<
@@ -203,18 +208,59 @@ export const useChangeEmail = () => {
     AxiosError<ErrorResponse>,
     ChangeEmailRequest
   >({
-    mutationFn: authApi.changeEmail,
+    mutationFn: (body) => authApi.changeEmail(userId, body),
 
     onSuccess: (res) => {
-      queryClient.invalidateQueries({
-        queryKey: authKeys.me(),
-      });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
+      queryClient.invalidateQueries({ queryKey: enterpriseKeys.all });
 
-      toast.success(res.message || "Đổi email thành công");
+      toast.success(res.message || "Thay đổi email thành công");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Thay đổi email thất bại"));
+    },
+  });
+};
+
+export const useChangeEmailMe = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<null>,
+    AxiosError<ErrorResponse>,
+    ChangeEmailRequest
+  >({
+    mutationFn: (body) => authApi.changeEmailMe(body),
+
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: authKeys.me() });
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+      queryClient.invalidateQueries({ queryKey: enterpriseKeys.me() });
+
+      toast.success(res.message || "Thay đổi email thành công");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Thay đổi email thất bại"));
+    },
+  });
+};
+
+// Đăng ký doanh nghiệp: xác thực OTP gửi đến email doanh nghiệp
+export const useVerifyRegisterEnterpriseEmailOtp = () => {
+  return useMutation<
+    ApiResponse<null>,
+    AxiosError<ErrorResponse>,
+    VerifyRegisterEnterpriseEmailOtpRequest
+  >({
+    mutationFn: authApi.verifyRegisterEnterpriseEmailOtp,
+
+    onSuccess: (res) => {
+      toast.success(res.message || "Xác thực OTP thành công");
     },
 
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Đổi email thất bại"));
+      toast.error(getErrorMessage(error, "Xác thực OTP thất bại"));
     },
   });
 };
@@ -225,24 +271,5 @@ export const useGetMe = (options?: { enabled?: boolean }) => {
     queryFn: authApi.getMe,
     enabled: options?.enabled ?? true,
     staleTime: Infinity,
-  });
-};
-
-// Khởi tạo mật khẩu
-export const useInitializePassword = (userId: string) => {
-  return useMutation<
-    ApiResponse<null>,
-    AxiosError<ErrorResponse>,
-    InitializePasswordRequest
-  >({
-    mutationFn: (body) => authApi.initializePassword(userId, body),
-
-    onSuccess: (res) => {
-      toast.success(res.message || "Khởi tạo mật khẩu thành công");
-    },
-
-    onError: (error) => {
-      toast.error(getErrorMessage(error, "Khởi tạo mật khẩu thất bại"));
-    },
   });
 };

@@ -87,6 +87,25 @@ export interface UpdateEnterpriseRequest {
   otherDocument?: File | null; // Giấy tờ khác
 }
 
+export interface UpdateEnterpriseMeRequest {
+  name: string;
+  licenseIssueDate?: string | null;
+  businessTypeId: string; // loại hình kinh doanh
+  businessIndustryId: string; // ngành nghề kinh doanh
+  province: string;
+  ward: string;
+  address?: string | null;
+  foreignName?: string | null;
+  officePhone?: string | null;
+  operatingProvince?: string | null;
+  operatingWard?: string | null;
+  businessLocation?: string | null;
+  representative?: string | null;
+  representativePhone?: string | null;
+  businessLicense?: File | null; // Giấy phép kinh doanh
+  otherDocument?: File | null; // Giấy tờ khác
+}
+
 // Cho Form trên FE
 export type DocumentField = "businessLicense" | "otherDocument";
 

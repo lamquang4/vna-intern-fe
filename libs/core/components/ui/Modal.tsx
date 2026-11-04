@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 
 interface ModalProps {
   title: string;
-  onClose: () => void;
+  onClose?: () => void;
   children: ReactNode;
   className?: string;
   headerClassName?: string;
@@ -32,15 +32,18 @@ export function Modal({
         >
           <div
             className={twMerge(
-              "flex shrink-0 items-center justify-between py-[15px] px-[20px] text-center",
+              "flex shrink-0 items-center py-[15px] px-[20px] text-center",
+              onClose ? "justify-between" : "justify-center",
               headerClassName,
             )}
           >
             <h4>{title}</h4>
 
-            <Button type="button" onClick={onClose}>
-              <X size={22} />
-            </Button>
+            {onClose && (
+              <Button type="button" onClick={onClose}>
+                <X size={22} />
+              </Button>
+            )}
           </div>
 
           <div className="flex flex-col gap-4 overflow-y-auto py-[20px] px-[20px]">

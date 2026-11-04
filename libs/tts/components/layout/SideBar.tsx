@@ -13,6 +13,8 @@ import { Image } from "@/libs/core/components/ui/Image";
 import { usePathname } from "next/navigation";
 import logo from "@/libs/tts/assets/logo.png";
 import { twMerge } from "tailwind-merge";
+import { ROLE_ADMIN, ROLE_ENTERPRISE } from "@/libs/core/constants/limits";
+import { useGetMe } from "../../hooks/useAuth";
 
 interface Props {
   menuOpen: boolean;
@@ -48,35 +50,78 @@ interface MenuGroup {
   items: MenuItem[];
 }
 
-const menuData: MenuGroup[] = [
-  {
-    title: "Hệ thống",
-    items: [
-      {
-        icon: <UsersRound size={20} strokeWidth={2} />,
-        label: "Người dùng",
-        key: "1a",
-        children: [
-          { label: "Danh sách người dùng", path: "/users" },
-          { label: "Thêm người dùng", path: "/users/create" },
-        ],
-      },
-      {
-        icon: <BuildingComplex size={20} strokeWidth={2} />,
-        label: "Doanh nghiệp",
-        key: "2a",
-        children: [
-          { label: "Danh sách doanh nghiệp", path: "/enterprises" },
-          { label: "Thêm doanh nghiệp", path: "/enterprises/create" },
-        ],
-      },
-    ],
-  },
-];
-
 function SideBar({ menuOpen, onToggleMenu }: Props) {
   const pathname = usePathname();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+
+  const { data } = useGetMe();
+  const account = data?.data;
+
+  const menuDataRoleAdmin: MenuGroup[] = [
+    {
+      title: "Hệ thống",
+      items: [
+        {
+          icon: <UsersRound size={20} strokeWidth={2} />,
+          label: "Người dùng",
+          key: "1a",
+          children: [
+            { label: "Danh sách người dùng", path: "/users" },
+            { label: "Thêm người dùng", path: "/users/create" },
+          ],
+        },
+        {
+          icon: <BuildingComplex size={20} strokeWidth={2} />,
+          label: "Doanh nghiệp",
+          key: "2a",
+          children: [
+            { label: "Danh sách doanh nghiệp", path: "/enterprises" },
+            { label: "Thêm doanh nghiệp", path: "/enterprises/create" },
+          ],
+        },
+      ],
+    },
+    {
+      title: "Tai nạn lao động",
+      items: [
+        {
+          icon: <BuildingComplex size={20} strokeWidth={2} />,
+          label: "TNLĐ theo HĐLĐ",
+          path: "/hd",
+        },
+      ],
+    },
+  ];
+
+  const menuDataRoleEnterprise: MenuGroup[] = [
+    {
+      title: "Hệ thống",
+      items: [
+        {
+          icon: <BuildingComplex size={20} strokeWidth={2} />,
+          label: "Thông tin doanh nghiệp",
+          path: "/enterprise",
+        },
+      ],
+    },
+    {
+      title: "Tai nạn lao động",
+      items: [
+        {
+          icon: <BuildingComplex size={20} strokeWidth={2} />,
+          label: "TNLĐ theo HĐLĐ",
+          path: "/hd",
+        },
+      ],
+    },
+  ];
+
+  const menuData =
+    account?.roleCode === ROLE_ADMIN
+      ? menuDataRoleAdmin
+      : account?.roleCode === ROLE_ENTERPRISE
+        ? menuDataRoleEnterprise
+        : [];
 
   const toggleOpen = (menu: string) => {
     setOpenMenus((prev) => ({
@@ -108,8 +153,8 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
 
           <ul className="flex flex-col font-normal px-[15px]">
             {menuData.map((group, groupIndex) => (
-              <div key={groupIndex} className="flex flex-col gap-[10px]">
-                <p className="uppercase">{group.title}</p>
+              <div key={groupIndex}>
+                <p className="uppercase py-3 font-normal">{group.title}</p>
 
                 {group.items.map((item, index) => (
                   <li key={index} className="flex flex-col gap-[10px]">
@@ -169,7 +214,9 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
                       <Link
                         href={item.path}
                         className={`${
-                          pathname === item.path ? "text-white" : ""
+                          pathname === item.path
+                            ? "bg-white text-sidebar"
+                            : "text-white"
                         } rounded-lg p-3 w-full cursor-pointer flex justify-between items-center`}
                       >
                         <p className="flex items-center gap-[10px]">

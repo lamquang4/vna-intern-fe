@@ -4,7 +4,7 @@ import { KeyRound, LogOut, UserRound } from "lucide-react";
 import DropdownMenu from "@/libs/core/components/ui/DropdownMenu";
 import { Image } from "@/libs/core/components/ui/Image";
 import userAvatar from "@/libs/tts/assets/user.png";
-import ChangePasswordModal from "../../auth/change-password/ChangePasswordModal";
+import ChangePasswordModal from "../../auth/ChangePasswordModal";
 import { useLogout, useGetMe } from "@/libs/tts/hooks/useAuth";
 
 function ProfileMenu() {

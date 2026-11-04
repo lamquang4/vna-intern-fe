@@ -6,13 +6,13 @@ import type { ApiResponse } from "@/libs/shared/core/models/common.model";
 import type {
   ChangeEmailRequest,
   ChangePasswordRequest,
-  ForgotPasswordRequest,
+  EmailOtpRequest,
+  InitializePasswordRequest,
   LoginRequest,
   LoginResponse,
   ResetPasswordRequest,
-  ResendForgotPasswordOtpRequest,
   VerifyChangeEmailOtpRequest,
-  InitializePasswordRequest,
+  VerifyRegisterEnterpriseEmailOtpRequest,
 } from "@/libs/shared/tts/models/auth.model";
 import type { UserDetailResponse } from "@/libs/shared/tts/models/user.model";
 
@@ -32,16 +32,22 @@ export const authApi = {
       .get<ApiResponse<UserDetailResponse>>(`${BASE}/me`)
       .then((r) => r.data),
 
-  forgotPassword: (data: ForgotPasswordRequest) =>
-    axiosPublic
-      .post<ApiResponse<null>>(`${BASE}/forgot-password`, data)
+  initializePassword: (userId: string, data: InitializePasswordRequest) =>
+    axiosInstance
+      .post<ApiResponse<null>>(`${BASE}/${userId}/initialize-password`, data)
       .then((r) => r.data),
 
-  resendForgotPasswordOtp: (data: ResendForgotPasswordOtpRequest) =>
-    axiosPublic
-      .post<ApiResponse<null>>(`${BASE}/resend-forgot-password-otp`, data)
-      .then((r) => r.data),
+  // Gửi / gửi lại OTP đến email
+  sendOtp: (data: EmailOtpRequest) => {
+    const client =
+      data.purpose === "CHANGE_EMAIL" ? axiosInstance : axiosPublic;
 
+    return client
+      .post<ApiResponse<null>>(`${BASE}/email-otp`, data)
+      .then((r) => r.data);
+  },
+
+  // Quên mật khẩu
   resetPassword: (data: ResetPasswordRequest) =>
     axiosPublic
       .post<ApiResponse<null>>(`${BASE}/reset-password`, data)
@@ -52,23 +58,29 @@ export const authApi = {
       .patch<ApiResponse<null>>(`${BASE}/change-password`, data)
       .then((r) => r.data),
 
-  changeEmail: (data: ChangeEmailRequest) =>
-    axiosInstance
-      .patch<ApiResponse<null>>(`${BASE}/change-email`, data)
-      .then((r) => r.data),
-
-  requestChangeEmailOtp: () =>
-    axiosInstance
-      .post<ApiResponse<null>>(`${BASE}/change-email/request-otp`)
-      .then((r) => r.data),
-
+  // Thay đổi email
   verifyChangeEmailOtp: (data: VerifyChangeEmailOtpRequest) =>
     axiosInstance
       .post<ApiResponse<null>>(`${BASE}/change-email/verify-otp`, data)
       .then((r) => r.data),
 
-  initializePassword: (userId: string, data: InitializePasswordRequest) =>
+  changeEmail: (userId: string, data: ChangeEmailRequest) =>
     axiosInstance
-      .post<ApiResponse<null>>(`${BASE}/${userId}/initialize-password`, data)
+      .patch<ApiResponse<null>>(`${BASE}/change-email/${userId}`, data)
+      .then((r) => r.data),
+
+  changeEmailMe: (data: ChangeEmailRequest) =>
+    axiosInstance
+      .patch<ApiResponse<null>>(`${BASE}/change-email`, data)
+      .then((r) => r.data),
+
+  // Đăng ký tài khoản doanh nghiệp
+  verifyRegisterEnterpriseEmailOtp: (
+    data: VerifyRegisterEnterpriseEmailOtpRequest,
+  ) =>
+    axiosPublic
+      .post<
+        ApiResponse<null>
+      >(`${BASE}/register-enterprise/verify-email-otp`, data)
       .then((r) => r.data),
 };

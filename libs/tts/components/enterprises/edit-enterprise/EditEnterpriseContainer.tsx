@@ -3,18 +3,23 @@ import { useState } from "react";
 import EnterpriseInfoReview from "../EnterpriseInfoReview";
 import EditEnterpriseForm from "./EditEnterpriseForm";
 import { EnterpriseDetailResponse } from "@/libs/shared/tts/models/enterprise.model";
-import { UpdateEnterpriseData } from "@/libs/shared/tts/schemas/enterprise.schema";
-import { useUpdateEnterprise } from "@/libs/tts/hooks/useEnterprises";
-import { useRouter } from "next/navigation";
+import {
+  UpdateEnterpriseData,
+  updateEnterpriseMeSchema,
+} from "@/libs/shared/tts/schemas/enterprise.schema";
+import {
+  useUpdateEnterprise,
+  useUpdateEnterpriseMe,
+} from "@/libs/tts/hooks/useEnterprises";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
 interface Props {
-  enterpriseId: string;
+  enterpriseId?: string;
 }
 
-function EditEnterpriseContainer({ enterpriseId }: Props) {
-  const router = useRouter();
+function EditEnterpriseContainer({ enterpriseId = "" }: Props) {
+  const isMePage = !enterpriseId;
 
   const [step, setStep] = useState<1 | 2>(1);
   const [formData, setFormData] = useState<UpdateEnterpriseData | null>(null);
@@ -25,7 +30,10 @@ function EditEnterpriseContainer({ enterpriseId }: Props) {
     Pick<EnterpriseDetailResponse, "businessLicense" | "otherDocument">
   >({ businessLicense: null, otherDocument: null });
 
-  const updateEnterpriseMutation = useUpdateEnterprise(enterpriseId);
+  const updateMeMutation = useUpdateEnterpriseMe();
+  const updateMutation = useUpdateEnterprise(enterpriseId);
+  
+  const isUpdating = updateMeMutation.isPending || updateMutation.isPending;
 
   const handleContinue = (
     data: UpdateEnterpriseData,
@@ -46,24 +54,38 @@ function EditEnterpriseContainer({ enterpriseId }: Props) {
     setStep(1);
   };
 
-  const handleConfirm = () => {
-    if (!formData) return;
-
-    updateEnterpriseMutation.mutate(formData, {
-      onSuccess: () => router.push("/enterprises"),
-    });
+  const handleUpdateSuccess = () => {
+    setFormData(null);
+    setStep(1);
   };
+
+  const handleConfirm = () => {
+    if (!formData || isUpdating) return;
+
+    if (isMePage) {
+      updateMeMutation.mutate(updateEnterpriseMeSchema.parse(formData), {
+        onSuccess: handleUpdateSuccess,
+      });
+    } else {
+      updateMutation.mutate(formData, {
+        onSuccess: handleUpdateSuccess,
+      });
+    }
+  };
+
   return (
     <div className="py-[30px] sm:px-[20px] px-[15px] flex flex-col gap-6 overflow-y-auto">
       <div className="flex justify-between items-center gap-4 flex-wrap">
         <h3>Chi tiết doanh nghiệp</h3>
 
-        <Link
-          href="/enterprises"
-          className="flex items-center font-medium gap-1 text-muted-foreground hover:text-primary px-3 py-2"
-        >
-          <ChevronLeft size={20} /> <span>Trở về</span>
-        </Link>
+        {!isMePage && (
+          <Link
+            href="/enterprises"
+            className="flex items-center font-medium gap-1 text-muted-foreground hover:text-primary px-3 py-2"
+          >
+            <ChevronLeft size={20} /> <span>Trở về</span>
+          </Link>
+        )}
       </div>
 
       <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
@@ -102,7 +124,7 @@ function EditEnterpriseContainer({ enterpriseId }: Props) {
             taxCode={taxCode}
             onBack={handleBack}
             onConfirm={handleConfirm}
-            isLoading={updateEnterpriseMutation.isPending}
+            isLoading={isUpdating}
           />
         )
       )}
