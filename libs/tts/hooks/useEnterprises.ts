@@ -123,7 +123,6 @@ export const useUpdateEnterpriseMe = () => {
 
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: enterpriseKeys.me() });
-      queryClient.invalidateQueries({ queryKey: enterpriseKeys.lists() });
 
       toast.success(res.message || "Cập nhật doanh nghiệp thành công");
     },

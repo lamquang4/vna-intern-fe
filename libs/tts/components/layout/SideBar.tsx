@@ -197,15 +197,17 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
                           }`}
                         >
                           {item.children.map((child, childIndex) => (
-                            <li
-                              key={childIndex}
-                              className={`rounded-lg w-full cursor-pointer p-3 ${
-                                pathname === child.path
-                                  ? "bg-white text-sidebar"
-                                  : ""
-                              }`}
-                            >
-                              <Link href={child.path}>{child.label}</Link>
+                            <li key={childIndex} className="w-full">
+                              <Link
+                                href={child.path}
+                                className={`block w-full rounded-lg p-3 ${
+                                  pathname === child.path
+                                    ? "bg-white text-sidebar"
+                                    : ""
+                                }`}
+                              >
+                                {child.label}
+                              </Link>
                             </li>
                           ))}
                         </ul>
