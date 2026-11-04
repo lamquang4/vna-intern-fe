@@ -17,6 +17,7 @@ import type {
   DeleteEnterpriseRequest,
   EnterpriseDetailResponse,
   EnterpriseResponse,
+  UpdateEnterpriseMeRequest,
   UpdateEnterpriseRequest,
 } from "@/libs/shared/tts/models/enterprise.model";
 import type { GetEnterprisesParams } from "@/libs/shared/tts/models/params.model";
@@ -30,6 +31,7 @@ export const enterpriseKeys = {
     [...enterpriseKeys.lists(), params ?? {}] as const,
   detail: (enterpriseId: string) =>
     [...enterpriseKeys.all, "detail", enterpriseId] as const,
+  me: () => [...enterpriseKeys.all, "me"] as const,
 };
 
 export const useGetEnterprises = (params?: GetEnterprisesParams) => {
@@ -48,6 +50,17 @@ export const useGetEnterpriseDetail = (enterpriseId: string) => {
     queryKey: enterpriseKeys.detail(enterpriseId),
     queryFn: () => enterpriseApis.getEnterpriseDetail(enterpriseId),
     enabled: !!enterpriseId,
+  });
+};
+
+export const useGetEnterpriseMe = (enabled = true) => {
+  return useQuery<
+    ApiResponse<EnterpriseDetailResponse>,
+    AxiosError<ErrorResponse>
+  >({
+    queryKey: enterpriseKeys.me(),
+    queryFn: () => enterpriseApis.getEnterpriseMe(),
+    enabled,
   });
 };
 
@@ -88,6 +101,28 @@ export const useUpdateEnterprise = (enterpriseId: string) => {
       queryClient.invalidateQueries({
         queryKey: enterpriseKeys.detail(enterpriseId),
       });
+
+      toast.success(res.message || "Cập nhật doanh nghiệp thành công");
+    },
+
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Cập nhật doanh nghiệp thất bại"));
+    },
+  });
+};
+
+export const useUpdateEnterpriseMe = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<null>,
+    AxiosError<ErrorResponse>,
+    UpdateEnterpriseMeRequest
+  >({
+    mutationFn: (data) => enterpriseApis.updateEnterpriseMe(data),
+
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: enterpriseKeys.me() });
 
       toast.success(res.message || "Cập nhật doanh nghiệp thành công");
     },

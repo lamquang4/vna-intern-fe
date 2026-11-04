@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type {
   CreateEnterpriseRequest,
+  UpdateEnterpriseMeRequest,
   UpdateEnterpriseRequest,
 } from "../models/enterprise.model";
 import {
@@ -128,3 +129,9 @@ export const updateEnterpriseSchema = z.object({
 }) satisfies z.ZodType<UpdateEnterpriseRequest>;
 
 export type UpdateEnterpriseData = z.infer<typeof updateEnterpriseSchema>;
+
+export const updateEnterpriseMeSchema = updateEnterpriseSchema.omit({
+  email: true,
+}) satisfies z.ZodType<UpdateEnterpriseMeRequest>;
+
+export type UpdateEnterpriseMeData = z.infer<typeof updateEnterpriseMeSchema>;

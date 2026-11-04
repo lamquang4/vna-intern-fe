@@ -3,20 +3,22 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/libs/core/components/ui/Button";
-import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
-import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
+import { FloatingInput } from "@/libs/core/components/ui/fields/FloatingInput";
+import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
 import { Label } from "@/libs/core/components/ui/Label";
 import { ChevronLeft, Save } from "lucide-react";
 import { useEffect, useState } from "react";
-import ChangeEmailModal from "../auth/change-email/ChangeEmailModal";
+import ChangeEmailModal from "../auth/ChangeEmailModal";
 import {
+  UpdateMeData,
   updateMeSchema,
+  UpdateUserData,
   updateUserSchema,
 } from "@/libs/shared/tts/schemas/user.schema";
 import AvatarUpload from "./AvatarUpload";
 import z from "zod";
 import { useGetHCMProvince, useGetHCMWards } from "../../hooks/useLocation";
-import { useGetMe, useRequestChangeEmailOtp } from "../../hooks/useAuth";
+import { useGetMe, useSendOtp } from "../../hooks/useAuth";
 import {
   useUpdateMe,
   useUpdateUser,
@@ -30,6 +32,8 @@ import Link from "next/link";
 import { GENDER_OPTIONS } from "@/libs/core/constants/options";
 import { getRequiredRoleCode } from "@/libs/core/utils/validators";
 import { ROLE_ADMIN, ROLE_ENTERPRISE } from "@/libs/core/constants/limits";
+import { Overlay } from "@/libs/core/components/ui/Overlay";
+import Loading from "@/libs/core/components/ui/Loading";
 
 interface Props {
   userId: string;
@@ -46,32 +50,38 @@ function EditUserForm({ userId }: Props) {
 
   const { data } = useGetAllRoles();
   const roles = data?.data;
-
   const meQuery = useGetMe();
   const userDetailQuery = useGetUserDetail(userId);
 
   const activeQuery = isAccountPage ? meQuery : userDetailQuery;
   const user = activeQuery.data?.data;
   const currentAccount = meQuery.data?.data;
+
   const isCurrentUser =
     !isAccountPage &&
     !!user?.username &&
     !!currentAccount?.username &&
     user.username === currentAccount.username;
-  const canSkipChangeEmailOtp =
+
+  const isSelf = isAccountPage || isCurrentUser;
+
+  const skipChangeEmailOtp =
+    !isSelf &&
     currentAccount?.roleCode === ROLE_ADMIN &&
     user?.roleCode === ROLE_ENTERPRISE;
+
+  const requiredRoleCode = getRequiredRoleCode(user?.username ?? "");
+  const isRoleLocked = requiredRoleCode !== null;
 
   const updateMeMutation = useUpdateMe();
   const updateUserMutation = useUpdateUser(userId);
   const updateMutation = isAccountPage ? updateMeMutation : updateUserMutation;
-
-  const requestChangeEmailOtp = useRequestChangeEmailOtp();
+  const sendOtpMutation = useSendOtp();
 
   const isUpdating = updateMutation.isPending;
   const isFetchingUser =
     activeQuery.isLoading || (!isAccountPage && meQuery.isLoading);
-  const isRequestingOtp = requestChangeEmailOtp.isPending;
+  const isSendingOtp = sendOtpMutation.isPending;
 
   useEffect(() => {
     if (isFetchingUser || isAccountPage) return;
@@ -117,9 +127,6 @@ function EditUserForm({ userId }: Props) {
 
   const wards = useGetHCMWards();
 
-  const requiredRoleCode = getRequiredRoleCode(user?.username ?? "");
-  const isRoleLocked = requiredRoleCode !== null;
-
   const roleOptions = (roles ?? [])
     .filter((role) => !requiredRoleCode || role.role === requiredRoleCode)
     .map((role) => ({
@@ -136,51 +143,50 @@ function EditUserForm({ userId }: Props) {
     label: ward.name,
   }));
 
-  const onSubmit = (data: z.output<typeof editUserSchema>) => {
+  const onSubmit = (data: UpdateUserData | UpdateMeData) => {
     if (isUpdating) return;
-
-    if (!isAccountPage && !currentAccount) {
-      toast.error("Không thể xác minh tài khoản hiện tại");
-      return;
-    }
-
-    const handleSuccess = () => {
-      resetField("avatar", {
-        defaultValue: null,
-      });
-    };
 
     if (isAccountPage) {
       const accountData = updateMeSchema.parse(data);
       updateMeMutation.mutate(accountData, {
-        onSuccess: handleSuccess,
+        onSuccess: () => {
+          resetField("avatar", {
+            defaultValue: null,
+          });
+        },
       });
     } else {
       const userData = updateUserSchema.parse(data);
       updateUserMutation.mutate(userData, {
         onSuccess: () => {
-          handleSuccess();
-          router.push("/users");
+          resetField("avatar", {
+            defaultValue: null,
+          });
         },
       });
     }
   };
 
   const handleRequestChangeEmailOtp = () => {
-    if (isRequestingOtp || isFetchingUser) {
+    if (isSendingOtp || isFetchingUser || !user?.email) {
       return;
     }
 
-    if (canSkipChangeEmailOtp) {
+    if (skipChangeEmailOtp) {
       setModalOpen(true);
       return;
     }
 
-    requestChangeEmailOtp.mutate(undefined, {
-      onSuccess: () => {
-        setModalOpen(true);
+    // OTP gửi đến email hiện tại của tài khoản đang đổi email
+    sendOtpMutation.mutate(
+      { email: user.email, purpose: "CHANGE_EMAIL" },
+      {
+        onSuccess: (res) => {
+          toast.success(res.message || "Đã gửi mã xác thực đến email");
+          setModalOpen(true);
+        },
       },
-    });
+    );
   };
 
   const handleCancel = () => {
@@ -335,7 +341,7 @@ function EditUserForm({ userId }: Props) {
                   />
                 </div>
 
-                <div className="grid gap-[15px] grid-cols-2">
+                <div className="grid grid-cols-1 gap-[15px] md:grid-cols-2">
                   <FloatingInput
                     label="Email"
                     placeholder="Nhập email"
@@ -348,7 +354,7 @@ function EditUserForm({ userId }: Props) {
                     type="button"
                     className="lg:justify-self-start justify-self-end text-primary font-medium"
                     onClick={handleRequestChangeEmailOtp}
-                    disabled={isRequestingOtp || isFetchingUser}
+                    disabled={isSendingOtp || isFetchingUser}
                   >
                     Thay đổi
                   </Button>
@@ -446,8 +452,16 @@ function EditUserForm({ userId }: Props) {
         <ChangeEmailModal
           onClose={() => setModalOpen(false)}
           email={user?.email || ""}
-          roleCode={user?.roleCode || ""}
+          userId={isSelf ? undefined : userId}
+          skipOtp={skipChangeEmailOtp}
         />
+      )}
+
+      {isSendingOtp && (
+        <Overlay>
+          <Loading size={55} color="white" thickness={8} />
+          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+        </Overlay>
       )}
     </>
   );

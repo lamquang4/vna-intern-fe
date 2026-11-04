@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { twMerge } from "tailwind-merge";
-import { Input } from "./Input";
+import { Input } from "../Input";
 import { FloatingFieldset } from "./FloatingFieldset";
 
 export interface FloatingSelectProps {
@@ -89,9 +89,7 @@ export function FloatingSelect({
         <div className="relative -mt-1">
           <Input
             ref={inputRef}
-            name={name}
             type="text"
-            autoComplete="off"
             tabIndex={disabled ? -1 : undefined}
             disabled={disabled}
             readOnly={disabled}
@@ -106,7 +104,7 @@ export function FloatingSelect({
               setKeyword(e.target.value);
               setOpen(true);
             }}
-            className="block w-full rounded-none border-0 bg-transparent px-3 py-2 pr-10 focus:border-0"
+            className="block w-full rounded-none border-0 bg-transparent px-3 py-1.5 pr-10 focus:border-0"
           />
 
           <ChevronDown

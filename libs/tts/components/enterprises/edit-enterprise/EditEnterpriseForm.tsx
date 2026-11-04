@@ -1,19 +1,28 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import z from "zod";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 import { Button } from "@/libs/core/components/ui/Button";
 import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
-import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
-import { FloatingSelect } from "@/libs/core/components/ui/FloatingSelect";
+import { FloatingInput } from "@/libs/core/components/ui/fields/FloatingInput";
+import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
 import { useGetAllBusinessIndustries } from "@/libs/tts/hooks/useBusinessIndustries";
 import { useGetAllBusinessTypes } from "@/libs/tts/hooks/useBusinessTypes";
 import {
   useGetHCMProvince,
   useGetHCMWards,
 } from "@/libs/tts/hooks/useLocation";
+import {
+  enterpriseKeys,
+  useGetEnterpriseDetail,
+  useGetEnterpriseMe,
+} from "@/libs/tts/hooks/useEnterprises";
+import { useSendOtp } from "@/libs/tts/hooks/useAuth";
 import {
   UpdateEnterpriseData,
   updateEnterpriseSchema,
@@ -25,7 +34,9 @@ import type {
 } from "@/libs/shared/tts/models/enterprise.model";
 import type { PreviewFile } from "@/libs/tts/utils/filePreviewUtil";
 import DocumentsField from "../DocumentsField";
-import { useGetEnterpriseDetail } from "@/libs/tts/hooks/useEnterprises";
+import ChangeEmailModal from "../../auth/ChangeEmailModal";
+import { Overlay } from "@/libs/core/components/ui/Overlay";
+import Loading from "@/libs/core/components/ui/Loading";
 
 interface Props {
   onContinue: (
@@ -39,20 +50,41 @@ interface Props {
     taxCode: string,
   ) => void;
   initialData: UpdateEnterpriseData | null;
+  /** Rỗng = doanh nghiệp tự sửa thông tin của mình (/enterprise) */
   enterpriseId: string;
 }
 
 function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [documentToDelete, setDocumentToDelete] =
     useState<DocumentRow<PreviewFile> | null>(null);
+
+  const isMePage = !enterpriseId;
+
   const { data: businessIndustryData } = useGetAllBusinessIndustries();
   const businessIndustries = businessIndustryData?.data;
-
   const { data: businessTypeData } = useGetAllBusinessTypes();
   const businessTypes = businessTypeData?.data;
 
-  const { data: enterpriseData } = useGetEnterpriseDetail(enterpriseId);
-  const enterprise = enterpriseData?.data;
+  const detailQuery = useGetEnterpriseDetail(enterpriseId);
+  const meQuery = useGetEnterpriseMe(isMePage);
+  const activeQuery = isMePage ? meQuery : detailQuery;
+
+  const enterprise = activeQuery.data?.data;
+  const isFetchingEnterprise = activeQuery.isLoading;
+
+  const sendOtpMutation = useSendOtp();
+  const isSendingOtp = sendOtpMutation.isPending;
+
+  useEffect(() => {
+    if (isFetchingEnterprise || enterprise) return;
+
+    toast.error("Không tìm thấy doanh nghiệp");
+    router.replace(isMePage ? "/account" : "/enterprises");
+  }, [isFetchingEnterprise, enterprise, isMePage, router]);
 
   const serverValues = {
     name: enterprise?.name ?? "",
@@ -96,10 +128,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
 
   const { data: province, isLoading: isFetchingProvince } = useGetHCMProvince();
 
-  const selectedProvince = useWatch({
-    control,
-    name: "province",
-  });
+  const selectedProvince = useWatch({ control, name: "province" });
   const selectedOperatingProvince = useWatch({
     control,
     name: "operatingProvince",
@@ -150,6 +179,21 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
             : null,
       },
       enterprise?.taxCode ?? "",
+    );
+  };
+
+  const handleRequestChangeEmailOtp = () => {
+    if (isSendingOtp || isFetchingEnterprise || !enterprise?.email) return;
+
+    // OTP gửi đến email hiện tại của doanh nghiệp
+    sendOtpMutation.mutate(
+      { email: enterprise.email, purpose: "CHANGE_EMAIL" },
+      {
+        onSuccess: (res) => {
+          toast.success(res.message || "Đã gửi mã xác thực đến email");
+          setModalOpen(true);
+        },
+      },
     );
   };
 
@@ -340,14 +384,38 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
                 {...register("foreignName")}
               />
 
-              <FloatingInput
-                label="Email"
-                placeholder="Nhập email"
-                type="text"
-                required
-                error={errors.email?.message}
-                {...register("email")}
-              />
+              <div className="flex items-center gap-[15px]">
+                {isMePage ? (
+                  <FloatingInput
+                    label="Email"
+                    placeholder="Nhập email"
+                    type="text"
+                    required
+                    disabled
+                    value={enterprise?.email ?? ""}
+                  />
+                ) : (
+                  <FloatingInput
+                    label="Email"
+                    placeholder="Nhập email"
+                    type="text"
+                    required
+                    error={errors.email?.message}
+                    {...register("email")}
+                  />
+                )}
+
+                {isMePage && (
+                  <Button
+                    type="button"
+                    className="shrink-0 text-primary font-medium"
+                    onClick={handleRequestChangeEmailOtp}
+                    disabled={isSendingOtp || isFetchingEnterprise}
+                  >
+                    Thay đổi
+                  </Button>
+                )}
+              </div>
 
               <FloatingInput
                 label="Số điện thoại cơ quan"
@@ -449,6 +517,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
 
           <Button
             type="submit"
+            disabled={isFetchingEnterprise}
             className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
           >
             Tiếp tục
@@ -464,6 +533,21 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
           cancelText="Hủy bỏ"
           onConfirm={handleConfirmRemoveDocument}
           onClose={() => setDocumentToDelete(null)}
+        />
+      )}
+
+      {isSendingOtp && (
+        <Overlay>
+          <Loading size={55} color="white" thickness={8} />
+          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+        </Overlay>
+      )}
+
+      {modalOpen && (
+        <ChangeEmailModal
+          onClose={() => setModalOpen(false)}
+          email={enterprise?.email ?? ""}
+          skipOtp={false}
         />
       )}
     </>

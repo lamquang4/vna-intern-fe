@@ -2,7 +2,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/libs/core/components/ui/Button";
-import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
+import { FloatingInput } from "@/libs/core/components/ui/fields/FloatingInput";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
 import Link from "next/link";
@@ -94,7 +94,7 @@ function LoginForm() {
               </Button>
 
               <Link
-                href="/"
+                href="/register-enterprise"
                 className="w-full font-medium rounded-sm px-2 py-2.5 text-center bg-transparent border border-primary text-primary"
               >
                 Đăng ký tài khoản doanh nghiệp

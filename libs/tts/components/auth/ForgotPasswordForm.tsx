@@ -1,17 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "react-hot-toast";
 import { Button } from "@/libs/core/components/ui/Button";
-import { FloatingInput } from "@/libs/core/components/ui/FloatingInput";
+import { FloatingInput } from "@/libs/core/components/ui/fields/FloatingInput";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
-import {
-  OTP_EXPIRE_SECONDS,
-  OTP_LENGTH,
-  OTP_RESEND_COOLDOWN_SECONDS,
-} from "@/libs/core/constants/limits";
-import { formatDuration } from "@/libs/core/utils/formatters";
 import Link from "next/link";
 import {
   ForgotPasswordData,
@@ -19,34 +14,26 @@ import {
   ResetPasswordData,
   resetPasswordSchema,
 } from "@/libs/shared/tts/schemas/auth.schema";
-import { validateOtpDigit } from "@/libs/core/utils/validators";
 import {
-  useForgotPassword,
-  useResendForgotPasswordOtp,
+  useResendOtp,
   useResetPassword,
+  useSendOtp,
 } from "../../hooks/useAuth";
 import AuthLayout from "./AuthLayout";
+import OtpField from "../../../core/components/ui/fields/OtpField";
 
 function ForgotPasswordForm() {
   const [step, setStep] = useState<1 | 2>(1);
-  // Đếm ngược hết hạn OTP
-  const [expireEndTime, setExpireEndTime] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [isOtpExpired, setIsOtpExpired] = useState<boolean>(false);
 
-  // Đếm ngược cooldown gửi lại OTP
-  const [cooldownEndTime, setCooldownEndTime] = useState<number | null>(null);
-  const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number>(0);
-
-  const forgotPasswordMutation = useForgotPassword();
-  const resendOtpMutation = useResendForgotPasswordOtp();
+  const sendOtpMutation = useSendOtp();
+  const resendOtpMutation = useResendOtp();
   const resetPasswordMutation = useResetPassword();
 
   const isSubmitting =
-    forgotPasswordMutation.isPending || resetPasswordMutation.isPending;
-  const isResendingOtp = resendOtpMutation.isPending;
-
-  const isCooldownActive = cooldownEndTime !== null && cooldownTimeLeft > 0;
-  const isOtpExpired = expireEndTime !== null && timeLeft <= 0;
+    resendOtpMutation.isPending ||
+    sendOtpMutation.isPending ||
+    resetPasswordMutation.isPending;
 
   const form1 = useForm<ForgotPasswordData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -65,224 +52,129 @@ function ForgotPasswordForm() {
     },
   });
 
-  const startOtpTimers = () => {
-    const now = Date.now();
-
-    setExpireEndTime(now + OTP_EXPIRE_SECONDS * 1000);
-    setTimeLeft(OTP_EXPIRE_SECONDS);
-
-    setCooldownEndTime(now + OTP_RESEND_COOLDOWN_SECONDS * 1000);
-    setCooldownTimeLeft(OTP_RESEND_COOLDOWN_SECONDS);
-  };
-
-  // Đếm ngược hết hạn OTP
-  useEffect(() => {
-    if (expireEndTime === null) return;
-
-    const tick = () => {
-      const remaining = Math.max(
-        0,
-        Math.round((expireEndTime - Date.now()) / 1000),
-      );
-      setTimeLeft(remaining);
-      return remaining;
-    };
-
-    const timer = setInterval(() => {
-      if (tick() <= 0) clearInterval(timer);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [expireEndTime]);
-
-  // Đếm ngược cooldown gửi lại OTP
-  useEffect(() => {
-    if (cooldownEndTime === null) return;
-
-    const tick = () => {
-      const remaining = Math.max(
-        0,
-        Math.round((cooldownEndTime - Date.now()) / 1000),
-      );
-      setCooldownTimeLeft(remaining);
-      return remaining;
-    };
-
-    const timer = setInterval(() => {
-      if (tick() <= 0) clearInterval(timer);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [cooldownEndTime]);
-
   const email = form2.watch("email");
 
   const onSubmitStep1 = (data: ForgotPasswordData) => {
     if (isSubmitting) return;
 
-    forgotPasswordMutation.mutate(data, {
-      onSuccess: () => {
-        form2.setValue("email", data.email);
-        form2.setValue("otpCode", "");
-        form1.reset();
-
-        startOtpTimers();
-        setStep(2);
-      },
-    });
-  };
-
-  const onSubmitStep2 = (data: ResetPasswordData) => {
-    if (isSubmitting || isOtpExpired) return;
-
-    resetPasswordMutation.mutate(data);
-  };
-
-  const handleResendOtp = () => {
-    if (isCooldownActive || isResendingOtp || !email) return;
-
-    resendOtpMutation.mutate(
-      { email },
+    sendOtpMutation.mutate(
+      { email: data.email, purpose: "FORGOT_PASSWORD" },
       {
-        onSuccess: () => {
+        onSuccess: (res) => {
+          toast.success(res.message || "Đã gửi mã xác thực đến email");
+          form2.setValue("email", data.email);
           form2.setValue("otpCode", "");
-          startOtpTimers();
+          form1.reset();
+          setStep(2);
         },
       },
     );
   };
 
+  const onSubmitStep2 = (data: ResetPasswordData) => {
+    if (isSubmitting || isOtpExpired) return;
+    resetPasswordMutation.mutate(data);
+  };
+
   return (
-    <>
-      <AuthLayout>
-        <form
-          className="flex flex-col gap-6"
-          onSubmit={
-            step === 1
-              ? form1.handleSubmit(onSubmitStep1)
-              : form2.handleSubmit(onSubmitStep2)
-          }
-        >
-          <h3 className="text-primary text-center uppercase">Quên mật khẩu</h3>
+    <AuthLayout>
+      <form
+        className="flex flex-col gap-6"
+        onSubmit={
+          step === 1
+            ? form1.handleSubmit(onSubmitStep1)
+            : form2.handleSubmit(onSubmitStep2)
+        }
+      >
+        <h3 className="text-primary text-center uppercase">Quên mật khẩu</h3>
 
-          <div className="flex flex-col gap-2 items-center">
-            {step === 1 ? (
-              <p>Vui lòng nhập email đã đăng ký tài khoản</p>
-            ) : (
-              <>
-                <p>Chúng tôi đã gửi mã xác nhận qua email</p>
-                <p className="font-medium">{email}</p>
-                <p>Bạn vui lòng kiểm tra và điền mã xác thực</p>
-              </>
-            )}
-          </div>
-
+        <div className="flex flex-col gap-2 items-center">
           {step === 1 ? (
-            <FloatingInput
-              label="Email"
-              placeholder="Nhập email"
-              error={form1.formState.errors.email?.message}
-              {...form1.register("email")}
-            />
+            <p>Vui lòng nhập email đã đăng ký tài khoản</p>
           ) : (
             <>
-              <FloatingInput
-                label="Mật khẩu mới"
-                placeholder="Nhập mật khẩu mới"
-                type="password"
-                error={form2.formState.errors.newPassword?.message}
-                {...form2.register("newPassword")}
-              />
-              <FloatingInput
-                label="Nhập lại mật khẩu mới"
-                placeholder="Nhập lại mật khẩu mới"
-                type="password"
-                error={form2.formState.errors.confirmNewPassword?.message}
-                {...form2.register("confirmNewPassword")}
-              />
-
-              <div className="flex flex-col gap-2">
-                <FloatingInput
-                  label="OTP"
-                  type="text"
-                  placeholder="Nhập mã otp"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={OTP_LENGTH}
-                  error={form2.formState.errors.otpCode?.message}
-                  {...form2.register("otpCode", {
-                    onChange: (e) => {
-                      const value = e.target.value;
-
-                      if (!validateOtpDigit(value)) {
-                        e.target.value = value
-                          .replace(/\D/g, "")
-                          .slice(0, OTP_LENGTH);
-                      }
-                    },
-                  })}
-                />
-
-                {step === 2 && (
-                  <div className="flex justify-between items-center">
-                    <Button
-                      type="button"
-                      onClick={handleResendOtp}
-                      disabled={isCooldownActive || isResendingOtp}
-                      className={`font-medium transition-all ${
-                        !isCooldownActive && !isResendingOtp
-                          ? "text-primary cursor-pointer"
-                          : "text-muted-foreground cursor-not-allowed"
-                      }`}
-                    >
-                      Gửi lại mã
-                    </Button>
-
-                    {timeLeft > 0 ? (
-                      <span>
-                        Hết hạn sau:
-                        <span className="ml-1 text-primary font-medium">
-                          {formatDuration(timeLeft)}
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="text-error font-medium">Đã hết hạn</span>
-                    )}
-                  </div>
-                )}
-              </div>
+              <p>Chúng tôi đã gửi mã xác nhận qua email</p>
+              <p className="font-medium">{email}</p>
+              <p>Bạn vui lòng kiểm tra và điền mã xác thực</p>
             </>
           )}
+        </div>
 
-          <div className="flex flex-col gap-3">
-            <Button
-              disabled={isSubmitting || (step === 2 && isOtpExpired)}
-              type="submit"
-              className="w-full font-medium rounded-sm px-2 py-2.5 text-center bg-primary text-white"
-            >
-              {step === 1 ? "Gửi xác thực" : "Khôi phục mật khẩu"}
-            </Button>
+        {step === 1 ? (
+          <FloatingInput
+            label="Email"
+            placeholder="Nhập email"
+            error={form1.formState.errors.email?.message}
+            {...form1.register("email")}
+          />
+        ) : (
+          <>
+            <FloatingInput
+              label="Mật khẩu mới"
+              placeholder="Nhập mật khẩu mới"
+              type="password"
+              error={form2.formState.errors.newPassword?.message}
+              {...form2.register("newPassword")}
+            />
+            <FloatingInput
+              label="Nhập lại mật khẩu mới"
+              placeholder="Nhập lại mật khẩu mới"
+              type="password"
+              error={form2.formState.errors.confirmNewPassword?.message}
+              {...form2.register("confirmNewPassword")}
+            />
 
-            {step === 1 && (
-              <div className="flex gap-2 justify-center items-center">
-                <span>Bạn đã có tài khoản</span>
-
-                <Link href="/" className="text-primary font-medium">
-                  Đăng nhập
-                </Link>
-              </div>
-            )}
-          </div>
-        </form>
-
-        {isSubmitting && (
-          <Overlay>
-            <Loading size={55} color="white" thickness={8} />
-            <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
-          </Overlay>
+            <Controller
+              name="otpCode"
+              control={form2.control}
+              render={({ field, fieldState }) => (
+                <OtpField
+                  name={field.name}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  error={fieldState.error?.message}
+                  onResend={(onSuccess) =>
+                    resendOtpMutation.mutate(
+                      { email, purpose: "FORGOT_PASSWORD" },
+                      { onSuccess },
+                    )
+                  }
+                  isResending={resendOtpMutation.isPending}
+                  onExpiredChange={setIsOtpExpired}
+                />
+              )}
+            />
+          </>
         )}
-      </AuthLayout>
-    </>
+
+        <div className="flex flex-col gap-3">
+          <Button
+            disabled={isSubmitting || (step === 2 && isOtpExpired)}
+            type="submit"
+            className="w-full font-medium rounded-sm px-2 py-2.5 text-center bg-primary text-white"
+          >
+            {step === 1 ? "Gửi xác thực" : "Khôi phục mật khẩu"}
+          </Button>
+
+          {step === 1 && (
+            <div className="flex gap-2 justify-center items-center">
+              <span>Bạn đã có tài khoản</span>
+              <Link href="/" className="text-primary font-medium">
+                Đăng nhập
+              </Link>
+            </div>
+          )}
+        </div>
+      </form>
+
+      {isSubmitting && (
+        <Overlay>
+          <Loading size={55} color="white" thickness={8} />
+          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+        </Overlay>
+      )}
+    </AuthLayout>
   );
 }
 

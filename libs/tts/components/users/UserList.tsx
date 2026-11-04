@@ -8,7 +8,7 @@ import DataTable from "@/libs/core/components/ui/DataTable";
 import ListLayout from "../layout/ListLayout";
 import { TableColumn } from "@/libs/core/models/component.model";
 import { Switch } from "@/libs/core/components/ui/Switch";
-import InitializePasswordModal from "../auth/initialize-password/InitializePasswordModal";
+import InitializePasswordModal from "../auth/InitializePasswordModal";
 import {
   useDeleteUsers,
   useGetUsers,
@@ -17,7 +17,7 @@ import {
 import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
 import { useSearchParams } from "next/navigation";
 import { GetUsersParams } from "@/libs/shared/tts/models/params.model";
-import UserFilterModal from "./filter/UserFilterModal";
+import UserFilterModal from "./UserFilterModal";
 import { useGetMe } from "../../hooks/useAuth";
 import toast from "react-hot-toast";
 

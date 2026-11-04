@@ -8,8 +8,8 @@ import { TableColumn } from "@/libs/core/models/component.model";
 import { Switch } from "@/libs/core/components/ui/Switch";
 import { useSearchParams } from "next/navigation";
 import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
-import EnterpriseFilterModal from "./filter/EnterpriseFilterModal";
-import InitializePasswordModal from "../auth/initialize-password/InitializePasswordModal";
+import EnterpriseFilterModal from "./EnterpriseFilterModal";
+import InitializePasswordModal from "../auth/InitializePasswordModal";
 import { GetEnterprisesParams } from "@/libs/shared/tts/models/params.model";
 import {
   useDeleteEnterprises,

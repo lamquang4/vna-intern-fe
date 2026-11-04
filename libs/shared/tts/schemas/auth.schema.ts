@@ -2,11 +2,12 @@ import { z } from "zod";
 import type {
   ChangeEmailRequest,
   ChangePasswordRequest,
-  ForgotPasswordRequest,
+  EmailOtpRequest,
   InitializePasswordRequest,
   LoginRequest,
   ResetPasswordRequest,
   VerifyChangeEmailOtpRequest,
+  VerifyRegisterEnterpriseEmailOtpRequest,
 } from "../models/auth.model";
 import {
   MAX_PASSWORD_LENGTH,
@@ -16,7 +17,7 @@ import {
 import { validateOtp } from "@/libs/core/utils/validators";
 import { emailField } from "./common.schema";
 
-const otpField = z
+export const otpField = z
   .string()
   .trim()
   .length(OTP_LENGTH, `Mã OTP gồm ${OTP_LENGTH} chữ số`)
@@ -37,8 +38,7 @@ const confirmPasswordField = z
   .string()
   .min(1, "Vui lòng nhập lại mật khẩu mới");
 
-// ---------- Đăng nhập ----------
-
+// Đăng nhập
 export const loginSchema = z.object({
   username: z.string().trim().min(1, "Tên đăng nhập không để trống"),
   password: passwordField,
@@ -47,11 +47,10 @@ export const loginSchema = z.object({
 
 export type LoginData = z.infer<typeof loginSchema>;
 
-// ---------- Quên mật khẩu ----------
-
+// Quên mật khẩu
 export const forgotPasswordSchema = z.object({
   email: emailField,
-}) satisfies z.ZodType<ForgotPasswordRequest>;
+}) satisfies z.ZodType<Omit<EmailOtpRequest, "purpose">>;
 
 export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;
 
@@ -69,8 +68,7 @@ export const resetPasswordSchema = z
 
 export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 
-// ---------- Đổi mật khẩu ----------
-
+// Đổi mật khẩu
 export const changePasswordSchema = z
   .object({
     currentPassword: passwordField,
@@ -88,11 +86,10 @@ export const changePasswordSchema = z
 
 export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
-// ---------- Đổi email ----------
-
+// Đổi email
 export const verifyChangeEmailOtpSchema = z.object({
   otpCode: otpField,
-}) satisfies z.ZodType<VerifyChangeEmailOtpRequest>;
+}) satisfies z.ZodType<Omit<VerifyChangeEmailOtpRequest, "email">>;
 
 export type VerifyChangeEmailOtpData = z.infer<
   typeof verifyChangeEmailOtpSchema
@@ -104,8 +101,16 @@ export const changeEmailSchema = z.object({
 
 export type ChangeEmailData = z.infer<typeof changeEmailSchema>;
 
-// ---------- Khởi tạo mật khẩu ----------
+// Đăng ký doanh nghiệp
+export const verifyRegisterEnterpriseEmailOtpSchema = z.object({
+  otpCode: otpField,
+}) satisfies z.ZodType<Omit<VerifyRegisterEnterpriseEmailOtpRequest, "email">>;
 
+export type VerifyRegisterEnterpriseEmailOtpData = z.infer<
+  typeof verifyRegisterEnterpriseEmailOtpSchema
+>;
+
+// Khởi tạo mật khẩu
 export const initializePasswordSchema = z.object({
   password: passwordField,
 }) satisfies z.ZodType<InitializePasswordRequest>;
