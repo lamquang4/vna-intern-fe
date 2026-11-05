@@ -1,4 +1,3 @@
-// proxy.ts
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtDecode } from "jwt-decode";
 import { COOKIE_KEYS } from "@/libs/core/constants/cookie";
@@ -50,19 +49,18 @@ function decodeCookie<T extends { exp: number }>(
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Phiên đăng nhập: dựa vào refresh token (sống lâu)
   const refreshToken = decodeCookie<RefreshTokenPayload>(
     request,
     COOKIE_KEYS.REFRESH_TOKEN,
   );
   const isAuthenticated = !!refreshToken;
 
-  // Role: lấy từ access token. Hết hạn/không có thì undefined
   const accessToken = decodeCookie<AccessTokenPayload>(
     request,
     COOKIE_KEYS.ACCESS_TOKEN,
   );
-  const role = accessToken?.role;
+
+  const role = accessToken?.role ?? refreshToken?.role;
 
   const privateRoute = PRIVATE_ROUTES.find(({ path }) =>
     matchesRoute(pathname, path),
@@ -76,10 +74,8 @@ export function proxy(request: NextRequest) {
       return redirectTo(request, LOGIN_PATH);
     }
 
-    // Có role mà sai thì chuyển hướng. Chưa biết role (access hết hạn)
-    // thì cho qua, FE refresh xong và BE sẽ chặn nếu không đủ quyền.
     const { roles } = privateRoute;
-    if (roles && role && !roles.includes(role)) {
+    if (roles && (!role || !roles.includes(role))) {
       return redirectTo(request, DEFAULT_AUTH_PATH);
     }
   }

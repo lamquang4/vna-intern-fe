@@ -86,6 +86,7 @@ export interface RefreshTokenPayload {
   sub: string;
   sid: string;
   type: "refresh";
+  role: string;
   iss: string;
   iat: number;
   exp: number;
