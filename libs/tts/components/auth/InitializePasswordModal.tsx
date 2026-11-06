@@ -9,7 +9,6 @@ import {
   initializePasswordSchema,
 } from "@/libs/shared/tts/schemas/auth.schema";
 import { useInitializePassword } from "@/libs/tts/hooks/useAuth";
-import { Save } from "lucide-react";
 
 interface Props {
   onClose: () => void;
@@ -92,9 +91,9 @@ function InitializePasswordModal({ onClose, username, userId }: Props) {
               <Button
                 disabled={isInitializingPassword}
                 type="submit"
-                className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white flex items-center gap-2"
+                className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
               >
-                <Save size={20} /> <span>Lưu</span>
+                Lưu
               </Button>
             </div>
           </div>

@@ -17,7 +17,6 @@ import {
   useResendOtp,
   useVerifyChangeEmailOtp,
 } from "../../hooks/useAuth";
-import { Save } from "lucide-react";
 import OtpField from "../../../core/components/ui/fields/OtpField";
 
 interface Props {
@@ -146,16 +145,15 @@ function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
             <Button
               disabled={isSubmitting || (step === 1 && isOtpExpired)}
               type="submit"
-              className="w-full px-3.5 py-2 rounded-lg font-medium bg-primary text-white flex justify-center items-center gap-2"
+              className="w-full rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
             >
-              {step === 2 && <Save size={20} />}
-              <span>{step === 1 ? "Xác nhận" : "Lưu"}</span>
+              {step === 1 ? "Xác nhận" : "Lưu"}
             </Button>
 
             <Button
               type="button"
               onClick={onClose}
-              className="w-full text-center rounded-lg px-3.5 py-2 font-medium border border-border"
+              className="w-full rounded-lg px-3.5 py-2 font-medium border border-border"
             >
               Hủy bỏ
             </Button>
