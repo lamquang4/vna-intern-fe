@@ -7,7 +7,7 @@ import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/fields/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
 import { Label } from "@/libs/core/components/ui/Label";
-import { ChevronLeft, Save } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import AvatarUpload from "./AvatarUpload";
 import {
   CreateUserData,
@@ -325,10 +325,9 @@ function CreateUserForm() {
           <Button
             disabled={isCreating}
             type="submit"
-            className="rounded-lg px-3.5 py-2 font-medium flex justify-center items-center gap-2 bg-primary text-white"
+            className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
           >
-            <Save size={18} />
-            <span>Lưu</span>
+            Lưu
           </Button>
         </div>
       </form>
