@@ -97,3 +97,103 @@
 
 @layer components {
 }
+
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
+@media print {
+  /* 1. Reset toàn bộ chiều cao, padding, margin của các khung LayoutPage */
+  html,
+  body,
+  main,
+  div {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Ẩn Sidebar và Header của LayoutPage */
+  aside,
+  nav,
+  header:not(.print-report-header) {
+    display: none !important;
+  }
+
+  /* 2. ĐƯA BÁO CÁO LÊN SÁT ĐỈNH TRANG GIẤY & THOÁT KHỎI FLEX CONTAINER CỦA LAYOUTPAGE */
+  .print-report {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+
+  .print-report-header {
+    display: block !important;
+    margin-top: 0 !important;
+    margin-bottom: 4mm !important;
+  }
+
+  .report-table-container {
+    overflow: visible !important;
+    border: none !important;
+  }
+
+  /* 3. Thu gọn padding bảng một chút để toàn bộ Báo cáo + Chữ ký nằm gọn đẹp trong 1 trang A4 */
+  .print-report table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: auto !important;
+    border-collapse: collapse !important;
+  }
+
+  .print-report tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-report th,
+  .print-report td {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+    background-color: transparent !important;
+    padding: 3px 4px !important;
+    font-size: 9pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .print-report table:first-of-type th:first-child,
+  .print-report table:first-of-type td:first-child {
+    width: 32% !important;
+  }
+
+  /* 4. Phần chữ ký vừa vặn ở chân trang */
+  .print-signature {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 6mm !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    text-align: center;
+    font-size: 10pt !important;
+  }
+
+  .print-stamp-space {
+    height: 22mm !important;
+  }
+}
+
