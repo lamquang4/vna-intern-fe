@@ -40,6 +40,3 @@ export const MAX_FOREIGN_NAME_LENGTH = 200;
 export const MAX_BUSINESS_LOCATION_LENGTH = 500;
 export const MAX_REPRESENTATIVE_LENGTH = 150;
 export const MAX_PHONE_LENGTH = 30;
-
-export const ROLE_ADMIN = "SO";
-export const ROLE_ENTERPRISE = "DOANH_NGHIEP";

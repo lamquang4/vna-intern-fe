@@ -16,15 +16,13 @@ import {
 import { useGetHCMProvince, useGetHCMWards } from "../../hooks/useLocation";
 import { useWatch } from "react-hook-form";
 import { useGetAllRoles } from "../../hooks/useRoles";
-import {
-  DEFAULT_PASSWORD,
-  ROLE_ENTERPRISE,
-} from "@/libs/core/constants/limits";
+import { DEFAULT_PASSWORD } from "@/libs/core/constants/limits";
 import { useCreateUser } from "../../hooks/useUsers";
 import { Switch } from "@/libs/core/components/ui/Switch";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GENDER_OPTIONS } from "@/libs/core/constants/options";
+import { RoleCode } from "@/libs/shared/tts/models/enums";
 
 function CreateUserForm() {
   const router = useRouter();
@@ -76,9 +74,9 @@ function CreateUserForm() {
   const wards = useGetHCMWards();
 
   const roleOptions = (roles ?? [])
-    .filter((role) => role.role !== ROLE_ENTERPRISE)
+    .filter((role) => role.code !== RoleCode.DOANH_NGHIEP)
     .map((role) => ({
-      value: role.id,
+      value: role.roleId,
       label: role.name,
     }));
 

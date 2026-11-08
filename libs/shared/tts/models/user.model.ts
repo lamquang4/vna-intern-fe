@@ -1,4 +1,4 @@
-export type Gender = "MALE" | "FEMALE";
+import { Gender, RoleCode } from "./enums";
 
 // request
 export interface UpdateUserRequest {
@@ -55,7 +55,7 @@ export interface UserDetailResponse {
   gender: Gender | null;
   position: string | null;
   roleId: string;
-  roleCode: string;
+  roleCode: RoleCode;
   email: string;
   province: string | null;
   ward: string | null;
@@ -69,7 +69,7 @@ export interface UserResponse {
   username: string;
   email: string;
   roleName: string;
-  roleCode: string;
+  roleCode: RoleCode;
   position: string;
   isActive: boolean;
 }

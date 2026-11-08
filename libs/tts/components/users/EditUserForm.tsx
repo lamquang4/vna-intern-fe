@@ -31,15 +31,15 @@ import { Switch } from "@/libs/core/components/ui/Switch";
 import Link from "next/link";
 import { GENDER_OPTIONS } from "@/libs/core/constants/options";
 import { getRequiredRoleCode } from "@/libs/core/utils/validators";
-import { ROLE_ADMIN, ROLE_ENTERPRISE } from "@/libs/core/constants/limits";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
+import { RoleCode } from "@/libs/shared/tts/models/enums";
 
 interface Props {
-  userId: string;
+  userId?: string;
 }
 
-function EditUserForm({ userId }: Props) {
+function EditUserForm({ userId = "" }: Props) {
   const router = useRouter();
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
@@ -67,8 +67,8 @@ function EditUserForm({ userId }: Props) {
 
   const skipChangeEmailOtp =
     !isSelf &&
-    currentAccount?.roleCode === ROLE_ADMIN &&
-    user?.roleCode === ROLE_ENTERPRISE;
+    currentAccount?.roleCode === RoleCode.SO &&
+    user?.roleCode === RoleCode.DOANH_NGHIEP;
 
   const requiredRoleCode = getRequiredRoleCode(user?.username ?? "");
   const isRoleLocked = requiredRoleCode !== null;
@@ -128,9 +128,9 @@ function EditUserForm({ userId }: Props) {
   const wards = useGetHCMWards();
 
   const roleOptions = (roles ?? [])
-    .filter((role) => !requiredRoleCode || role.role === requiredRoleCode)
+    .filter((role) => !requiredRoleCode || role.code === requiredRoleCode)
     .map((role) => ({
-      value: role.id,
+      value: role.roleId,
       label: role.name,
     }));
 

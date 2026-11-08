@@ -28,3 +28,10 @@ export interface PageParams {
   page?: number;
   size?: number;
 }
+
+export interface FileResponse {
+  fileName: string; // "giay-phep-kinh-doanh.pdf"
+  contentType: string; // "application/pdf", "image/png", ...
+  size: number; // bytes
+  url: string;
+}

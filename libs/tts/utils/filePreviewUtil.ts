@@ -1,10 +1,10 @@
-import type { FileResponse } from "@/libs/shared/tts/models/enterprise.model";
 import { ALLOWED_IMAGE_MIME_TYPES } from "@/libs/core/constants/limits";
+import { FileResponse } from "@/libs/shared/core/models/common.model";
 
 export type PreviewFile = File | FileResponse;
 
 export const isStoredFile = (file: PreviewFile): file is FileResponse =>
-  "fileId" in file;
+  "url" in file;
 
 export const getFileName = (file: PreviewFile) =>
   isStoredFile(file) ? file.fileName : file.name;

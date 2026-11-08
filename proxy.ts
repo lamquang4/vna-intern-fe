@@ -1,11 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtDecode } from "jwt-decode";
 import { COOKIE_KEYS } from "@/libs/core/constants/cookie";
-import { ROLE_ADMIN, ROLE_ENTERPRISE } from "@/libs/core/constants/limits";
 import type {
   AccessTokenPayload,
   RefreshTokenPayload,
 } from "@/libs/shared/tts/models/auth.model";
+import { RoleCode } from "./libs/shared/tts/models/enums";
 
 const LOGIN_PATH = "/";
 const DEFAULT_AUTH_PATH = "/account";
@@ -16,9 +16,9 @@ const PRIVATE_ROUTES: {
   roles?: string[];
 }[] = [
   { path: "/account" },
-  { path: "/users", roles: [ROLE_ADMIN] },
-  { path: "/enterprises", roles: [ROLE_ADMIN] },
-  { path: "/enterprise", roles: [ROLE_ENTERPRISE] },
+  { path: "/users", roles: [RoleCode.SO] },
+  { path: "/enterprises", roles: [RoleCode.SO] },
+  { path: "/enterprise", roles: [RoleCode.DOANH_NGHIEP] },
 ];
 
 // Đã đăng nhập thì không cần truy cập
