@@ -1,9 +1,11 @@
+import { Gender } from "@/libs/shared/tts/models/enums";
+
 export const GENDER_OPTIONS = [
-  { value: "MALE", label: "Nam" },
-  { value: "FEMALE", label: "Nữ" },
+  { value: Gender.MALE, label: "Nam" },
+  { value: Gender.FEMALE, label: "Nữ" },
 ];
 
-export const STATUS_OPTIONS = [
+export const USER_STATUS_OPTIONS = [
   { value: "true", label: "Hoạt động" },
   { value: "false", label: "Ngừng hoạt động" },
 ];

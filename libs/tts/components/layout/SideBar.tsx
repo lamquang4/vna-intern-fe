@@ -4,7 +4,6 @@ import {
   BuildingComplex,
   ChevronDown,
   ChevronUp,
-  Settings,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -13,8 +12,8 @@ import { Image } from "@/libs/core/components/ui/Image";
 import { usePathname } from "next/navigation";
 import logo from "@/libs/tts/assets/logo.png";
 import { twMerge } from "tailwind-merge";
-import { ROLE_ADMIN, ROLE_ENTERPRISE } from "@/libs/core/constants/limits";
 import { useGetMe } from "../../hooks/useAuth";
+import { RoleCode } from "@/libs/shared/tts/models/enums";
 
 interface Props {
   menuOpen: boolean;
@@ -117,9 +116,9 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
   ];
 
   const menuData =
-    account?.roleCode === ROLE_ADMIN
+    account?.roleCode === RoleCode.SO
       ? menuDataRoleAdmin
-      : account?.roleCode === ROLE_ENTERPRISE
+      : account?.roleCode === RoleCode.DOANH_NGHIEP
         ? menuDataRoleEnterprise
         : [];
 
@@ -153,84 +152,82 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
 
           <ul className="flex flex-col font-normal px-[15px] gap-[10px]">
             {menuData.map((group, groupIndex) => (
-              <>
-                <div key={groupIndex} className="flex flex-col gap-[10px]">
-                  <p className="uppercase py-3 font-normal">{group.title}</p>
+              <div key={groupIndex} className="flex flex-col gap-[10px]">
+                <p className="uppercase py-3 font-normal">{group.title}</p>
 
-                  {group.items.map((item, index) => (
-                    <li key={index} className="flex flex-col gap-[10px]">
-                      {item.children ? (
-                        <>
-                          <div
-                            onClick={() => toggleOpen(item.key)}
-                            className={`${
-                              openMenus[item.key] ||
-                              item.children.some(
-                                (child) => pathname === child.path,
-                              )
-                                ? ""
-                                : ""
-                            } rounded-lg p-3 w-full cursor-pointer flex justify-between items-center`}
-                          >
-                            <p className="flex items-center gap-[10px]">
-                              {item.icon} {item.label}
-                            </p>
-                            <Button type="button">
-                              {openMenus[item.key] ||
-                              item.children.some(
-                                (child) => pathname === child.path,
-                              ) ? (
-                                <ChevronDown size={18} />
-                              ) : (
-                                <ChevronUp size={18} />
-                              )}
-                            </Button>
-                          </div>
-
-                          <ul
-                            className={`max-h-0 overflow-hidden invisible transition-all duration-600 ease-in-out pl-[30px] flex flex-col gap-[10px] ${
-                              openMenus[item.key] ||
-                              item.children.some(
-                                (child) => pathname === child.path,
-                              )
-                                ? "max-h-fit visible"
-                                : ""
-                            }`}
-                          >
-                            {item.children.map((child, childIndex) => (
-                              <li key={childIndex} className="w-full">
-                                <Link
-                                  href={child.path}
-                                  className={`block w-full rounded-lg p-3 ${
-                                    pathname === child.path
-                                      ? "bg-white text-sidebar"
-                                      : ""
-                                  }`}
-                                >
-                                  {child.label}
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        </>
-                      ) : (
-                        <Link
-                          href={item.path}
+                {group.items.map((item, index) => (
+                  <li key={index} className="flex flex-col gap-[10px]">
+                    {item.children ? (
+                      <>
+                        <div
+                          onClick={() => toggleOpen(item.key)}
                           className={`${
-                            pathname === item.path
-                              ? "bg-white text-sidebar"
-                              : "text-white"
+                            openMenus[item.key] ||
+                            item.children.some(
+                              (child) => pathname === child.path,
+                            )
+                              ? ""
+                              : ""
                           } rounded-lg p-3 w-full cursor-pointer flex justify-between items-center`}
                         >
                           <p className="flex items-center gap-[10px]">
                             {item.icon} {item.label}
                           </p>
-                        </Link>
-                      )}
-                    </li>
-                  ))}
-                </div>
-              </>
+                          <Button type="button">
+                            {openMenus[item.key] ||
+                            item.children.some(
+                              (child) => pathname === child.path,
+                            ) ? (
+                              <ChevronDown size={18} />
+                            ) : (
+                              <ChevronUp size={18} />
+                            )}
+                          </Button>
+                        </div>
+
+                        <ul
+                          className={`max-h-0 overflow-hidden invisible transition-all duration-600 ease-in-out pl-[30px] flex flex-col gap-[10px] ${
+                            openMenus[item.key] ||
+                            item.children.some(
+                              (child) => pathname === child.path,
+                            )
+                              ? "max-h-fit visible"
+                              : ""
+                          }`}
+                        >
+                          {item.children.map((child, childIndex) => (
+                            <li key={childIndex} className="w-full">
+                              <Link
+                                href={child.path}
+                                className={`block w-full rounded-lg p-3 ${
+                                  pathname === child.path
+                                    ? "bg-white text-sidebar"
+                                    : ""
+                                }`}
+                              >
+                                {child.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : (
+                      <Link
+                        href={item.path}
+                        className={`${
+                          pathname === item.path
+                            ? "bg-white text-sidebar"
+                            : "text-white"
+                        } rounded-lg p-3 w-full cursor-pointer flex justify-between items-center`}
+                      >
+                        <p className="flex items-center gap-[10px]">
+                          {item.icon} {item.label}
+                        </p>
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </div>
             ))}
           </ul>
         </nav>

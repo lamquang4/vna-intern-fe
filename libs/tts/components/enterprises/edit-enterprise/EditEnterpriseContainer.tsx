@@ -32,7 +32,7 @@ function EditEnterpriseContainer({ enterpriseId = "" }: Props) {
 
   const updateMeMutation = useUpdateEnterpriseMe();
   const updateMutation = useUpdateEnterprise(enterpriseId);
-  
+
   const isUpdating = updateMeMutation.isPending || updateMutation.isPending;
 
   const handleContinue = (
@@ -91,7 +91,7 @@ function EditEnterpriseContainer({ enterpriseId = "" }: Props) {
       <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
         <div className="flex gap-2 items-center">
           <div
-            className={`size-6.5 rounded-full flex items-center justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground text-white"}`}
+            className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
           >
             1
           </div>
@@ -100,7 +100,7 @@ function EditEnterpriseContainer({ enterpriseId = "" }: Props) {
 
         <div className="flex gap-2 items-center">
           <div
-            className={`size-6.5 rounded-full flex items-center justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground text-white"}`}
+            className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
           >
             2
           </div>

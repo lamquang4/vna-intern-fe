@@ -1,4 +1,4 @@
-// request
+import { FileResponse } from "../../core/models/common.model";
 
 //response
 // /enterprises?name=&taxCode=&businessType=&businessIndustry=&ward=&isActive=&page=&size=
@@ -11,14 +11,6 @@ export interface EnterpriseResponse {
   businessIndustry: string;
   ward: string;
   isActive: boolean;
-}
-
-export interface FileResponse {
-  fileId: string;
-  fileName: string; // "giay-phep-kinh-doanh.pdf"
-  contentType: string; // "application/pdf", "image/png", ...
-  size: number; // bytes
-  url: string;
 }
 
 export interface EnterpriseDetailResponse {
@@ -42,6 +34,7 @@ export interface EnterpriseDetailResponse {
   otherDocument?: FileResponse | null;
 }
 
+// request
 export interface DeleteEnterpriseRequest {
   enterpriseIds: string[];
 }

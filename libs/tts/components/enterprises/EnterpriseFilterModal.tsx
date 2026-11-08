@@ -9,7 +9,7 @@ import { Funnel, FunnelX } from "lucide-react";
 import { useGetAllBusinessIndustries } from "@/libs/tts/hooks/useBusinessIndustries";
 import { useGetAllBusinessTypes } from "@/libs/tts/hooks/useBusinessTypes";
 import { useGetHCMWards } from "@/libs/tts/hooks/useLocation";
-import { STATUS_OPTIONS } from "@/libs/core/constants/options";
+import { USER_STATUS_OPTIONS } from "@/libs/core/constants/options";
 
 interface Props {
   onClose: () => void;
@@ -169,7 +169,7 @@ function EnterpriseFilterModal({ onClose }: Props) {
                   <FloatingSelect
                     label="Trạng thái"
                     placeholder="Tất cả trạng thái"
-                    options={STATUS_OPTIONS}
+                    options={USER_STATUS_OPTIONS}
                     value={field.value}
                     onChange={field.onChange}
                   />
