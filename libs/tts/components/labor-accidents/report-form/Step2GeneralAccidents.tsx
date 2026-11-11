@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { useFormContext, UseFieldArrayReturn } from 'react-hook-form';
+import { Controller, useFormContext, UseFieldArrayReturn } from 'react-hook-form';
 import {
   GeneralAccidentSubTab,
   LaborAccidentReportFormValues,
@@ -12,6 +12,7 @@ import {
 import { VictimMetricsFields } from './VictimMetricsFields';
 import { DamageMetricsFields } from './DamageMetricsFields';
 import { FormattedNumberInput } from './FormattedNumberInput';
+import { FloatingSelect } from '@/libs/core/components/ui/fields/FloatingSelect';
 
 interface Step2Props {
   activeSubTab: GeneralAccidentSubTab;
@@ -28,12 +29,14 @@ export const Step2GeneralAccidents: React.FC<Step2Props> = ({
   categories,
   disabled = false,
 }) => {
-  const { register, formState: { errors } } = useFormContext<LaborAccidentReportFormValues>();
+  const { control, register, formState: { errors } } = useFormContext<LaborAccidentReportFormValues>();
   const [openAccordions, setOpenAccordions] = useState<Record<number, boolean>>({ 0: true });
 
   const causeOptions = categories.filter((c) => c.type === 'CAUSE');
   const injuryOptions = categories.filter((c) => c.type === 'INJURY_FACTOR');
   const occupationOptions = categories.filter((c) => c.type === 'OCCUPATION');
+  const toSelectOptions = (items: MasterAccidentCategoryDto[]) =>
+    items.map((item) => ({ value: item.id, label: `${item.code} - ${item.name}` }));
 
   const toggleAccordion = (index: number) => {
     setOpenAccordions((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -147,18 +150,22 @@ export const Step2GeneralAccidents: React.FC<Step2Props> = ({
                           <label className="mb-2 block text-sm font-medium text-foreground">
                             1. Phân theo nguyên nhân xảy ra TNLĐ
                           </label>
-                          <select
-                            disabled={disabled}
-                            {...register(`generalAccidents.details.${index}.causeCategoryId`)}
-                            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-primary"
-                          >
-                            <option value="">-- Chọn nguyên nhân --</option>
-                            {causeOptions.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
+                          <Controller
+                            control={control}
+                            name={`generalAccidents.details.${index}.causeCategoryId`}
+                            render={({ field }) => (
+                              <FloatingSelect
+                                label="Nguyên nhân xảy ra TNLĐ"
+                                options={toSelectOptions(causeOptions)}
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                placeholder="Chọn nguyên nhân"
+                                disabled={disabled}
+                                error={errors.generalAccidents?.details?.[index]?.causeCategoryId?.message}
+                              />
+                            )}
+                          />
                           {errors.generalAccidents?.details?.[index]?.causeCategoryId?.message && (
                             <p className="mt-1 text-xs text-error">
                               {errors.generalAccidents.details[index]?.causeCategoryId?.message}
@@ -170,18 +177,22 @@ export const Step2GeneralAccidents: React.FC<Step2Props> = ({
                           <label className="mb-2 block text-sm font-medium text-foreground">
                             2. Phân theo yếu tố gây chấn thương
                           </label>
-                          <select
-                            disabled={disabled}
-                            {...register(`generalAccidents.details.${index}.injuryFactorCategoryId`)}
-                            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-primary"
-                          >
-                            <option value="">-- Chọn yếu tố gây chấn thương --</option>
-                            {injuryOptions.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
+                          <Controller
+                            control={control}
+                            name={`generalAccidents.details.${index}.injuryFactorCategoryId`}
+                            render={({ field }) => (
+                              <FloatingSelect
+                                label="Yếu tố gây chấn thương"
+                                options={toSelectOptions(injuryOptions)}
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                placeholder="Chọn yếu tố gây chấn thương"
+                                disabled={disabled}
+                                error={errors.generalAccidents?.details?.[index]?.injuryFactorCategoryId?.message}
+                              />
+                            )}
+                          />
                           {errors.generalAccidents?.details?.[index]?.injuryFactorCategoryId?.message && (
                             <p className="mt-1 text-xs text-error">
                               {errors.generalAccidents.details[index]?.injuryFactorCategoryId?.message}
@@ -195,18 +206,22 @@ export const Step2GeneralAccidents: React.FC<Step2Props> = ({
                           <label className="mb-2 block text-sm font-medium text-foreground">
                             3. Phân theo nghề nghiệp
                           </label>
-                          <select
-                            disabled={disabled}
-                            {...register(`generalAccidents.details.${index}.occupationCategoryId`)}
-                            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-primary"
-                          >
-                            <option value="">-- Chọn nghề nghiệp --</option>
-                            {occupationOptions.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
+                          <Controller
+                            control={control}
+                            name={`generalAccidents.details.${index}.occupationCategoryId`}
+                            render={({ field }) => (
+                              <FloatingSelect
+                                label="Nghề nghiệp"
+                                options={toSelectOptions(occupationOptions)}
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                placeholder="Chọn nghề nghiệp"
+                                disabled={disabled}
+                                error={errors.generalAccidents?.details?.[index]?.occupationCategoryId?.message}
+                              />
+                            )}
+                          />
                           {errors.generalAccidents?.details?.[index]?.occupationCategoryId?.message && (
                             <p className="mt-1 text-xs text-error">
                               {errors.generalAccidents.details[index]?.occupationCategoryId?.message}

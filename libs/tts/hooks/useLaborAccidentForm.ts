@@ -122,7 +122,7 @@ export function useLaborAccidentForm(initialData: LaborAccidentReportFormValues)
 
   // 5. Logic nút "Huỷ bỏ" (Hiển thị popup cảnh báo nếu form đã bị chỉnh sửa)
   const handleCancelClick = useCallback((onNavigateBack: () => void) => {
-    if (isDirty && initialData.status === 'DRAFT') {
+    if (isDirty && initialData.status !== 'ACCEPTED') {
       setIsCancelModalOpen(true);
     } else {
       onNavigateBack();

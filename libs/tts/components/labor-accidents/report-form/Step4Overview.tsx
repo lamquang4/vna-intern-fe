@@ -43,9 +43,11 @@ export const Step4Overview: React.FC<Step4OverviewProps> = ({
       const uploaded = await onUploadPdf(file);
       setValue('attachmentUrl', uploaded.url, { shouldDirty: true });
       setValue('attachmentName', uploaded.name, { shouldDirty: true });
+      setValue('attachmentFile', file, { shouldDirty: true });
     } else {
       setValue('attachmentUrl', URL.createObjectURL(file), { shouldDirty: true });
       setValue('attachmentName', file.name, { shouldDirty: true });
+      setValue('attachmentFile', file, { shouldDirty: true });
     }
   };
 

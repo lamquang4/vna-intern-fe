@@ -25,6 +25,10 @@ import { Step4Overview } from './Step4Overview';
 import { useGetAllBusinessIndustries } from '@/libs/tts/hooks/useBusinessIndustries';
 import { useGetAllBusinessTypes } from '@/libs/tts/hooks/useBusinessTypes';
 import { useGetEnterpriseMe } from '@/libs/tts/hooks/useEnterprises';
+import { useGetMe } from '@/libs/tts/hooks/useAuth';
+import axios from 'axios';
+import type { ErrorResponse } from '@/libs/shared/core/models/common.model';
+import { getErrorMessage } from '@/libs/core/utils/errorUtil';
 
 interface LaborAccidentReportFormProps {
   initialData: LaborAccidentReportFormValues;
@@ -33,6 +37,7 @@ interface LaborAccidentReportFormProps {
   onBackToList: () => void;
   onSaveDraft: (values: LaborAccidentReportFormValues) => Promise<void>;
   onSubmitReport: (values: LaborAccidentReportFormValues) => Promise<void>;
+  canEdit?: boolean;
 }
 
 const SECTION_OPTIONS: { value: ReportSectionKey; label: string }[] = [
@@ -52,6 +57,7 @@ const LaborAccidentReportForm: React.FC<LaborAccidentReportFormProps> = ({
   onBackToList,
   onSaveDraft,
   onSubmitReport,
+  canEdit = true,
 }) => {
   const {
     form,
@@ -67,7 +73,7 @@ const LaborAccidentReportForm: React.FC<LaborAccidentReportFormProps> = ({
     isReadOnly,
   } = useLaborAccidentForm(initialData);
 
-  const activeSection = isReadOnly ? 'OVERVIEW' : currentSection;
+  const activeSection = isReadOnly || !canEdit ? 'OVERVIEW' : currentSection;
 
   const handlePrint = () => {
     window.print();
@@ -75,7 +81,12 @@ const LaborAccidentReportForm: React.FC<LaborAccidentReportFormProps> = ({
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitReport)} className="min-h-full bg-background">
+      <form
+        onSubmit={form.handleSubmit(onSubmitReport, () => {
+          toast.error('Thông tin báo cáo chưa hợp lệ. Vui lòng kiểm tra các trường bắt buộc.');
+        })}
+        className="min-h-full bg-background"
+      >
         {/* TOP HEADER BAR */}
         <div className="flex items-center justify-between gap-4 border-b border-border bg-background px-6 py-4 shadow-sm print:hidden print:p-0">
           <h2 className="text-base font-semibold text-foreground">Báo cáo định kỳ Tai nạn lao động</h2>
@@ -139,7 +150,7 @@ const LaborAccidentReportForm: React.FC<LaborAccidentReportFormProps> = ({
                 >
                   In báo cáo
                 </button>
-                {!isReadOnly && (
+                {!isReadOnly && canEdit && (
                   <button
                     type="submit"
                     className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
@@ -177,7 +188,7 @@ const LaborAccidentReportForm: React.FC<LaborAccidentReportFormProps> = ({
         {/* NỘI DUNG TỪNG BƯỚC */}
         <div className="p-6 print:p-0">
           {activeSection === 'COMPANY_INFO' && (
-            <Step1CompanyInfo disabled={isReadOnly} />
+            <Step1CompanyInfo disabled={isReadOnly || !canEdit} />
           )}
 
           {activeSection === 'GENERAL_ACCIDENTS' && (
@@ -186,14 +197,14 @@ const LaborAccidentReportForm: React.FC<LaborAccidentReportFormProps> = ({
               onChangeSubTab={setGeneralSubTab}
               fieldArray={caseDetailsFieldArray}
               categories={categories}
-              disabled={isReadOnly}
+              disabled={isReadOnly || !canEdit}
             />
           )}
 
-          {activeSection === 'ARTICLE_39_ALLOWANCE' && <Step3Article39 disabled={isReadOnly} />}
+          {activeSection === 'ARTICLE_39_ALLOWANCE' && <Step3Article39 disabled={isReadOnly || !canEdit} />}
 
           {activeSection === 'OVERVIEW' && (
-            <Step4Overview categories={categories} isReadOnly={isReadOnly} />
+            <Step4Overview categories={categories} isReadOnly={isReadOnly || !canEdit} />
           )}
         </div>
 
@@ -227,14 +238,25 @@ export const LaborAccidentReportContainer: React.FC = () => {
   const reportYear = Number(searchParams.get('year')) || new Date().getFullYear();
   const reportPeriod =
     searchParams.get('period') === 'SIX_MONTHS' ? ('SIX_MONTHS' as const) : ('FULL_YEAR' as const);
+  const { data: accountData } = useGetMe();
+  const role = accountData?.data.roleCode;
+  const canEdit = role === 'DOANH_NGHIEP';
   const newReport = useMemo(
     () => createNewLaborAccidentReport(reportYear, reportPeriod),
     [reportYear, reportPeriod]
   );
   const { data: enterpriseData, isLoading: isEnterpriseLoading, isError: isEnterpriseError } =
     useGetEnterpriseMe(isCreateMode);
-  const { data: businessTypesData } = useGetAllBusinessTypes();
-  const { data: businessIndustriesData } = useGetAllBusinessIndustries();
+  const {
+    data: businessTypesData,
+    isLoading: isBusinessTypesLoading,
+    isError: isBusinessTypesError,
+  } = useGetAllBusinessTypes();
+  const {
+    data: businessIndustriesData,
+    isLoading: isBusinessIndustriesLoading,
+    isError: isBusinessIndustriesError,
+  } = useGetAllBusinessIndustries();
 
   const {
     data: detailData,
@@ -256,6 +278,22 @@ export const LaborAccidentReportContainer: React.FC = () => {
     businessIndustriesData?.data?.find(
       (item) => item.businessIndustryId === enterprise?.businessIndustryId
     )?.name ?? enterprise?.businessIndustryId ?? '';
+  const reportWithReferenceNames = detailData
+    ? {
+        ...detailData,
+        companyInfo: {
+          ...detailData.companyInfo,
+          companyType:
+            businessTypesData?.data?.find(
+              (item) => item.businessTypeId === detailData.companyInfo.companyType,
+            )?.name ?? detailData.companyInfo.companyType,
+          businessSector:
+            businessIndustriesData?.data?.find(
+              (item) => item.businessIndustryId === detailData.companyInfo.businessSector,
+            )?.name ?? detailData.companyInfo.businessSector,
+        },
+      }
+    : undefined;
   const initialData = isCreateMode
     ? {
         ...newReport,
@@ -266,15 +304,24 @@ export const LaborAccidentReportContainer: React.FC = () => {
           businessSector: businessIndustryName,
         },
       }
-    : detailData;
+    : reportWithReferenceNames;
 
-  if ((!isCreateMode && isReportLoading) || areCategoriesLoading || (isCreateMode && isEnterpriseLoading)) {
+  if (
+    (!isCreateMode && isReportLoading) ||
+    areCategoriesLoading ||
+    isBusinessTypesLoading ||
+    isBusinessIndustriesLoading ||
+    (isCreateMode && isEnterpriseLoading) ||
+    !role
+  ) {
     return <div className="p-6 text-sm text-muted-foreground">Đang tải báo cáo...</div>;
   }
 
   if (
     (!isCreateMode && isReportError) ||
     areCategoriesError ||
+    isBusinessTypesError ||
+    isBusinessIndustriesError ||
     (isCreateMode && isEnterpriseError) ||
     !initialData
   ) {
@@ -291,35 +338,48 @@ export const LaborAccidentReportContainer: React.FC = () => {
 
   const handleSaveDraft = async (values: LaborAccidentReportFormValues) => {
     try {
-      if (isCreateMode) {
-        await laborAccidentApis.createDraftReport(values);
-      } else if (reportId) {
-        await laborAccidentApis.saveDraftReport(reportId, values);
-      } else {
+      const id =
+        reportId ??
+        (await laborAccidentApis.getReportId(reportYear, values.reportPeriod, role ?? ''));
+      if (!id) {
         throw new Error('Không xác định được mã báo cáo');
       }
+      await laborAccidentApis.updateReport(id, values);
       toast.success('Đã lưu báo cáo nháp');
       router.push(backUrl);
-    } catch {
-      toast.error('Không thể lưu báo cáo nháp. Vui lòng thử lại.');
+    } catch (error) {
+      toast.error(
+        axios.isAxiosError<ErrorResponse>(error)
+          ? getErrorMessage(error, 'Không thể lưu báo cáo nháp. Vui lòng thử lại.')
+          : error instanceof Error
+            ? error.message
+            : 'Không thể lưu báo cáo nháp. Vui lòng thử lại.',
+      );
     }
   };
 
   const handleSubmitReport = async (values: LaborAccidentReportFormValues) => {
     try {
-      let id = reportId;
-      if (isCreateMode) {
-        const created = await laborAccidentApis.createDraftReport(values);
-        id = created.id;
-      }
+      const id =
+        reportId ??
+        (await laborAccidentApis.getReportId(reportYear, values.reportPeriod, role ?? ''));
       if (!id) {
         throw new Error('Không xác định được mã báo cáo');
       }
-      await laborAccidentApis.submitReport(id, values);
+      if (!values.attachmentFile) {
+        throw new Error('Vui lòng đính kèm báo cáo PDF có dấu mộc');
+      }
+      await laborAccidentApis.updateReport(id, values, true);
       toast.success('Đã gửi báo cáo');
       router.push(backUrl);
-    } catch {
-      toast.error('Không thể gửi báo cáo. Vui lòng thử lại.');
+    } catch (error) {
+      toast.error(
+        axios.isAxiosError<ErrorResponse>(error)
+          ? getErrorMessage(error, 'Không thể gửi báo cáo. Vui lòng thử lại.')
+          : error instanceof Error
+            ? error.message
+            : 'Không thể gửi báo cáo. Vui lòng thử lại.',
+      );
     }
   };
 
@@ -331,6 +391,7 @@ export const LaborAccidentReportContainer: React.FC = () => {
       onBackToList={handleBackToList}
       onSaveDraft={handleSaveDraft}
       onSubmitReport={handleSubmitReport}
+      canEdit={canEdit}
     />
   );
 };

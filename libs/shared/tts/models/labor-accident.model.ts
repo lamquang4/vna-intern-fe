@@ -1,5 +1,5 @@
 export type ReportPeriod = 'SIX_MONTHS' | 'FULL_YEAR'; // 6 tháng | Cả năm
-export type ReportStatus = 'DRAFT' | 'ACCEPTED';       // Đang báo cáo | Đã tiếp nhận
+export type ReportStatus = 'PENDING' | 'IN_PROGRESS' | 'ACCEPTED';
 
 /**
  * 4 Mục trong Dropdown "Chọn mục báo cáo" (Popup danh mục báo cáo TNLĐ - Màn 26.1)
@@ -110,6 +110,7 @@ export interface LaborAccidentReportFormValues {
   article39Accidents: FullAccidentMetrics;   // Màn 26.4
   attachmentUrl?: string;                    // Màn 26.5 & 26.6 (baocaoTNLD.pdf)
   attachmentName?: string;
+  attachmentFile?: File;
 }
 
 /** Dòng hiển thị trên Bảng tổng hợp ở Màn 26.5 & 26.6 */

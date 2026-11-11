@@ -21,4 +21,3 @@ export const useGetHCMWards = () => {
 
   return useMemo(() => province?.wards ?? [], [province]);
 };
-

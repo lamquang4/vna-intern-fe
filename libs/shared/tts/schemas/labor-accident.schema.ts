@@ -178,6 +178,21 @@ const addDetailTotalIssues = (
   details: AccidentCaseDetailFormValues[],
   context: z.RefinementCtx
 ) => {
+  // The detail rows are created after the summary total is entered. Defer
+  // cross-row totals until each row has been started, otherwise the summary
+  // step fails against the initial zero-valued rows.
+  if (
+    details.length === 0 ||
+    details.some(
+      (detail) =>
+        !detail.causeCategoryId ||
+        !detail.injuryFactorCategoryId ||
+        !detail.occupationCategoryId
+    )
+  ) {
+    return;
+  }
+
   DETAIL_SUM_FIELDS.forEach((field: DetailSumField) => {
     const detailsTotal = details.reduce((total, detail) => total + detail[field], 0);
 
@@ -312,7 +327,7 @@ export const laborAccidentReportSchema = z.object({
   id: z.string().optional(),
   reportYear: z.number().int('Năm phải là số nguyên').min(2000).max(2100),
   reportPeriod: z.enum(['SIX_MONTHS', 'FULL_YEAR']),
-  status: z.enum(['DRAFT', 'ACCEPTED']),
+  status: z.enum(['PENDING', 'IN_PROGRESS', 'ACCEPTED']),
   companyInfo: z
     .object({
       companyName: z.string().trim().min(1, 'Chưa có tên doanh nghiệp'),
@@ -333,6 +348,7 @@ export const laborAccidentReportSchema = z.object({
   article39Accidents: fullAccidentMetricsSchema,
   attachmentUrl: z.string().optional(),
   attachmentName: z.string().optional(),
+  attachmentFile: z.instanceof(File).optional(),
 }).superRefine((data, context) => {
   const workforce = {
     totalEmployees: data.companyInfo.totalEmployees,
