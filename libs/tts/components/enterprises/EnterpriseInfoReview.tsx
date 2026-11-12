@@ -9,9 +9,9 @@ import type {
   CreateEnterpriseData,
   UpdateEnterpriseData,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
-import { type PreviewFile } from "@/libs/tts/utils/filePreviewUtil";
+import { type PreviewFile } from "@/libs/tts/utils/filePreview";
 import { InfoItem } from "./InfoItem";
-import DocumentsField from "./DocumentsField";
+import EnterpriseFileField from "./EnterpriseFileField";
 
 interface Props {
   data: CreateEnterpriseData | UpdateEnterpriseData;
@@ -130,7 +130,7 @@ function EnterpriseInfoReview({
         <div className="flex flex-col gap-[20px]">
           <h5>File đính kèm</h5>
 
-          <DocumentsField documents={documents} />
+          <EnterpriseFileField documents={documents} />
         </div>
       </div>
 

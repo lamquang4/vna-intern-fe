@@ -11,6 +11,7 @@ import { Label } from "@/libs/core/components/ui/Label";
 import { LoginData, loginSchema } from "@/libs/shared/tts/schemas/auth.schema";
 import { useLogin } from "../../hooks/useAuth";
 import AuthLayout from "./AuthLayout";
+import { formatTaxCode } from "@/libs/core/utils/formatters";
 
 function LoginForm() {
   const loginMutation = useLogin();
@@ -51,8 +52,17 @@ function LoginForm() {
             placeholder="Nhập tên tài khoản"
             type="text"
             required
+            maxLength={14}
             error={errors.username?.message}
-            {...register("username")}
+            {...register("username", {
+              onChange: (e) => {
+                const value = e.target.value;
+
+                if (/^[a-zA-Z]/.test(value)) return;
+
+                e.target.value = formatTaxCode(value);
+              },
+            })}
           />
 
           <FloatingInput

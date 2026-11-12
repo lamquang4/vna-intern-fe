@@ -4,7 +4,6 @@ import {
   MAX_IMAGE_SIZE,
   OTP_LENGTH,
 } from "../constants/limits";
-import { RoleCode } from "@/libs/shared/tts/models/enums";
 
 export function validateUsername(value: string): boolean {
   const regex = /^VNA\d{8}$/i;
@@ -48,16 +47,4 @@ export function validateDateNotFuture(value: string): boolean {
 export function validateTaxCode(value: string): boolean {
   const regex = /^\d{10}(-?\d{3})?$/;
   return regex.test(value.trim());
-}
-
-export function getRequiredRoleCode(username: string): string | null {
-  const value = username.trim();
-
-  // VNA + 8 số -> chỉ được vai trò SỞ
-  if (validateUsername(value)) return RoleCode.SO;
-
-  // Mã số thuế 10 số hoặc 13 số -> chỉ được DOANH NGHIỆP
-  if (validateTaxCode(value)) return RoleCode.DOANH_NGHIEP;
-
-  return null;
 }

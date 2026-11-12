@@ -15,7 +15,7 @@ import {
   getFileName,
   getFileSizeLabel,
   type PreviewFile,
-} from "@/libs/tts/utils/filePreviewUtil";
+} from "@/libs/tts/utils/filePreview";
 import FilePreviewContentModal from "./FilePreviewContentModal";
 
 interface Props<TFile extends PreviewFile> {

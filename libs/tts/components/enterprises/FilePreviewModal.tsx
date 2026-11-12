@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Image } from "@/libs/core/components/ui/Image";
-import { MIME_DOC, MIME_DOCX, MIME_PDF } from "@/libs/core/constants/limits";
+import { MIME_DOCX, MIME_PDF } from "@/libs/core/constants/limits";
 import { axiosInstance } from "@/libs/core/services/axiosInstance.ts";
 import {
   getFileName,
@@ -10,7 +10,7 @@ import {
   isImageMime,
   isStoredFile,
   type PreviewFile,
-} from "@/libs/tts/utils/filePreviewUtil";
+} from "@/libs/tts/utils/filePreview";
 import toast from "react-hot-toast";
 import { Modal } from "@/libs/core/components/ui/Modal";
 
@@ -19,18 +19,11 @@ interface Props {
   onClose: () => void;
 }
 
-function FilePreviewContentModal({ file, onClose }: Props) {
+function FilePreviewModal({ file, onClose }: Props) {
   const mime = getMimeType(file);
   const isPdf = mime === MIME_PDF;
   const isDocx = mime === MIME_DOCX;
   const isImage = isImageMime(mime);
-
-  const unsupportedMessage =
-    mime === MIME_DOC
-      ? "Chưa hỗ trợ xem trước Word .doc. Vui lòng lưu tệp thành .docx."
-      : !isPdf && !isDocx && !isImage
-        ? "Định dạng tệp này chưa hỗ trợ xem trước."
-        : null;
 
   const docxRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
@@ -46,11 +39,6 @@ function FilePreviewContentModal({ file, onClose }: Props) {
       toast.error(message);
       onCloseRef.current();
     };
-
-    if (unsupportedMessage) {
-      fail(unsupportedMessage);
-      return;
-    }
 
     let cancelled = false;
     let objectUrl: string | undefined;
@@ -94,9 +82,7 @@ function FilePreviewContentModal({ file, onClose }: Props) {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
       docxEl?.replaceChildren();
     };
-  }, [file, mime, isDocx, unsupportedMessage]);
-
-  if (unsupportedMessage) return null;
+  }, [file, mime, isDocx]);
 
   return (
     <Modal
@@ -134,4 +120,4 @@ function FilePreviewContentModal({ file, onClose }: Props) {
   );
 }
 
-export default FilePreviewContentModal;
+export default FilePreviewModal;

@@ -12,7 +12,7 @@ export function Input({ className, error, ref, ...props }: InputProps) {
       ref={ref}
       aria-invalid={error ? true : undefined}
       className={twMerge(
-        "border border-border bg-background outline-none transition-colors",
+        "border border-border outline-none transition-colors",
         "focus:border-primary",
         "disabled:cursor-not-allowed",
         error && "border-error focus:border-error",

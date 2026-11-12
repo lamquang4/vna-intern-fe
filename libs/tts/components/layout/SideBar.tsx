@@ -86,7 +86,7 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
         {
           icon: <BuildingComplex size={20} strokeWidth={2} />,
           label: "TNLĐ theo HĐLĐ",
-          path: "/hd",
+          path: "/accident-reports",
         },
       ],
     },
@@ -109,7 +109,7 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
         {
           icon: <BuildingComplex size={20} strokeWidth={2} />,
           label: "TNLĐ theo HĐLĐ",
-          path: "/hd",
+          path: "/accident-reports",
         },
       ],
     },

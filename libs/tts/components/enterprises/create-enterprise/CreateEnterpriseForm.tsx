@@ -20,9 +20,9 @@ import {
   DocumentField,
   DocumentRow,
 } from "@/libs/shared/tts/models/enterprise.model";
-import DocumentsField from "../DocumentsField";
-import { formatTaxCodeInput } from "@/libs/core/utils/formatters";
-import { PreviewFile } from "@/libs/tts/utils/filePreviewUtil";
+import EnterpriseFileField from "../EnterpriseFileField";
+import { formatTaxCode } from "@/libs/core/utils/formatters";
+import { PreviewFile } from "@/libs/tts/utils/filePreview";
 
 interface Props {
   onContinue: (
@@ -173,7 +173,7 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
               error={errors.taxCode?.message}
               {...register("taxCode", {
                 onChange: (e) => {
-                  e.target.value = formatTaxCodeInput(e.target.value);
+                  e.target.value = formatTaxCode(e.target.value);
                 },
               })}
             />
@@ -385,7 +385,7 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
 
         <div className="flex flex-col gap-[20px]">
           <h5>File đính kèm</h5>
-          <DocumentsField
+          <EnterpriseFileField
             documents={documents}
             onSelect={handleSelectDocument}
             onRemove={(row) => handleRemoveDocument(row.id)}

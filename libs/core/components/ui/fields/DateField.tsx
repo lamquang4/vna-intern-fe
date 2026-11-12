@@ -5,7 +5,7 @@ import { CalendarDays } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import "react-datepicker/dist/react-datepicker.css";
 import { Input, type InputProps } from "../Input";
-import { formatDateInput } from "../../../utils/formatters";
+import { formatDateTyping } from "../../../utils/formatters";
 
 export interface DateFieldProps {
   value?: Date | null;
@@ -22,7 +22,7 @@ const DateTrigger = forwardRef<HTMLInputElement, InputProps>(
   ({ onChange, ...props }, ref) => {
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
       const inputType = (e.nativeEvent as InputEvent).inputType ?? "";
-      e.target.value = formatDateInput(
+      e.target.value = formatDateTyping(
         e.target.value,
         inputType.startsWith("delete"),
       );

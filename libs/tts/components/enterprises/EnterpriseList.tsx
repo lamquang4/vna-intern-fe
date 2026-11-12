@@ -43,7 +43,7 @@ function EnterpriseList() {
   ).length;
 
   const page = Number(searchParams.get("page")) || 1;
-  const size = Number(searchParams.get("size")) || 10;
+  const size = Number(searchParams.get("size")) || 12;
   const isActiveParam = searchParams.get("isActive");
 
   const params: GetEnterprisesParams = {
@@ -167,7 +167,7 @@ function EnterpriseList() {
   return (
     <>
       <ListLayout
-        title="Danh sách doanh nghiệp"
+        title="Doanh nghiệp"
         count={totalElements}
         actions={
           <>

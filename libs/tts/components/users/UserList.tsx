@@ -45,7 +45,7 @@ function UserList() {
   ).length;
 
   const page = Number(searchParams.get("page")) || 1;
-  const size = Number(searchParams.get("size")) || 10;
+  const size = Number(searchParams.get("size")) || 12;
   const isActiveParam = searchParams.get("isActive");
 
   const params: GetUsersParams = {
@@ -188,7 +188,7 @@ function UserList() {
   return (
     <>
       <ListLayout
-        title="Danh sách người dùng"
+        title="Người dùng"
         count={totalElements}
         actions={
           <>

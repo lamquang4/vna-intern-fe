@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import z from "zod";
 import toast from "react-hot-toast";
@@ -18,7 +17,6 @@ import {
   useGetHCMWards,
 } from "@/libs/tts/hooks/useLocation";
 import {
-  enterpriseKeys,
   useGetEnterpriseDetail,
   useGetEnterpriseMe,
 } from "@/libs/tts/hooks/useEnterprises";
@@ -32,8 +30,8 @@ import type {
   DocumentRow,
   EnterpriseDetailResponse,
 } from "@/libs/shared/tts/models/enterprise.model";
-import type { PreviewFile } from "@/libs/tts/utils/filePreviewUtil";
-import DocumentsField from "../DocumentsField";
+import type { PreviewFile } from "@/libs/tts/utils/filePreview";
+import EnterpriseFileField from "../EnterpriseFileField";
 import ChangeEmailModal from "../../auth/ChangeEmailModal";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
@@ -50,13 +48,11 @@ interface Props {
     taxCode: string,
   ) => void;
   initialData: UpdateEnterpriseData | null;
-  /** Rỗng = doanh nghiệp tự sửa thông tin của mình (/enterprise) */
   enterpriseId: string;
 }
 
 function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [documentToDelete, setDocumentToDelete] =
@@ -498,7 +494,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
 
           <div className="flex flex-col gap-[30px]">
             <h5>File đính kèm</h5>
-            <DocumentsField
+            <EnterpriseFileField
               documents={documents}
               onSelect={handleSelectDocument}
               onRemove={(row) => setDocumentToDelete(row)}

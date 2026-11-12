@@ -18,6 +18,7 @@ export const ALLOWED_DOCUMENT_MIME_TYPES = [
 ];
 
 export const MAX_DOCUMENT_SIZE = 5 * 1024 * 1024; // 5MB
+export const MAX_ACCIDENT_REPORT_PDF_SIZE = 15 * 1024 * 1024; // 15MB
 
 export const OTP_LENGTH = 6;
 export const OTP_EXPIRE_SECONDS = 5 * 60; // 5 phút
@@ -40,3 +41,5 @@ export const MAX_FOREIGN_NAME_LENGTH = 200;
 export const MAX_BUSINESS_LOCATION_LENGTH = 500;
 export const MAX_REPRESENTATIVE_LENGTH = 150;
 export const MAX_PHONE_LENGTH = 30;
+
+export const MAX_ACCIDENT_DETAILS = 20; // số vụ chi tiết tối đa khi khai báo TNLĐ

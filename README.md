@@ -53,6 +53,8 @@ Hệ thống có 2 vai trò là Sở và Doanh nghiệp. Mỗi vai trò có nhó
 
 ### Chức năng chính
 
+Một số chức năng được giới hạn theo vai trò người dùng, chỉ những vai trò được cấp quyền mới có thể truy cập và thực hiện
+
 | Nhóm chức năng           | Hành động                           |
 | ------------------------ | ----------------------------------- |
 | **Xác thực**             | Đăng nhập                           |
@@ -74,6 +76,10 @@ Hệ thống có 2 vai trò là Sở và Doanh nghiệp. Mỗi vai trò có nhó
 |                          | Cập nhật doanh nghiệp               |
 |                          | Xóa doanh nghiệp                    |
 |                          | Xem thông tin doanh nghiệp chi tiết |
+| **Báo cáo TNLĐ**         | Lấy danh sách báo cáo TNLĐ          |
+|                          | Khai báo báo cáo TNLĐ               |
+|                          | Xem báo cáo chi tiết                |
+|                          | Tổng hợp báo cáo theo năm           |
 
 ## Cấu trúc thư mục
 

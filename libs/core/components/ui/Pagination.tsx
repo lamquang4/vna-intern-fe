@@ -104,22 +104,24 @@ function Pagination({ totalPages, page, size, totalElements }: Props) {
       <div className="flex shrink-0 items-center gap-2">
         <span className="whitespace-nowrap">Số dòng mỗi trang</span>
         <Select
+          searchable={false}
+          className="w-18"
           value={size}
-          onChange={(e) => {
-            const newSize = e.target.value;
+          onChange={(value) => {
             const params = new URLSearchParams(searchParams.toString());
-            params.set("size", newSize);
+
+            params.set("size", value);
             params.set("page", "1");
 
             router.push(`${pathname}?${params.toString()}`);
           }}
-          className="p-1.5 border border-border"
-        >
-          <option value="12">12</option>
-          <option value="24">24</option>
-          <option value="36">36</option>
-          <option value="48">48</option>
-        </Select>
+          options={[
+            { value: 12, label: "12" },
+            { value: 24, label: "24" },
+            { value: 36, label: "36" },
+            { value: 48, label: "48" },
+          ]}
+        />
       </div>
 
       <p>

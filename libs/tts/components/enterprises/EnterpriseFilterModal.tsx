@@ -11,10 +11,6 @@ import { useGetAllBusinessTypes } from "@/libs/tts/hooks/useBusinessTypes";
 import { useGetHCMWards } from "@/libs/tts/hooks/useLocation";
 import { USER_STATUS_OPTIONS } from "@/libs/core/constants/options";
 
-interface Props {
-  onClose: () => void;
-}
-
 const EMPTY_FILTERS = {
   name: "",
   taxCode: "",

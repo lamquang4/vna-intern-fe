@@ -30,7 +30,6 @@ import { useGetAllRoles } from "../../hooks/useRoles";
 import { Switch } from "@/libs/core/components/ui/Switch";
 import Link from "next/link";
 import { GENDER_OPTIONS } from "@/libs/core/constants/options";
-import { getRequiredRoleCode } from "@/libs/core/utils/validators";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
 import { RoleCode } from "@/libs/shared/tts/models/enums";
@@ -57,21 +56,18 @@ function EditUserForm({ userId = "" }: Props) {
   const user = activeQuery.data?.data;
   const currentAccount = meQuery.data?.data;
 
-  const isCurrentUser =
-    !isAccountPage &&
-    !!user?.username &&
-    !!currentAccount?.username &&
-    user.username === currentAccount.username;
+  const isSelf =
+    isAccountPage ||
+    (!!user?.username && user.username === currentAccount?.username);
 
-  const isSelf = isAccountPage || isCurrentUser;
-
+  // Sở sửa doanh nghiệp -> không cần OTP khi đổi email
   const skipChangeEmailOtp =
     !isSelf &&
     currentAccount?.roleCode === RoleCode.SO &&
     user?.roleCode === RoleCode.DOANH_NGHIEP;
 
-  const requiredRoleCode = getRequiredRoleCode(user?.username ?? "");
-  const isRoleLocked = requiredRoleCode !== null;
+  // Role đã cố định theo tài khoản, không cho đổi
+  const isRoleLocked = !!user?.roleCode;
 
   const updateMeMutation = useUpdateMe();
   const updateUserMutation = useUpdateUser(userId);
@@ -85,13 +81,11 @@ function EditUserForm({ userId = "" }: Props) {
 
   useEffect(() => {
     if (isFetchingUser || isAccountPage) return;
-
     if (!user) {
       toast.error("Không tìm thấy người dùng");
       router.replace("/users");
-      return;
     }
-  }, [isFetchingUser, isAccountPage, isCurrentUser, user, router]);
+  }, [isFetchingUser, isAccountPage, user, router]);
 
   const { register, control, handleSubmit, setValue, resetField, reset } =
     useForm<
@@ -128,11 +122,8 @@ function EditUserForm({ userId = "" }: Props) {
   const wards = useGetHCMWards();
 
   const roleOptions = (roles ?? [])
-    .filter((role) => !requiredRoleCode || role.code === requiredRoleCode)
-    .map((role) => ({
-      value: role.roleId,
-      label: role.name,
-    }));
+    .filter((role) => !user?.roleCode || role.code === user.roleCode)
+    .map((role) => ({ value: role.roleId, label: role.name }));
 
   const provinceOptions = province
     ? [{ value: province.province, label: province.province }]
@@ -227,7 +218,7 @@ function EditUserForm({ userId = "" }: Props) {
                 )}
               />
 
-              {!isAccountPage && !isCurrentUser && currentAccount && (
+              {!isAccountPage && currentAccount && (
                 <Label className="flex w-full cursor-pointer items-center justify-between gap-3">
                   <h5>Kích hoạt</h5>
 

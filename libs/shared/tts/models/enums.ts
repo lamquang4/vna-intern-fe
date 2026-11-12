@@ -19,3 +19,23 @@ export const CategoryType = {
 } as const;
 
 export type CategoryType = (typeof CategoryType)[keyof typeof CategoryType];
+
+export const AccidentReportStatus = {
+  PENDING: "PENDING",
+  IN_PROGRESS: "IN_PROGRESS",
+  ACCEPTED: "ACCEPTED",
+  APPROVED: "APPROVED",
+  DECLINED: "DECLINED",
+  EXPIRED: "EXPIRED",
+} as const;
+
+export type AccidentReportStatus =
+  (typeof AccidentReportStatus)[keyof typeof AccidentReportStatus];
+
+export const AccidentReportPeriod = {
+  SIX_MONTHS: "SIX_MONTHS",
+  FULL_YEAR: "FULL_YEAR",
+} as const;
+
+export type AccidentReportPeriod =
+  (typeof AccidentReportPeriod)[keyof typeof AccidentReportPeriod];

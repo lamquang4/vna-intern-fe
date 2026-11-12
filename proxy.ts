@@ -19,6 +19,8 @@ const PRIVATE_ROUTES: {
   { path: "/users", roles: [RoleCode.SO] },
   { path: "/enterprises", roles: [RoleCode.SO] },
   { path: "/enterprise", roles: [RoleCode.DOANH_NGHIEP] },
+  { path: "/accident-reports/overall", roles: [RoleCode.SO] },
+  { path: "/accident-reports", roles: [RoleCode.DOANH_NGHIEP, RoleCode.SO] },
 ];
 
 // Đã đăng nhập thì không cần truy cập
@@ -96,5 +98,6 @@ export const config = {
     "/users/:path*",
     "/enterprises/:path*",
     "/enterprise/:path*",
+    "/accident-reports/:path",
   ],
 };
