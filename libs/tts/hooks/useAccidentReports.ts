@@ -17,6 +17,7 @@ import type {
   AccidentReportResponse,
   AccidentReportSummaryResponse,
   OverallAccidentReportResponse,
+  ReviewAccidentReportsRequest,
   UpdateAccidentReportRequest,
 } from "@/libs/shared/tts/models/accident-report.model";
 import type {
@@ -24,7 +25,7 @@ import type {
   GetAccidentReportsParams,
 } from "@/libs/shared/tts/models/params.model";
 import { getErrorMessage } from "@/libs/core/utils/errorUtil";
-import { accidentReportApi } from "../services/apis/accidentReportApis";
+import { accidentReportApis } from "../services/apis/accidentReportApis";
 
 export const accidentReportKeys = {
   all: ["accident-reports"] as const,
@@ -50,9 +51,10 @@ export const useGetAccidentReports = (
     AxiosError<ErrorResponse>
   >({
     queryKey: accidentReportKeys.listParams(params),
-    queryFn: () => accidentReportApi.getAccidentReports(params),
+    queryFn: () => accidentReportApis.getAccidentReports(params),
     placeholderData: keepPreviousData,
     enabled,
+    refetchInterval: 60_000, // 1 phút, chỉ chạy khi tab đang hiển thị
   });
 };
 
@@ -66,9 +68,10 @@ export const useGetAccidentReportsMe = (
     AxiosError<ErrorResponse>
   >({
     queryKey: accidentReportKeys.myListParams(params),
-    queryFn: () => accidentReportApi.getAccidentReportsMe(params),
+    queryFn: () => accidentReportApis.getAccidentReportsMe(params),
     placeholderData: keepPreviousData,
     enabled,
+    refetchInterval: 60_000, // 1 phút, chỉ chạy khi tab đang hiển thị
   });
 };
 
@@ -79,36 +82,31 @@ export const useGetAccidentReportDetail = (id: string) => {
     AxiosError<ErrorResponse>
   >({
     queryKey: accidentReportKeys.detail(id),
-    queryFn: () => accidentReportApi.getAccidentReportDetail(id),
+    queryFn: () => accidentReportApis.getAccidentReportDetail(id),
     enabled: !!id,
   });
 };
 
 // Lấy tóm tắt 1 báo cáo
-export const useGetAccidentReportSummary = (
-  id: string,
-  enabled = true,
-) => {
+export const useGetAccidentReportSummary = (id: string, enabled = true) => {
   return useQuery<
     ApiResponse<AccidentReportSummaryResponse>,
     AxiosError<ErrorResponse>
   >({
     queryKey: accidentReportKeys.summary(id),
-    queryFn: () => accidentReportApi.getAccidentReportSummary(id),
+    queryFn: () => accidentReportApis.getAccidentReportSummary(id),
     enabled: !!id && enabled,
   });
 };
 
 // Lấy báo cáo tổng hợp toàn Sở theo năm
-export const useGetOverallAccidentReport = (
-  year?: number,
-) => {
+export const useGetOverallAccidentReport = (year?: number) => {
   return useQuery<
     ApiResponse<OverallAccidentReportResponse>,
     AxiosError<ErrorResponse>
   >({
     queryKey: accidentReportKeys.overall(year),
-    queryFn: () => accidentReportApi.getOverallAccidentReport(year),
+    queryFn: () => accidentReportApis.getOverallAccidentReport(year),
   });
 };
 
@@ -121,7 +119,7 @@ export const useUpdateAccidentReport = (id: string) => {
     AxiosError<ErrorResponse>,
     UpdateAccidentReportRequest
   >({
-    mutationFn: (data) => accidentReportApi.updateAccidentReport(id, data),
+    mutationFn: (data) => accidentReportApis.updateAccidentReport(id, data),
 
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: accidentReportKeys.lists() });
@@ -139,6 +137,42 @@ export const useUpdateAccidentReport = (id: string) => {
 
     onError: (error) => {
       toast.error(getErrorMessage(error, "Khai báo báo cáo thất bại"));
+    },
+  });
+};
+
+export const useReviewAccidentReport = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ApiResponse<null>,
+    AxiosError<ErrorResponse>,
+    ReviewAccidentReportsRequest
+  >({
+    mutationFn: (data) => accidentReportApis.reviewAccidentReport(data),
+
+    onSuccess: (res) => {
+      toast.success(res.message || "Cập nhật trạng thái thành công");
+    },
+
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Cập nhật trạng thái thất bại"));
+    },
+
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({ queryKey: accidentReportKeys.lists() });
+      queryClient.invalidateQueries({
+        queryKey: [...accidentReportKeys.all, "overall"],
+      });
+
+      variables.accidentReportIds.forEach((id) => {
+        queryClient.invalidateQueries({
+          queryKey: accidentReportKeys.detail(id),
+        });
+        queryClient.invalidateQueries({
+          queryKey: accidentReportKeys.summary(id),
+        });
+      });
     },
   });
 };

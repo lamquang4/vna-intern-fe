@@ -1,5 +1,5 @@
 "use client";
-import { Eye, Filter, Pencil } from "lucide-react";
+import { CircleCheck, CircleX, Eye, Filter, Pencil } from "lucide-react";
 import { Button } from "@/libs/core/components/ui/Button";
 import DataTable from "@/libs/core/components/ui/DataTable";
 import ListLayout from "../layout/ListLayout";
@@ -14,6 +14,7 @@ import {
 } from "@/libs/shared/tts/models/params.model";
 import {
   AccidentReportPeriod,
+  AccidentReportReviewStatus,
   AccidentReportStatus,
   RoleCode,
 } from "@/libs/shared/tts/models/enums";
@@ -21,6 +22,7 @@ import { AccidentReportResponse } from "@/libs/shared/tts/models/accident-report
 import {
   useGetAccidentReports,
   useGetAccidentReportsMe,
+  useReviewAccidentReport,
 } from "../../hooks/useAccidentReports";
 import {
   ACCIDENT_REPORT_PERIOD_OPTIONS,
@@ -30,13 +32,21 @@ import {
 import { useGetMe } from "../../hooks/useAuth";
 import { formatDate } from "@/libs/core/utils/formatters";
 import { Select } from "@/libs/core/components/ui/Select";
+import toast from "react-hot-toast";
+import NoteModal from "./NoteModal";
+import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
 
 function AccidentReportList() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
+  const [confirmStatus, setConfirmStatus] =
+    useState<AccidentReportReviewStatus | null>(null);
+  const [reviewStatus, setReviewStatus] =
+    useState<AccidentReportReviewStatus | null>(null);
 
   const getStatusLabel = (status: AccidentReportStatus) =>
     ACCIDENT_REPORT_STATUS_OPTIONS.find((o) => o.value === status)?.label ??
@@ -44,7 +54,7 @@ function AccidentReportList() {
 
   const getPeriodLabel = (period: AccidentReportPeriod) =>
     ACCIDENT_REPORT_PERIOD_OPTIONS.find((o) => o.value === period)?.label ??
-    status;
+    period;
 
   const FILTER_KEYS = [
     "name",
@@ -103,7 +113,7 @@ function AccidentReportList() {
     });
   };
 
-  const { data: dataMe } = useGetMe();
+  const { data: dataMe, isLoading: isLoadingMe } = useGetMe();
   const account = dataMe?.data;
 
   const isRoleSo = account?.roleCode === RoleCode.SO;
@@ -121,15 +131,55 @@ function AccidentReportList() {
 
   const data = isRoleSo ? dataSo : isRoleDN ? dataDN : undefined;
 
-  const isFetchingAccidentReports = isRoleSo
-    ? isLoadingSo
-    : isRoleDN
-      ? isLoadingDN
-      : false;
+  const isFetchingAccidentReports =
+    isLoadingMe || (isRoleSo ? isLoadingSo : isRoleDN ? isLoadingDN : false);
 
   const accidentReports = data?.data ?? [];
   const totalElements = data?.totalElements ?? 0;
   const totalPages = data?.totalPages ?? 1;
+
+  const reviewAccidentReportMutation = useReviewAccidentReport();
+  const isReviewing = reviewAccidentReportMutation.isPending;
+
+  const handleConfirmDialogReview = (status: AccidentReportReviewStatus) => {
+    if (selectedIds.length === 0) return;
+
+    const reportById = new Map(
+      accidentReports.map((r) => [r.accidentReportId, r]),
+    );
+
+    const hasInvalid = selectedIds.some(
+      (id) => reportById.get(id)?.status !== AccidentReportStatus.ACCEPTED,
+    );
+
+    if (hasInvalid) {
+      toast.error(
+        "Chỉ được duyệt hoặc từ chối các báo cáo có trạng thái là đã tiếp nhận",
+      );
+      return;
+    }
+
+    setConfirmStatus(status);
+  };
+
+  const handleConfirmReview = () => {
+    setReviewStatus(confirmStatus);
+    setConfirmStatus(null);
+  };
+
+  const handleReviewAccidentReport = (note: string) => {
+    if (!reviewStatus || isReviewing || selectedIds.length === 0) return;
+
+    reviewAccidentReportMutation.mutate(
+      { accidentReportIds: selectedIds, status: reviewStatus, note },
+      {
+        onSuccess: () => {
+          setReviewStatus(null);
+          setSelectedIds([]);
+        },
+      },
+    );
+  };
 
   const columns: TableColumn<AccidentReportResponse>[] = [
     {
@@ -165,15 +215,34 @@ function AccidentReportList() {
       header: "Trạng thái",
       cell: (r) => {
         const isAccepted = r.status === AccidentReportStatus.ACCEPTED;
+        const isApproved = r.status === AccidentReportStatus.APPROVED;
+        const isDeclined = r.status === AccidentReportStatus.DECLINED;
+        const isExpired = r.status === AccidentReportStatus.EXPIRED;
 
         return (
           <div className="flex items-center gap-2">
             <div
               className={`size-3 rounded-full ${
-                isAccepted ? "bg-primary" : "bg-muted-foreground"
+                isAccepted
+                  ? "bg-primary"
+                  : isApproved
+                    ? "bg-success"
+                    : isDeclined || isExpired
+                      ? "bg-error"
+                      : "bg-muted-foreground"
               }`}
             />
-            <span className={`font-normal ${isAccepted ? "text-primary" : ""}`}>
+            <span
+              className={`font-normal ${
+                isAccepted
+                  ? "text-primary"
+                  : isApproved
+                    ? "text-success"
+                    : isDeclined || isExpired
+                      ? "text-error"
+                      : ""
+              }`}
+            >
               {getStatusLabel(r.status)}
             </span>
           </div>
@@ -197,7 +266,7 @@ function AccidentReportList() {
             <Button
               type="button"
               onClick={() => setFilterOpen(true)}
-              className="flex items-center gap-2 rounded-md border border-primary px-2 py-2.5 font-medium text-primary"
+              className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 font-medium text-primary"
             >
               <Filter size={18} />
               <span>
@@ -216,10 +285,36 @@ function AccidentReportList() {
             {isRoleSo && (
               <Link
                 href={`/accident-reports/overall?year=${selectedYear}`}
-                className="whitespace-nowrap rounded-md bg-primary px-2 py-2.5 font-medium text-white w-full"
+                className="whitespace-nowrap rounded-md bg-primary px-3 py-2 font-medium text-white w-full"
               >
                 Báo cáo tổng hợp
               </Link>
+            )}
+
+            {selectedIds.length > 0 && isRoleSo && (
+              <Button
+                type="button"
+                onClick={() =>
+                  handleConfirmDialogReview(AccidentReportStatus.APPROVED)
+                }
+                className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
+              >
+                <CircleCheck size={18} />
+                <span>Duyệt ({selectedIds.length})</span>
+              </Button>
+            )}
+
+            {selectedIds.length > 0 && isRoleSo && (
+              <Button
+                type="button"
+                onClick={() =>
+                  handleConfirmDialogReview(AccidentReportStatus.DECLINED)
+                }
+                className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
+              >
+                <CircleX size={18} />
+                <span>Từ chối ({selectedIds.length})</span>
+              </Button>
             )}
           </>
         }
@@ -230,13 +325,45 @@ function AccidentReportList() {
           data={accidentReports}
           getRowId={(r) => r.accidentReportId}
           isLoading={isFetchingAccidentReports}
+          selectedIds={isRoleSo ? selectedIds : undefined}
+          onSelectionChange={isRoleSo ? setSelectedIds : undefined}
         />
       </ListLayout>
 
       {filterOpen && account?.roleCode && (
         <AccidentReportFilterModal
           onClose={() => setFilterOpen(false)}
-          roleCode={account?.roleCode}
+          roleCode={account.roleCode}
+          onClearSelection={() => setSelectedIds([])}
+        />
+      )}
+
+      {confirmStatus && (
+        <ConfirmDialog
+          title={
+            confirmStatus === AccidentReportStatus.APPROVED
+              ? "Xác nhận duyệt báo cáo"
+              : "Xác nhận từ chối báo cáo"
+          }
+          description={`Bạn có chắc chắn muốn ${
+            confirmStatus === AccidentReportStatus.APPROVED
+              ? "duyệt"
+              : "từ chối"
+          } ${selectedIds.length} báo cáo đã chọn?`}
+          confirmText="Xác nhận"
+          cancelText="Hủy bỏ"
+          onConfirm={handleConfirmReview}
+          onClose={() => setConfirmStatus(null)}
+        />
+      )}
+
+      {reviewStatus && (
+        <NoteModal
+          count={selectedIds.length}
+          status={reviewStatus}
+          isLoading={isReviewing}
+          onSubmit={handleReviewAccidentReport}
+          onClose={() => setReviewStatus(null)}
         />
       )}
     </>

@@ -1,5 +1,9 @@
 import { FileResponse } from "../../core/models/common.model";
-import { AccidentReportPeriod, AccidentReportStatus } from "./enums";
+import {
+  AccidentReportPeriod,
+  AccidentReportReviewStatus,
+  AccidentReportStatus,
+} from "./enums";
 
 export interface AccidentVictimStats {
   // Số vụ
@@ -110,6 +114,12 @@ export interface UpdateAccidentReportRequest {
 
   // Xem tổng quan báo cáo tai nạn lao động
   stampedReport?: File | null; // pdf
+}
+
+export interface ReviewAccidentReportsRequest {
+  accidentReportIds: string[];
+  status: AccidentReportReviewStatus;
+  note: string;
 }
 
 // response

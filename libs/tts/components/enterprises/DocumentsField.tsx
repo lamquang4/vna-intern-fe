@@ -16,7 +16,7 @@ import {
   getFileSizeLabel,
   type PreviewFile,
 } from "@/libs/tts/utils/filePreview";
-import FilePreviewContentModal from "./FilePreviewContentModal";
+import FilePreviewModal from "./FilePreviewModal";
 
 interface Props<TFile extends PreviewFile> {
   documents: DocumentRow<TFile>[];
@@ -89,7 +89,7 @@ function DocumentsField<TFile extends PreviewFile>({
       />
 
       {previewFile && (
-        <FilePreviewContentModal
+        <FilePreviewModal
           file={previewFile}
           onClose={() => setPreviewFile(null)}
         />

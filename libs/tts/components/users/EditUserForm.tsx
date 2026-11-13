@@ -422,7 +422,7 @@ function EditUserForm({ userId = "" }: Props) {
             <Button
               type="button"
               onClick={handleCancel}
-              className="rounded-lg px-3.5 py-2 font-medium border border-border"
+              className="rounded-lg px-3 py-2 font-medium border border-border"
             >
               Hủy bỏ
             </Button>
@@ -430,7 +430,7 @@ function EditUserForm({ userId = "" }: Props) {
             <Button
               disabled={isFetchingUser}
               type="submit"
-              className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
+              className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
             >
               Lưu
             </Button>

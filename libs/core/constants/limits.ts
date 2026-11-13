@@ -43,3 +43,4 @@ export const MAX_REPRESENTATIVE_LENGTH = 150;
 export const MAX_PHONE_LENGTH = 30;
 
 export const MAX_ACCIDENT_DETAILS = 20; // số vụ chi tiết tối đa khi khai báo TNLĐ
+export const MAX_REVIEW_NOTE_LENGTH = 500;

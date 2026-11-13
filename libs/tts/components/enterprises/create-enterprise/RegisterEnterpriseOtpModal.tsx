@@ -91,7 +91,7 @@ function RegisterEnterpriseOtpModal({ onClose, onSuccess, email }: Props) {
             <Button
               disabled={isSubmitting || isOtpExpired}
               type="submit"
-              className="w-full px-3.5 py-2 rounded-lg font-medium bg-primary text-white"
+              className="w-full px-3 py-2 rounded-lg font-medium bg-primary text-white"
             >
               Xác nhận
             </Button>
@@ -99,7 +99,7 @@ function RegisterEnterpriseOtpModal({ onClose, onSuccess, email }: Props) {
             <Button
               type="button"
               onClick={handleCancel}
-              className="w-full text-center rounded-lg px-3.5 py-2 font-medium border border-border"
+              className="w-full text-center rounded-lg px-3 py-2 font-medium border border-border"
             >
               Hủy bỏ
             </Button>

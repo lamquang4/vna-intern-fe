@@ -11,6 +11,7 @@ import { USER_STATUS_OPTIONS } from "@/libs/core/constants/options";
 
 interface Props {
   onClose: () => void;
+  onClearSelection: () => void;
 }
 
 const EMPTY_FILTERS = {
@@ -28,7 +29,7 @@ interface Props {
   onClose: () => void;
 }
 
-function UserFilterModal({ onClose }: Props) {
+function UserFilterModal({ onClose, onClearSelection }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -60,6 +61,8 @@ function UserFilterModal({ onClose }: Props) {
       else params.delete(key);
     });
     params.set("page", "1");
+
+    onClearSelection();
 
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     onClose();
@@ -147,14 +150,14 @@ function UserFilterModal({ onClose }: Props) {
             <Button
               type="button"
               onClick={handleClear}
-              className="rounded-lg bg-error px-3 py-2.5 font-medium text-white flex items-center gap-2"
+              className="rounded-lg bg-error px-3 py-2 font-medium text-white flex items-center gap-2"
             >
               <FunnelX size={20} /> <span>Xóa bộ lọc</span>
             </Button>
 
             <Button
               type="submit"
-              className="rounded-lg bg-primary px-3 py-2.5 font-medium text-white flex items-center gap-2"
+              className="rounded-lg bg-primary px-3 py-2 font-medium text-white flex items-center gap-2"
             >
               <Funnel size={20} /> <span>Áp dụng</span>
             </Button>

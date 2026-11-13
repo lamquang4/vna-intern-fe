@@ -35,7 +35,7 @@ function AccountInfoReviewModal({ taxCode, onClose }: Props) {
             <Button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
+              className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
             >
               Xác nhận
             </Button>

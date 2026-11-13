@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { UpdateAccidentReportRequest } from "../models/accident-report.model";
 import {
   MAX_ACCIDENT_REPORT_PDF_SIZE,
+  MAX_REVIEW_NOTE_LENGTH,
   MIME_PDF,
 } from "@/libs/core/constants/limits";
 
@@ -261,3 +262,13 @@ export type UpdateAccidentReportData = z.infer<
 export type UpdateAccidentReportFormValues = z.input<
   typeof updateAccidentReportSchema
 >;
+
+export const reviewNoteSchema = z.object({
+  note: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập ghi chú lý do")
+    .max(MAX_REVIEW_NOTE_LENGTH, `Tối đa ${MAX_REVIEW_NOTE_LENGTH} ký tự`),
+});
+
+export type ReviewNoteData = z.infer<typeof reviewNoteSchema>;

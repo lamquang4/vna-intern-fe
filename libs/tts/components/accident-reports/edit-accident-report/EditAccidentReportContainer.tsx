@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronLeft, Printer, Save } from "lucide-react";
+import { ChevronLeft, CircleCheck, CircleX, Printer, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -18,6 +18,7 @@ import {
 import type { AccidentStats } from "@/libs/shared/tts/models/accident-report.model";
 import {
   AccidentReportPeriod,
+  AccidentReportReviewStatus,
   AccidentReportStatus,
   RoleCode,
 } from "@/libs/shared/tts/models/enums";
@@ -30,6 +31,7 @@ import { useGetMe } from "../../../hooks/useAuth";
 import {
   useGetAccidentReportDetail,
   useGetAccidentReportSummary,
+  useReviewAccidentReport,
   useUpdateAccidentReport,
 } from "../../../hooks/useAccidentReports";
 import BusinessInfoStep from "./BusinessInfoStep";
@@ -38,6 +40,8 @@ import AccidentDetailsStep from "./AccidentDetailsStep";
 import ReportOverviewStep from "./ReportOverviewStep";
 import toast from "react-hot-toast";
 import { downloadAccidentReportWord } from "@/libs/tts/utils/accidentReportWordExport.";
+import NoteModal from "../NoteModal";
+import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
 
 interface Props {
   accidentReportId: string;
@@ -100,9 +104,17 @@ const lastStep = ACCIDENT_REPORT_STEP_OPTIONS.length - 1;
 function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   const router = useRouter();
 
+  const [confirmStatus, setConfirmStatus] =
+    useState<AccidentReportReviewStatus | null>(null);
+  const [reviewStatus, setReviewStatus] =
+    useState<AccidentReportReviewStatus | null>(null);
+
   const reportQuery = useGetAccidentReportDetail(accidentReportId);
   const report = reportQuery.data?.data;
   const isFetchingReport = reportQuery.isLoading;
+
+  const reviewMutation = useReviewAccidentReport();
+  const isReviewing = reviewMutation.isPending;
 
   const { data: currentAccount, isLoading: isLoadingAccount } = useGetMe();
   const isRoleSo = currentAccount?.data.roleCode === RoleCode.SO;
@@ -110,6 +122,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   const isAccepted = report?.status === AccidentReportStatus.ACCEPTED;
   const canEdit =
     mode === "edit" && !isLoadingAccount && isRoleDN && !isAccepted;
+  const canReview = isRoleSo && isAccepted;
   const isReadOnly = !canEdit;
   const canNavigateSteps = mode === "edit" && canEdit;
 
@@ -210,6 +223,51 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
     mode,
     router,
   ]);
+
+  const handleConfirmDialogReview = (status: AccidentReportReviewStatus) => {
+    if (!canReview || isReviewing) return;
+
+    if (report?.status !== AccidentReportStatus.ACCEPTED) {
+      toast.error(
+        "Chỉ được duyệt hoặc từ chối báo cáo có trạng thái đã tiếp nhận",
+      );
+      return;
+    }
+
+    setConfirmStatus(status);
+  };
+
+  const handleConfirmReview = () => {
+    if (!confirmStatus) return;
+
+    setReviewStatus(confirmStatus);
+    setConfirmStatus(null);
+  };
+
+  const handleReviewAccidentReport = (note: string) => {
+    if (
+      !reviewStatus ||
+      !canReview ||
+      isReviewing ||
+      report?.status !== AccidentReportStatus.ACCEPTED
+    ) {
+      return;
+    }
+
+    reviewMutation.mutate(
+      {
+        accidentReportIds: [accidentReportId],
+        status: reviewStatus,
+        note,
+      },
+      {
+        onSuccess: () => {
+          setReviewStatus(null);
+          router.replace("/accident-reports");
+        },
+      },
+    );
+  };
 
   const goToNextStep = async () => {
     if (activeStep >= lastStep || isUpdating) return;
@@ -406,6 +464,34 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
           )}
 
           <div className="flex items-center justify-center gap-3">
+            {canReview && (
+              <>
+                <Button
+                  type="button"
+                  onClick={() =>
+                    handleConfirmDialogReview(AccidentReportStatus.APPROVED)
+                  }
+                  disabled={isReviewing}
+                  className="flex items-center gap-2 rounded-md bg-success px-2 py-2.5 font-medium text-white"
+                >
+                  <CircleCheck size={18} />
+                  <span>Duyệt</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() =>
+                    handleConfirmDialogReview(AccidentReportStatus.DECLINED)
+                  }
+                  disabled={isReviewing}
+                  className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
+                >
+                  <CircleX size={18} />
+                  <span>Từ chối</span>
+                </Button>
+              </>
+            )}
+
             {activeStep === lastStep && (
               <Button
                 type="button"
@@ -413,12 +499,10 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
                 disabled={
                   isExportingReport || summaryQuery.isLoading || !summary
                 }
-                className="flex items-center gap-2 rounded-md border border-primary px-3.5 py-2 text-primary"
+                className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
               >
                 <Printer size={18} />
-                <span>
-                  {isExportingReport ? "Đang tạo Word..." : "In báo cáo"}
-                </span>
+                <span>In báo cáo</span>
               </Button>
             )}
 
@@ -427,7 +511,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
                 type="button"
                 onClick={goToPreviousStep}
                 disabled={isUpdating}
-                className="rounded-md border border-primary px-3.5 py-2 text-primary"
+                className="rounded-md border border-primary px-3 py-2 text-primary"
               >
                 Quay lại
               </Button>
@@ -441,7 +525,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
                   isUpdating ||
                   (activeStep === lastStep && !hasValidNewStampedReport)
                 }
-                className="flex items-center gap-2 rounded-md bg-primary px-3.5 py-2 text-white"
+                className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-white"
               >
                 <Save size={18} />
                 <span>{activeStep === lastStep ? "Gửi báo cáo" : "Lưu"}</span>
@@ -453,7 +537,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
                 type="button"
                 onClick={goToNextStep}
                 disabled={isUpdating}
-                className="rounded-md border border-primary px-3.5 py-2 text-primary"
+                className="rounded-md border border-primary px-3 py-2 text-primary"
               >
                 Tiếp tục
               </Button>
@@ -461,6 +545,35 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
           </div>
         </form>
       </FormProvider>
+
+      {confirmStatus && (
+        <ConfirmDialog
+          title={
+            confirmStatus === AccidentReportStatus.APPROVED
+              ? "Xác nhận duyệt báo cáo"
+              : "Xác nhận từ chối báo cáo"
+          }
+          description={`Bạn có chắc chắn muốn ${
+            confirmStatus === AccidentReportStatus.APPROVED
+              ? "duyệt"
+              : "từ chối"
+          } báo cáo này?`}
+          confirmText="Xác nhận"
+          cancelText="Hủy bỏ"
+          onConfirm={handleConfirmReview}
+          onClose={() => setConfirmStatus(null)}
+        />
+      )}
+
+      {reviewStatus && (
+        <NoteModal
+          count={1}
+          status={reviewStatus}
+          isLoading={isReviewing}
+          onSubmit={handleReviewAccidentReport}
+          onClose={() => setReviewStatus(null)}
+        />
+      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import type {
   AccidentReportResponse,
   AccidentReportSummaryResponse,
   OverallAccidentReportResponse,
+  ReviewAccidentReportsRequest,
   UpdateAccidentReportRequest,
 } from "@/libs/shared/tts/models/accident-report.model";
 import {
@@ -17,7 +18,6 @@ import {
 
 const BASE = "/accident-reports";
 
-// Helper chuyển đổi payload cập nhật báo cáo có file đính kèm sang FormData
 const toAccidentReportFormData = (
   data: UpdateAccidentReportRequest,
 ): FormData => {
@@ -47,7 +47,7 @@ const toAccidentReportFormData = (
   return formData;
 };
 
-export const accidentReportApi = {
+export const accidentReportApis = {
   // Lấy danh sách phân trang báo cáo TNLĐ (role Sở)
   getAccidentReports: (params?: GetAccidentReportsParams) =>
     axiosInstance
@@ -84,5 +84,11 @@ export const accidentReportApi = {
       .get<
         ApiResponse<OverallAccidentReportResponse>
       >(`${BASE}/summary`, { params: { year } })
+      .then((r) => r.data),
+
+  // Duyệt hoặc từ chối báo cáo
+  reviewAccidentReport: (data: ReviewAccidentReportsRequest) =>
+    axiosInstance
+      .put<ApiResponse<null>>(`${BASE}/review`, data)
       .then((r) => r.data),
 };

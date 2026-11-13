@@ -19,6 +19,7 @@ import {
 interface Props {
   onClose: () => void;
   roleCode: RoleCode;
+  onClearSelection: () => void;
 }
 
 const EMPTY_FILTERS = {
@@ -32,7 +33,11 @@ const EMPTY_FILTERS = {
 
 type Filters = typeof EMPTY_FILTERS;
 
-function AccidentReportFilterModal({ onClose, roleCode }: Props) {
+function AccidentReportFilterModal({
+  onClose,
+  roleCode,
+  onClearSelection,
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -83,6 +88,8 @@ function AccidentReportFilterModal({ onClose, roleCode }: Props) {
       else params.delete(key);
     });
     params.set("page", "1");
+
+    onClearSelection();
 
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     onClose();
@@ -194,14 +201,14 @@ function AccidentReportFilterModal({ onClose, roleCode }: Props) {
             <Button
               type="button"
               onClick={handleClear}
-              className="rounded-lg bg-error px-3 py-2.5 font-medium text-white flex items-center gap-2"
+              className="rounded-lg bg-error px-3 py-2 font-medium text-white flex items-center gap-2"
             >
               <FunnelX size={20} /> <span>Xóa bộ lọc</span>
             </Button>
 
             <Button
               type="submit"
-              className="rounded-lg bg-primary px-3 py-2.5 font-medium text-white flex items-center gap-2"
+              className="rounded-lg bg-primary px-3 py-2 font-medium text-white flex items-center gap-2"
             >
               <Funnel size={20} /> <span>Áp dụng</span>
             </Button>

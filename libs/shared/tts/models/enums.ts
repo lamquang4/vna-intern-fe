@@ -32,6 +32,14 @@ export const AccidentReportStatus = {
 export type AccidentReportStatus =
   (typeof AccidentReportStatus)[keyof typeof AccidentReportStatus];
 
+export const AccidentReportReviewStatus = {
+  APPROVED: AccidentReportStatus.APPROVED,
+  DECLINED: AccidentReportStatus.DECLINED,
+} as const;
+
+export type AccidentReportReviewStatus =
+  (typeof AccidentReportReviewStatus)[keyof typeof AccidentReportReviewStatus];
+
 export const AccidentReportPeriod = {
   SIX_MONTHS: "SIX_MONTHS",
   FULL_YEAR: "FULL_YEAR",

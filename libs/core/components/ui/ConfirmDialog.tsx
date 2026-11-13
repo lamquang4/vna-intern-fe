@@ -34,7 +34,7 @@ export function ConfirmDialog({
             type="button"
             disabled={isLoading}
             onClick={onConfirm}
-            className="w-full rounded-lg bg-primary px-2 py-2 font-medium text-white"
+            className="w-full rounded-lg bg-primary px-3 py-2 font-medium text-white"
           >
             {confirmText}
           </Button>
@@ -43,7 +43,7 @@ export function ConfirmDialog({
             type="button"
             disabled={isLoading}
             onClick={onClose}
-            className="w-full rounded-lg bg-error px-2 py-2 font-medium text-white"
+            className="w-full rounded-lg bg-error px-3 py-2 font-medium text-white"
           >
             {cancelText}
           </Button>

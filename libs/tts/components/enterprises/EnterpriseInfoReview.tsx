@@ -139,7 +139,7 @@ function EnterpriseInfoReview({
           type="button"
           onClick={onBack}
           disabled={isLoading}
-          className="rounded-lg px-3.5 py-2 font-medium border border-border"
+          className="rounded-lg px-3 py-2 font-medium border border-border"
         >
           Trở về
         </Button>
@@ -148,7 +148,7 @@ function EnterpriseInfoReview({
           type="button"
           onClick={onConfirm}
           disabled={isLoading}
-          className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
+          className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
         >
           Xác nhận
         </Button>

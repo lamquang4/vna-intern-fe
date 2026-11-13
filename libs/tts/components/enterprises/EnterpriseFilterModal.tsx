@@ -24,9 +24,10 @@ type Filters = typeof EMPTY_FILTERS;
 
 interface Props {
   onClose: () => void;
+  onClearSelection: () => void;
 }
 
-function EnterpriseFilterModal({ onClose }: Props) {
+function EnterpriseFilterModal({ onClose, onClearSelection }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -75,6 +76,8 @@ function EnterpriseFilterModal({ onClose }: Props) {
       else params.delete(key);
     });
     params.set("page", "1");
+
+    onClearSelection();
 
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     onClose();

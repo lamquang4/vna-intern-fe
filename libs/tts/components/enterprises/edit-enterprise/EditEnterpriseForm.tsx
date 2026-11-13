@@ -506,7 +506,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
           <Button
             type="button"
             onClick={handleCancel}
-            className="rounded-lg px-3.5 py-2 font-medium border border-border"
+            className="rounded-lg px-3 py-2 font-medium border border-border"
           >
             Hủy bỏ
           </Button>
@@ -514,7 +514,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
           <Button
             type="submit"
             disabled={isFetchingEnterprise}
-            className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
+            className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
           >
             Tiếp tục
           </Button>

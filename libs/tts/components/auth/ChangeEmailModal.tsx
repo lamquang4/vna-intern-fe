@@ -145,7 +145,7 @@ function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
             <Button
               disabled={isSubmitting || (step === 1 && isOtpExpired)}
               type="submit"
-              className="w-full rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
+              className="w-full rounded-lg px-3 py-2 font-medium bg-primary text-white"
             >
               {step === 1 ? "Xác nhận" : "Lưu"}
             </Button>
@@ -153,7 +153,7 @@ function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
             <Button
               type="button"
               onClick={onClose}
-              className="w-full rounded-lg px-3.5 py-2 font-medium border border-border"
+              className="w-full rounded-lg px-3 py-2 font-medium border border-border"
             >
               Hủy bỏ
             </Button>

@@ -397,14 +397,14 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
         <Button
           type="button"
           onClick={handleCancel}
-          className="rounded-lg px-3.5 py-2 font-medium border border-border"
+          className="rounded-lg px-3 py-2 font-medium border border-border"
         >
           Hủy bỏ
         </Button>
 
         <Button
           type="submit"
-          className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
+          className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
         >
           Tiếp tục
         </Button>

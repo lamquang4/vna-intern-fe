@@ -24,7 +24,8 @@ function EnterpriseList() {
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [toggleStatusId, setToggleStatusId] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [initializePasswordModalOpen, setInitializePasswordModalOpen] =
+    useState<boolean>(false);
   const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
   const [username, setUsername] = useState<string>("");
@@ -109,7 +110,7 @@ function EnterpriseList() {
   };
 
   const handleOpenInitialPasswordModal = (username: string, userId: string) => {
-    setModalOpen(true);
+    setInitializePasswordModalOpen(true);
     setUsername(username);
     setUserId(userId);
   };
@@ -175,7 +176,7 @@ function EnterpriseList() {
               <Button
                 type="button"
                 onClick={handleConfirmDialogDeleteEnterprises}
-                className="flex items-center gap-2 rounded-md bg-error px-2 py-2.5 font-medium text-white"
+                className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
               >
                 <Trash size={18} />
                 <span>
@@ -187,7 +188,7 @@ function EnterpriseList() {
             <Button
               type="button"
               onClick={() => setFilterOpen(true)}
-              className="flex items-center gap-2 rounded-md border border-primary px-2 py-2.5 font-medium text-primary"
+              className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 font-medium text-primary"
             >
               <Filter size={18} />
               <span>
@@ -197,7 +198,7 @@ function EnterpriseList() {
 
             <Link
               href="/enterprises/create"
-              className="rounded-md bg-primary px-2 py-2.5 font-medium text-white flex items-center gap-2"
+              className="rounded-md bg-primary px-3 py-2 font-medium text-white flex items-center gap-2"
             >
               <CirclePlus size={18} strokeWidth={2} /> <span>Thêm</span>
             </Link>
@@ -215,9 +216,9 @@ function EnterpriseList() {
         />
       </ListLayout>
 
-      {modalOpen && (
+      {initializePasswordModalOpen && (
         <InitializePasswordModal
-          onClose={() => setModalOpen(false)}
+          onClose={() => setInitializePasswordModalOpen(false)}
           username={username}
           userId={userId}
         />
@@ -248,7 +249,10 @@ function EnterpriseList() {
       )}
 
       {filterOpen && (
-        <EnterpriseFilterModal onClose={() => setFilterOpen(false)} />
+        <EnterpriseFilterModal
+          onClose={() => setFilterOpen(false)}
+          onClearSelection={() => setSelectedIds([])}
+        />
       )}
     </>
   );
