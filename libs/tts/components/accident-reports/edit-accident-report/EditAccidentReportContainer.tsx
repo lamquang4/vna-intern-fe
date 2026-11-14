@@ -42,6 +42,8 @@ import toast from "react-hot-toast";
 import { downloadAccidentReportWord } from "@/libs/tts/utils/accidentReportWordExport.";
 import NoteModal from "../NoteModal";
 import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
+import { Overlay } from "@/libs/core/components/ui/Overlay";
+import Loading from "@/libs/core/components/ui/Loading";
 
 interface Props {
   accidentReportId: string;
@@ -464,6 +466,32 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
           )}
 
           <div className="flex items-center justify-center gap-3">
+            {canNavigateSteps && activeStep > 0 && (
+              <Button
+                type="button"
+                onClick={goToPreviousStep}
+                disabled={isUpdating}
+                className="rounded-md border border-primary px-3 py-2 text-primary"
+              >
+                Quay lại
+              </Button>
+            )}
+
+            {canEdit && (
+              <Button
+                type="button"
+                onClick={saveCurrentStep}
+                disabled={
+                  isUpdating ||
+                  (activeStep === lastStep && !hasValidNewStampedReport)
+                }
+                className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-white"
+              >
+                <Save size={18} />
+                <span>{activeStep === lastStep ? "Gửi báo cáo" : "Lưu"}</span>
+              </Button>
+            )}
+
             {canReview && (
               <>
                 <Button
@@ -503,32 +531,6 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
               >
                 <Printer size={18} />
                 <span>In báo cáo</span>
-              </Button>
-            )}
-
-            {canNavigateSteps && activeStep > 0 && (
-              <Button
-                type="button"
-                onClick={goToPreviousStep}
-                disabled={isUpdating}
-                className="rounded-md border border-primary px-3 py-2 text-primary"
-              >
-                Quay lại
-              </Button>
-            )}
-
-            {canEdit && (
-              <Button
-                type="button"
-                onClick={saveCurrentStep}
-                disabled={
-                  isUpdating ||
-                  (activeStep === lastStep && !hasValidNewStampedReport)
-                }
-                className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-white"
-              >
-                <Save size={18} />
-                <span>{activeStep === lastStep ? "Gửi báo cáo" : "Lưu"}</span>
               </Button>
             )}
 
@@ -573,6 +575,13 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
           onSubmit={handleReviewAccidentReport}
           onClose={() => setReviewStatus(null)}
         />
+      )}
+
+      {isUpdating && (
+        <Overlay>
+          <Loading size={55} color="white" thickness={8} />
+          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+        </Overlay>
       )}
     </div>
   );

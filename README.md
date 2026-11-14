@@ -55,31 +55,33 @@ Hệ thống có 2 vai trò là Sở và Doanh nghiệp. Mỗi vai trò có nhó
 
 Một số chức năng được giới hạn theo vai trò người dùng, chỉ những vai trò được cấp quyền mới có thể truy cập và thực hiện
 
-| Nhóm chức năng           | Hành động                           |
-| ------------------------ | ----------------------------------- |
-| **Xác thực**             | Đăng nhập                           |
-|                          | Đăng xuất                           |
-|                          | Khôi phục mật khẩu                  |
-|                          | Thay đổi mật khẩu                   |
-|                          | Thay đổi email                      |
-|                          | Khởi tạo mật khẩu                   |
-|                          | Xác thực email bằng OTP             |
-| **Quản lý người dùng**   | Lấy danh sách người dùng            |
-|                          | Thêm người dùng                     |
-|                          | Cập nhật người dùng                 |
-|                          | Xóa nhiều người dùng                |
-|                          | Bật/tắt trạng thái tài khoản        |
-|                          | Xem thông tin người dùng chi tiết   |
-| **Quản lý doanh nghiệp** | Lấy danh sách doanh nghiệp          |
-|                          | Đăng ký doanh nghiệp                |
-|                          | Thêm doanh nghiệp                   |
-|                          | Cập nhật doanh nghiệp               |
-|                          | Xóa doanh nghiệp                    |
-|                          | Xem thông tin doanh nghiệp chi tiết |
-| **Báo cáo TNLĐ**         | Lấy danh sách báo cáo TNLĐ          |
-|                          | Khai báo báo cáo TNLĐ               |
-|                          | Xem báo cáo chi tiết                |
-|                          | Tổng hợp báo cáo theo năm           |
+| Nhóm chức năng               | Hành động                           |
+| ---------------------------- | ----------------------------------- |
+| **Xác thực**                 | Đăng nhập                           |
+|                              | Đăng xuất                           |
+|                              | Khôi phục mật khẩu                  |
+|                              | Thay đổi mật khẩu                   |
+|                              | Thay đổi email                      |
+|                              | Khởi tạo mật khẩu                   |
+|                              | Xác thực email bằng OTP             |
+| **Quản lý người dùng**       | Lấy danh sách người dùng            |
+|                              | Thêm người dùng                     |
+|                              | Cập nhật người dùng                 |
+|                              | Xóa nhiều người dùng                |
+|                              | Bật/tắt trạng thái tài khoản        |
+|                              | Xem thông tin người dùng chi tiết   |
+| **Quản lý doanh nghiệp**     | Lấy danh sách doanh nghiệp          |
+|                              | Đăng ký doanh nghiệp                |
+|                              | Thêm doanh nghiệp                   |
+|                              | Cập nhật doanh nghiệp               |
+|                              | Xóa doanh nghiệp                    |
+|                              | Xem thông tin doanh nghiệp chi tiết |
+| **Báo cáo tai nạn lao động** | Lấy danh sách báo cáo TNLĐ          |
+|                              | Khai báo báo cáo TNLĐ               |
+|                              | Xem báo cáo chi tiết                |
+|                              | Tổng hợp báo cáo theo năm           |
+|                              | In báo cáo ra word                  |
+|                              | Xem xét duyệt hoặc từ chối báo cáo  |
 
 ## Cấu trúc thư mục
 

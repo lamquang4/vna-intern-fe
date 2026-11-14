@@ -10,6 +10,11 @@ import {
 } from "@/libs/core/constants/limits";
 import { formatDuration } from "@/libs/core/utils/formatters";
 
+export interface OtpTimers {
+  expireEndTime: number;
+  cooldownEndTime: number;
+}
+
 interface Props {
   name: string;
   value: string;
@@ -19,7 +24,13 @@ interface Props {
   onResend: (onSuccess: () => void) => void;
   isResending?: boolean;
   onExpiredChange?: (expired: boolean) => void;
+  initialExpireEndTime?: number;
+  initialCooldownEndTime?: number;
+  onTimersChange?: (timers: OtpTimers) => void;
 }
+
+const calcTimeLeft = (endTime: number) =>
+  Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
 
 function OtpField({
   name,
@@ -30,20 +41,24 @@ function OtpField({
   onResend,
   isResending = false,
   onExpiredChange,
+  initialExpireEndTime,
+  initialCooldownEndTime,
+  onTimersChange,
 }: Props) {
-  // Đếm ngược hết hạn OTP (bắt đầu ngay khi mount)
   const [expireEndTime, setExpireEndTime] = useState<number>(
-    () => Date.now() + OTP_EXPIRE_SECONDS * 1000,
+    () => initialExpireEndTime ?? Date.now() + OTP_EXPIRE_SECONDS * 1000,
   );
-  const [expireTimeLeft, setExpireTimeLeft] =
-    useState<number>(OTP_EXPIRE_SECONDS);
+  const [expireTimeLeft, setExpireTimeLeft] = useState<number>(() =>
+    calcTimeLeft(expireEndTime),
+  );
 
   // Đếm ngược cooldown gửi lại OTP
   const [cooldownEndTime, setCooldownEndTime] = useState<number>(
-    () => Date.now() + OTP_RESEND_COOLDOWN_SECONDS * 1000,
+    () =>
+      initialCooldownEndTime ?? Date.now() + OTP_RESEND_COOLDOWN_SECONDS * 1000,
   );
-  const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number>(
-    OTP_RESEND_COOLDOWN_SECONDS,
+  const [cooldownTimeLeft, setCooldownTimeLeft] = useState<number>(() =>
+    calcTimeLeft(cooldownEndTime),
   );
 
   const isOtpExpired = expireTimeLeft <= 0;
@@ -53,10 +68,7 @@ function OtpField({
   // Timer hết hạn OTP
   useEffect(() => {
     const timer = setInterval(() => {
-      const remaining = Math.max(
-        0,
-        Math.ceil((expireEndTime - Date.now()) / 1000),
-      );
+      const remaining = calcTimeLeft(expireEndTime);
       setExpireTimeLeft(remaining);
       if (remaining <= 0) clearInterval(timer);
     }, 1000);
@@ -67,10 +79,7 @@ function OtpField({
   // Timer cooldown gửi lại OTP
   useEffect(() => {
     const timer = setInterval(() => {
-      const remaining = Math.max(
-        0,
-        Math.ceil((cooldownEndTime - Date.now()) / 1000),
-      );
+      const remaining = calcTimeLeft(cooldownEndTime);
       setCooldownTimeLeft(remaining);
       if (remaining <= 0) clearInterval(timer);
     }, 1000);
@@ -84,12 +93,19 @@ function OtpField({
 
   const startTimers = () => {
     const now = Date.now();
+    const newExpireEndTime = now + OTP_EXPIRE_SECONDS * 1000;
+    const newCooldownEndTime = now + OTP_RESEND_COOLDOWN_SECONDS * 1000;
 
-    setExpireEndTime(now + OTP_EXPIRE_SECONDS * 1000);
+    setExpireEndTime(newExpireEndTime);
     setExpireTimeLeft(OTP_EXPIRE_SECONDS);
 
-    setCooldownEndTime(now + OTP_RESEND_COOLDOWN_SECONDS * 1000);
+    setCooldownEndTime(newCooldownEndTime);
     setCooldownTimeLeft(OTP_RESEND_COOLDOWN_SECONDS);
+
+    onTimersChange?.({
+      expireEndTime: newExpireEndTime,
+      cooldownEndTime: newCooldownEndTime,
+    });
   };
 
   const handleResend = () => {

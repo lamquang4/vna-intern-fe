@@ -13,6 +13,15 @@ import { toast } from "react-hot-toast";
 import RegisterEnterpriseOtpModal from "./RegisterEnterpriseOtpModal";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
+import {
+  OTP_EXPIRE_SECONDS,
+  OTP_RESEND_COOLDOWN_SECONDS,
+} from "@/libs/core/constants/limits";
+import type { OtpTimers } from "@/libs/core/components/ui/fields/OtpField";
+
+interface StoredOtpTimers extends OtpTimers {
+  email: string;
+}
 
 function CreateEnterpriseContainer() {
   const pathname = usePathname();
@@ -28,11 +37,13 @@ function CreateEnterpriseContainer() {
 
   const [isOtpModalOpen, setIsOtpModalOpen] = useState<boolean>(false);
   const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
+  const [otpTimers, setOtpTimers] = useState<StoredOtpTimers | null>(null);
 
   const createEnterpriseMutation = useCreateEnterprise();
   const sendOtpMutation = useSendOtp();
 
   const isSendingOtp = sendOtpMutation.isPending;
+  const isCreating = createEnterpriseMutation.isPending;
 
   const handleContinue = (
     data: CreateEnterpriseData,
@@ -50,10 +61,25 @@ function CreateEnterpriseContainer() {
       return;
     }
 
+    if (
+      otpTimers &&
+      otpTimers.email === data.email &&
+      Date.now() < otpTimers.cooldownEndTime
+    ) {
+      setIsOtpModalOpen(true);
+      return;
+    }
+
     sendOtpMutation.mutate(
       { email: data.email, purpose: "REGISTER_ENTERPRISE" },
       {
         onSuccess: (res) => {
+          const now = Date.now();
+          setOtpTimers({
+            email: data.email,
+            expireEndTime: now + OTP_EXPIRE_SECONDS * 1000,
+            cooldownEndTime: now + OTP_RESEND_COOLDOWN_SECONDS * 1000,
+          });
           toast.success(res.message || "Đã gửi mã xác thực đến email");
           setIsOtpModalOpen(true);
         },
@@ -63,6 +89,8 @@ function CreateEnterpriseContainer() {
 
   const handleOtpVerified = () => {
     if (formData) setVerifiedEmail(formData.email);
+    // OTP đã dùng, lần sau phải gửi mã mới
+    setOtpTimers(null);
     setIsOtpModalOpen(false);
     setStep(2);
   };
@@ -76,7 +104,7 @@ function CreateEnterpriseContainer() {
   };
 
   const handleConfirm = () => {
-    if (!formData || createEnterpriseMutation.isPending) return;
+    if (!formData || isCreating) return;
 
     createEnterpriseMutation.mutate(formData, {
       onSuccess: () => {
@@ -88,6 +116,15 @@ function CreateEnterpriseContainer() {
   const handleCloseAccountModal = () => {
     router.replace(backHref);
   };
+
+  // Chỉ truyền timer cho modal khi nó thuộc đúng email hiện tại
+  const activeOtpTimers =
+    formData && otpTimers && otpTimers.email === formData.email
+      ? {
+          expireEndTime: otpTimers.expireEndTime,
+          cooldownEndTime: otpTimers.cooldownEndTime,
+        }
+      : null;
 
   return (
     <>
@@ -141,7 +178,7 @@ function CreateEnterpriseContainer() {
             businessIndustryName={businessIndustryName}
             onBack={handleBack}
             onConfirm={handleConfirm}
-            isLoading={createEnterpriseMutation.isPending}
+            isLoading={isCreating}
           />
         )}
       </div>
@@ -151,14 +188,11 @@ function CreateEnterpriseContainer() {
           email={formData.email}
           onClose={handleCloseOtpModal}
           onSuccess={handleOtpVerified}
+          otpTimers={activeOtpTimers}
+          onOtpTimersChange={(timers) =>
+            setOtpTimers({ email: formData.email, ...timers })
+          }
         />
-      )}
-
-      {isSendingOtp && (
-        <Overlay>
-          <Loading size={55} color="white" thickness={8} />
-          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
-        </Overlay>
       )}
 
       {step === 3 && formData && (
@@ -166,6 +200,13 @@ function CreateEnterpriseContainer() {
           taxCode={formData.taxCode}
           onClose={handleCloseAccountModal}
         />
+      )}
+
+      {(isSendingOtp || isCreating) && (
+        <Overlay>
+          <Loading size={55} color="white" thickness={8} />
+          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+        </Overlay>
       )}
     </>
   );

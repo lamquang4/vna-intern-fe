@@ -12,6 +12,7 @@ import {
 export const emailField = z
   .string()
   .trim()
+  .toLowerCase()
   .min(1, "Email không để trống")
   .email("Email không hợp lệ")
   .max(MAX_EMAIL_LENGTH, `Email tối đa ${MAX_EMAIL_LENGTH} ký tự`);

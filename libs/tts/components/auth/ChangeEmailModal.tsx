@@ -17,16 +17,32 @@ import {
   useResendOtp,
   useVerifyChangeEmailOtp,
 } from "../../hooks/useAuth";
-import OtpField from "../../../core/components/ui/fields/OtpField";
+import OtpField, {
+  OtpTimers,
+} from "../../../core/components/ui/fields/OtpField";
 
 interface Props {
   onClose: () => void;
   userId?: string;
   email: string;
   skipOtp: boolean;
+  // Mốc thời gian OTP do cha lưu (null/undefined = chưa có, OtpField tự bắt đầu mới)
+  otpTimers?: OtpTimers | null;
+  // Gửi lại OTP trong modal thành công -> báo cha lưu mốc mới
+  onOtpTimersChange?: (timers: OtpTimers) => void;
+  // Xác thực OTP thành công -> cha xóa timer (mã đã dùng)
+  onOtpVerified?: () => void;
 }
 
-function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
+function ChangeEmailModal({
+  onClose,
+  userId,
+  email,
+  skipOtp,
+  otpTimers,
+  onOtpTimersChange,
+  onOtpVerified,
+}: Props) {
   const [step, setStep] = useState<1 | 2>(skipOtp ? 2 : 1);
   const [isOtpExpired, setIsOtpExpired] = useState<boolean>(false);
 
@@ -63,6 +79,7 @@ function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
       {
         onSuccess: () => {
           form1.reset();
+          onOtpVerified?.();
           setStep(2);
         },
       },
@@ -127,6 +144,9 @@ function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
                   }
                   isResending={resendOtpMutation.isPending}
                   onExpiredChange={setIsOtpExpired}
+                  initialExpireEndTime={otpTimers?.expireEndTime}
+                  initialCooldownEndTime={otpTimers?.cooldownEndTime}
+                  onTimersChange={onOtpTimersChange}
                 />
               )}
             />

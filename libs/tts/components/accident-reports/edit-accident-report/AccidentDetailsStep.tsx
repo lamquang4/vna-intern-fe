@@ -141,13 +141,13 @@ function AccidentDetailsStep() {
     <div className="flex flex-col gap-[20px]">
       <div className="flex flex-col gap-2">
         <p>Doanh nghiệp xảy ra tai nạn lao động vui lòng nhập theo từng bước</p>
-      </div>
 
-      {desiredDetailsCount === 0 && (
-        <p className="text-error">
-          Tổng số vụ tai nạn là 0, không có chi tiết vụ tai nạn cần khai báo.
-        </p>
-      )}
+        {desiredDetailsCount === 0 && (
+          <p className="text-error">
+            Tổng số vụ tai nạn là 0, không có chi tiết vụ tai nạn cần khai báo.
+          </p>
+        )}
+      </div>
 
       {fields.map((field, index) => {
         const row = details[index];
@@ -159,7 +159,7 @@ function AccidentDetailsStep() {
         return (
           <div
             key={field.id}
-            className="flex flex-col gap-5 rounded-md border-b border-border"
+            className="flex flex-col gap-6 rounded-md border-b border-border pb-6"
           >
             <Button
               type="button"
@@ -190,7 +190,7 @@ function AccidentDetailsStep() {
               className={
                 collapsedDetails.has(field.id)
                   ? "hidden"
-                  : "flex flex-col gap-5"
+                  : "flex flex-col gap-[20px]"
               }
             >
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -265,6 +265,7 @@ function AccidentDetailsStep() {
                     )}
                     type="number"
                     min={0}
+                    required
                     label="Tổng số người bị nạn"
                     placeholder="Nhập tổng số người bị nạn"
                     error={getError(`accidentDetails.${index}.totalVictims`)}
@@ -276,6 +277,7 @@ function AccidentDetailsStep() {
                     )}
                     type="number"
                     min={0}
+                    required
                     label="Tổng số lao động nữ bị nạn"
                     placeholder="Nhập tổng số lao động nữ bị nạn"
                     error={getError(
@@ -289,6 +291,7 @@ function AccidentDetailsStep() {
                     )}
                     type="number"
                     min={0}
+                    required
                     label="Tổng số người chết"
                     placeholder="Nhập tổng số người chết"
                     error={getError(
@@ -302,6 +305,7 @@ function AccidentDetailsStep() {
                     )}
                     type="number"
                     min={0}
+                    required
                     label="Tổng số người bị thương nặng"
                     placeholder="Nhập tổng số người bị thương nặng"
                     error={getError(
@@ -318,6 +322,7 @@ function AccidentDetailsStep() {
                     )}
                     type="number"
                     min={0}
+                    required
                     label="Số người bị nạn không QL"
                     placeholder="Nhập số người bị nạn không QL"
                     error={getError(
@@ -331,6 +336,7 @@ function AccidentDetailsStep() {
                     )}
                     type="number"
                     min={0}
+                    required
                     label="Lao động nữ bị nạn không QL"
                     placeholder="Nhập lao động nữ bị nạn không QL"
                     error={getError(
@@ -344,6 +350,7 @@ function AccidentDetailsStep() {
                     )}
                     type="number"
                     min={0}
+                    required
                     label="Số người chết không QL"
                     placeholder="Nhập số người chết không QL"
                     error={getError(
@@ -357,6 +364,7 @@ function AccidentDetailsStep() {
                     )}
                     type="number"
                     min={0}
+                    required
                     label="Người bị thương nặng không QL"
                     placeholder="Nhập người bị thương nặng không QL"
                     error={getError(
@@ -375,6 +383,7 @@ function AccidentDetailsStep() {
                     })}
                     formatThousands
                     label="Chi phí y tế"
+                    required
                     placeholder="Nhập chi phí y tế"
                     error={getError(`accidentDetails.${index}.medicalExpense`)}
                   />
@@ -386,7 +395,8 @@ function AccidentDetailsStep() {
                       },
                     )}
                     formatThousands
-                    label="Chi phí trả lương trong thời gian điều trị  "
+                    label="Chi phí trả lương trong thời gian điều trị"
+                    required
                     placeholder="Nhập chi phí trả lương trong thời gian điều trị"
                     error={getError(
                       `accidentDetails.${index}.salaryExpenseDuringTreatment`,
@@ -410,6 +420,7 @@ function AccidentDetailsStep() {
                   <FloatingInput
                     label="Tổng số tiền chi phí"
                     type="text"
+                    required
                     value={new Intl.NumberFormat("vi-VN").format(totalExpense)}
                     disabled
                   />
@@ -424,6 +435,7 @@ function AccidentDetailsStep() {
                     type="number"
                     min={0}
                     label="Tổng số ngày nghỉ vì TNLĐ"
+                    required
                     placeholder="Nhập tổng số ngày nghỉ vì TNLĐ"
                     error={getError(`accidentDetails.${index}.totalDaysOff`)}
                   />
@@ -436,7 +448,7 @@ function AccidentDetailsStep() {
                       },
                     )}
                     formatThousands
-                    label="Thiệt hại tài sản  "
+                    label="Thiệt hại tài sản"
                     placeholder="Nhập thiệt hại tài sản"
                     error={getError(
                       `accidentDetails.${index}.propertyDamageExpense`,

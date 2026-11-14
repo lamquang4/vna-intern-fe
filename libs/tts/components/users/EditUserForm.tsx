@@ -33,15 +33,24 @@ import { GENDER_OPTIONS } from "@/libs/core/constants/options";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
 import { RoleCode } from "@/libs/shared/tts/models/enums";
+import {
+  OTP_EXPIRE_SECONDS,
+  OTP_RESEND_COOLDOWN_SECONDS,
+} from "@/libs/core/constants/limits";
+import type { OtpTimers } from "../../../core/components/ui/fields/OtpField";
 
 interface Props {
   userId?: string;
+}
+interface StoredOtpTimers extends OtpTimers {
+  email: string;
 }
 
 function EditUserForm({ userId = "" }: Props) {
   const router = useRouter();
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [otpTimers, setOtpTimers] = useState<StoredOtpTimers | null>(null);
 
   const editUserSchema = z.union([updateUserSchema, updateMeSchema]);
 
@@ -168,11 +177,28 @@ function EditUserForm({ userId = "" }: Props) {
       return;
     }
 
+    if (
+      otpTimers &&
+      otpTimers.email === user.email &&
+      Date.now() < otpTimers.cooldownEndTime
+    ) {
+      setModalOpen(true);
+      return;
+    }
+
+    const targetEmail = user.email;
+
     // OTP gửi đến email hiện tại của tài khoản đang đổi email
     sendOtpMutation.mutate(
-      { email: user.email, purpose: "CHANGE_EMAIL" },
+      { email: targetEmail, purpose: "CHANGE_EMAIL" },
       {
         onSuccess: (res) => {
+          const now = Date.now();
+          setOtpTimers({
+            email: targetEmail,
+            expireEndTime: now + OTP_EXPIRE_SECONDS * 1000,
+            cooldownEndTime: now + OTP_RESEND_COOLDOWN_SECONDS * 1000,
+          });
           toast.success(res.message || "Đã gửi mã xác thực đến email");
           setModalOpen(true);
         },
@@ -183,6 +209,15 @@ function EditUserForm({ userId = "" }: Props) {
   const handleCancel = () => {
     reset();
   };
+
+  // Chỉ truyền timer cho modal khi nó thuộc đúng email hiện tại
+  const activeOtpTimers =
+    otpTimers && otpTimers.email === user?.email
+      ? {
+          expireEndTime: otpTimers.expireEndTime,
+          cooldownEndTime: otpTimers.cooldownEndTime,
+        }
+      : null;
 
   return (
     <>
@@ -444,10 +479,15 @@ function EditUserForm({ userId = "" }: Props) {
           email={user?.email || ""}
           userId={isSelf ? undefined : userId}
           skipOtp={skipChangeEmailOtp}
+          otpTimers={activeOtpTimers}
+          onOtpTimersChange={(timers) =>
+            setOtpTimers({ email: user?.email ?? "", ...timers })
+          }
+          onOtpVerified={() => setOtpTimers(null)}
         />
       )}
 
-      {isSendingOtp && (
+      {(isSendingOtp || isUpdating) && (
         <Overlay>
           <Loading size={55} color="white" thickness={8} />
           <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>

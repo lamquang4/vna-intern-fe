@@ -13,6 +13,8 @@ import {
 } from "@/libs/tts/hooks/useEnterprises";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { Overlay } from "@/libs/core/components/ui/Overlay";
+import Loading from "@/libs/core/components/ui/Loading";
 
 interface Props {
   enterpriseId?: string;
@@ -74,61 +76,70 @@ function EditEnterpriseContainer({ enterpriseId = "" }: Props) {
   };
 
   return (
-    <div className="py-[30px] sm:px-[20px] px-[15px] flex flex-col gap-6 overflow-y-auto">
-      <div className="flex justify-between items-center gap-4 flex-wrap">
-        <h3>Chi tiết doanh nghiệp</h3>
+    <>
+      <div className="py-[30px] sm:px-[20px] px-[15px] flex flex-col gap-6 overflow-y-auto">
+        <div className="flex justify-between items-center gap-4 flex-wrap">
+          <h3>Chi tiết doanh nghiệp</h3>
 
-        {!isMePage && (
-          <Link
-            href="/enterprises"
-            className="flex items-center font-medium gap-1 text-muted-foreground hover:text-primary px-3 py-2"
-          >
-            <ChevronLeft size={20} /> <span>Trở về</span>
-          </Link>
+          {!isMePage && (
+            <Link
+              href="/enterprises"
+              className="flex items-center font-medium gap-1 text-muted-foreground hover:text-primary px-3 py-2"
+            >
+              <ChevronLeft size={20} /> <span>Trở về</span>
+            </Link>
+          )}
+        </div>
+
+        <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
+          <div className="flex gap-2 items-center">
+            <div
+              className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
+            >
+              1
+            </div>
+            <span>Thông tin doanh nghiệp</span>
+          </div>
+
+          <div className="flex gap-2 items-center">
+            <div
+              className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
+            >
+              2
+            </div>
+            <span>Xác nhận đăng ký</span>
+          </div>
+        </div>
+
+        {step === 1 ? (
+          <EditEnterpriseForm
+            onContinue={handleContinue}
+            initialData={formData}
+            enterpriseId={enterpriseId}
+          />
+        ) : (
+          formData && (
+            <EnterpriseInfoReview
+              data={formData}
+              existingFiles={existingFiles}
+              businessTypeName={businessTypeName}
+              businessIndustryName={businessIndustryName}
+              taxCode={taxCode}
+              onBack={handleBack}
+              onConfirm={handleConfirm}
+              isLoading={isUpdating}
+            />
+          )
         )}
       </div>
 
-      <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
-        <div className="flex gap-2 items-center">
-          <div
-            className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
-          >
-            1
-          </div>
-          <span>Thông tin doanh nghiệp</span>
-        </div>
-
-        <div className="flex gap-2 items-center">
-          <div
-            className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
-          >
-            2
-          </div>
-          <span>Xác nhận đăng ký</span>
-        </div>
-      </div>
-
-      {step === 1 ? (
-        <EditEnterpriseForm
-          onContinue={handleContinue}
-          initialData={formData}
-          enterpriseId={enterpriseId}
-        />
-      ) : (
-        formData && (
-          <EnterpriseInfoReview
-            data={formData}
-            existingFiles={existingFiles}
-            businessTypeName={businessTypeName}
-            businessIndustryName={businessIndustryName}
-            taxCode={taxCode}
-            onBack={handleBack}
-            onConfirm={handleConfirm}
-            isLoading={isUpdating}
-          />
-        )
+      {isUpdating && (
+        <Overlay>
+          <Loading size={55} color="white" thickness={8} />
+          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+        </Overlay>
       )}
-    </div>
+    </>
   );
 }
 
