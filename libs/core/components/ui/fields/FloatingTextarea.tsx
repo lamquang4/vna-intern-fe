@@ -29,7 +29,7 @@ export function FloatingTextarea({
           disabled={disabled}
           error={error}
           className={twMerge(
-            "-mt-1 block w-full rounded-none border-0 bg-transparent px-3 py-2 focus:border-0",
+            "block w-full rounded-none border-0 bg-transparent px-3 py-2 focus:border-0",
             className,
           )}
         />
