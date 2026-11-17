@@ -47,12 +47,12 @@ function NoteModal({ onClose, onSubmit, count, isLoading, status }: Props) {
         <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col gap-6">
             <p>
-              Ghi chú lý do {isApprove ? "duyệt" : "từ chối"} {count}
-              báo cáo đã chọn
+              Ghi chú lý do cho {isApprove ? "duyệt" : "từ chối"} {count} báo
+              cáo đã chọn
             </p>
 
             <FloatingTextarea
-              label="Ghi chú lý do"
+              label="Ghi chú"
               placeholder="Nhập ghi chú lý do"
               required
               minRows={8}

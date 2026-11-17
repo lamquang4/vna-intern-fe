@@ -129,6 +129,7 @@ export interface AccidentReportResponse {
   taxCode: string;
   reportPeriod: AccidentReportPeriod;
   status: AccidentReportStatus;
+  note: string;
   createdAt: string;
   updatedAt?: string | null;
 }
@@ -157,6 +158,7 @@ export interface AccidentReportDetailResponse {
 
   // Xem tổng quan báo cáo tai nạn lao động
   stampedReport?: FileResponse | null;
+  note: string;
 }
 
 export interface AccidentReportSummaryResponse {

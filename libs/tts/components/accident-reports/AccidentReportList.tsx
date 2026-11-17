@@ -185,19 +185,30 @@ function AccidentReportList() {
     {
       key: "actions",
       header: "Hành động",
-      cell: (r) => (
-        <div className="flex items-center gap-3">
-          <Link href={`/accident-reports/${r.accidentReportId}?mode=view`}>
-            <Eye size={22} className="text-muted-foreground" />
-          </Link>
+      cell: (r) => {
+        const isViewOnly = (
+          [
+            AccidentReportStatus.ACCEPTED,
+            AccidentReportStatus.APPROVED,
+            AccidentReportStatus.DECLINED,
+            AccidentReportStatus.EXPIRED,
+          ] as AccidentReportStatus[]
+        ).includes(r.status);
 
-          {r.status !== AccidentReportStatus.ACCEPTED && isRoleDN && (
-            <Link href={`/accident-reports/${r.accidentReportId}?mode=edit`}>
-              <Pencil size={22} className="text-edit" />
+        return (
+          <div className="flex items-center gap-3">
+            <Link href={`/accident-reports/${r.accidentReportId}?mode=view`}>
+              <Eye size={22} className="text-muted-foreground" />
             </Link>
-          )}
-        </div>
-      ),
+
+            {isRoleDN && !isViewOnly && (
+              <Link href={`/accident-reports/${r.accidentReportId}?mode=edit`}>
+                <Pencil size={22} className="text-edit" />
+              </Link>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "taxCode",
@@ -209,6 +220,13 @@ function AccidentReportList() {
       key: "reportPeriod",
       header: "Kỳ báo cáo",
       cell: (r) => getPeriodLabel(r.reportPeriod),
+    },
+    {
+      key: "note",
+      header: "Ghi chú",
+      cell: (r) => (
+        <p className="line-clamp-2 max-w-xs break-words">{r.note}</p>
+      ),
     },
     {
       key: "status",
@@ -248,11 +266,6 @@ function AccidentReportList() {
           </div>
         );
       },
-    },
-    {
-      key: "createdAt",
-      header: "Ngày tạo",
-      cell: (r) => formatDate(r.createdAt),
     },
   ];
 

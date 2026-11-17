@@ -110,6 +110,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
     useState<AccidentReportReviewStatus | null>(null);
   const [reviewStatus, setReviewStatus] =
     useState<AccidentReportReviewStatus | null>(null);
+  const [isExportingReport, setIsExportingReport] = useState<boolean>(false);
 
   const reportQuery = useGetAccidentReportDetail(accidentReportId);
   const report = reportQuery.data?.data;
@@ -119,11 +120,23 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   const isReviewing = reviewMutation.isPending;
 
   const { data: currentAccount, isLoading: isLoadingAccount } = useGetMe();
+
   const isRoleSo = currentAccount?.data.roleCode === RoleCode.SO;
   const isRoleDN = currentAccount?.data.roleCode === RoleCode.DOANH_NGHIEP;
   const isAccepted = report?.status === AccidentReportStatus.ACCEPTED;
+  const isViewOnly =
+    !!report &&
+    (
+      [
+        AccidentReportStatus.ACCEPTED,
+        AccidentReportStatus.APPROVED,
+        AccidentReportStatus.DECLINED,
+        AccidentReportStatus.EXPIRED,
+      ] as AccidentReportStatus[]
+    ).includes(report.status);
+
   const canEdit =
-    mode === "edit" && !isLoadingAccount && isRoleDN && !isAccepted;
+    mode === "edit" && !isLoadingAccount && isRoleDN && !!report && !isViewOnly;
   const canReview = isRoleSo && isAccepted;
   const isReadOnly = !canEdit;
   const canNavigateSteps = mode === "edit" && canEdit;
@@ -131,13 +144,12 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   const [currentStep, setCurrentStep] = useState(
     mode === "view" ? lastStep : 0,
   );
-  const activeStep = isRoleSo || isAccepted ? lastStep : currentStep;
+  const activeStep = isRoleSo || isViewOnly ? lastStep : currentStep;
   const summaryQuery = useGetAccidentReportSummary(
     accidentReportId,
     activeStep === lastStep,
   );
   const summary = summaryQuery.data?.data;
-  const [isExportingReport, setIsExportingReport] = useState(false);
   const updateMutation = useUpdateAccidentReport(accidentReportId);
 
   const isUpdating = updateMutation.isPending;
@@ -150,10 +162,10 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
         return ["totalEmployees", "femaleEmployees", "totalSalaryFund"];
       case 1:
       case 3: {
-        const prefix = step === 1 ? "accidentTotals" : "subsidizedAccident";
+        const type = step === 1 ? "accidentTotals" : "subsidizedAccident";
         return accidentStatsFields.map(
           (field) =>
-            `${prefix}.${field}` as FieldPath<UpdateAccidentReportFormValues>,
+            `${type}.${field}` as FieldPath<UpdateAccidentReportFormValues>,
         );
       }
       case 2:
@@ -167,13 +179,6 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
         return ["stampedReport"];
     }
   };
-
-  useEffect(() => {
-    if (isFetchingReport || report) return;
-
-    toast.error("Không tìm thấy báo cáo TNLĐ");
-    router.replace("/accident-reports");
-  }, [isFetchingReport, report, router]);
 
   const getPeriodLabel = (period: AccidentReportPeriod) =>
     ACCIDENT_REPORT_PERIOD_OPTIONS.find((o) => o.value === period)?.label ??
@@ -205,6 +210,13 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
     stampedReport.size <= MAX_ACCIDENT_REPORT_PDF_SIZE;
 
   useEffect(() => {
+    if (isFetchingReport || report) return;
+
+    toast.error("Không tìm thấy báo cáo TNLĐ");
+    router.replace("/accident-reports");
+  }, [isFetchingReport, report, router]);
+
+  useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentStep(mode === "view" ? lastStep : 0);
   }, [mode]);
@@ -212,14 +224,14 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   useEffect(() => {
     if (
       mode === "edit" &&
-      (isRoleSo || (!isFetchingReport && isRoleDN && isAccepted))
+      (isRoleSo || (!isFetchingReport && isRoleDN && isViewOnly))
     ) {
       router.replace(`/accident-reports/${accidentReportId}?mode=view`);
     }
   }, [
     accidentReportId,
     isFetchingReport,
-    isAccepted,
+    isViewOnly,
     isRoleDN,
     isRoleSo,
     mode,
@@ -447,12 +459,10 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
                   businessTypeName={report?.businessTypeName}
                 />
               )}
-              {activeStep === 1 && (
-                <AccidentStatsStep prefix="accidentTotals" />
-              )}
+              {activeStep === 1 && <AccidentStatsStep type="accidentTotals" />}
               {activeStep === 2 && <AccidentDetailsStep />}
               {activeStep === 3 && (
-                <AccidentStatsStep prefix="subsidizedAccident" />
+                <AccidentStatsStep type="subsidizedAccident" />
               )}
             </div>
           )}

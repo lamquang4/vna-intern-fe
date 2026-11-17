@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { ArrowUpToLine, Eye } from "lucide-react";
 import { Controller, useFormContext } from "react-hook-form";
@@ -19,12 +18,8 @@ import {
 } from "@/libs/tts/utils/filePreview";
 import type { AccidentReportSummaryResponse } from "@/libs/shared/tts/models/accident-report.model";
 import AccidentReportSummaryTable from "./AccidentReportSummaryTable";
-
-interface StampedReportRow {
-  id: string;
-  name: string;
-  file: PreviewFile | null;
-}
+import { FloatingTextarea } from "@/libs/core/components/ui/fields/FloatingTextarea";
+import { AccidentReportStatus } from "@/libs/shared/tts/models/enums";
 
 interface Props {
   report?: AccidentReportDetailResponse;
@@ -45,35 +40,29 @@ function ReportOverviewStep({ report, summary, disabled = false }: Props) {
         : null;
   const currentFile = selectedFilePreview ?? stampedReport ?? null;
 
-  const documents: StampedReportRow[] = [
-    {
-      id: "stampedReport",
-      name: "Báo cáo TNLĐ có dấu mộc công ty",
-      file: currentFile,
-    },
-  ];
+  const documents: PreviewFile[] = currentFile ? [currentFile] : [];
 
-  const columns: TableColumn<StampedReportRow>[] = [
-    { key: "name", header: "Loại tài liệu", cell: (row) => row.name },
+  const columns: TableColumn<PreviewFile>[] = [
     {
-      key: "fileName",
-      header: "Tên file",
-      cell: (row) => (row.file ? getFileName(row.file) : "Chưa chọn tệp"),
+      key: "name",
+      header: "Loại tài liệu",
+      cell: () => "Báo cáo TNLĐ có dấu mộc công ty",
     },
+    { key: "fileName", header: "Tên file", cell: (file) => getFileName(file) },
     {
       key: "fileInfo",
       header: "Dung lượng",
-      cell: (row) => (row.file ? getFileSizeLabel(row.file) : ""),
+      cell: (file) => getFileSizeLabel(file),
     },
     {
       key: "actions",
       header: "Hành động",
-      cell: (row) => (
+      cell: (file) => (
         <div className="flex items-center gap-3">
-          {row.file && (
+          {file && (
             <Button
               type="button"
-              onClick={() => setPreviewFile(row.file)}
+              onClick={() => setPreviewFile(file)}
               aria-label="Xem trước tệp"
             >
               <Eye size={22} className="text-muted-foreground" />
@@ -115,8 +104,22 @@ function ReportOverviewStep({ report, summary, disabled = false }: Props) {
         <DataTable
           columns={columns}
           data={documents}
-          getRowId={(row) => row.id}
+          getRowId={() => "stampedReport"}
         />
+
+        {report?.note &&
+          (report?.status === AccidentReportStatus.APPROVED ||
+            report?.status === AccidentReportStatus.DECLINED) && (
+            <FloatingTextarea
+              label="Ghi chú"
+              required
+              minRows={8}
+              maxRows={16}
+              value={report?.note}
+              readOnly
+              disabled
+            />
+          )}
 
         <AccidentReportSummaryTable summary={summary} />
       </div>
