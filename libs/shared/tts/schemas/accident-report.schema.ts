@@ -69,7 +69,7 @@ const validateVictims = (
   },
   ctx: z.RefinementCtx,
 ) => {
-  // Tổng
+  // ----- Tổng -----
   if (data.totalFemaleVictims > data.totalVictims) {
     addIssue(
       ctx,
@@ -104,37 +104,7 @@ const validateVictims = (
     );
   }
 
-  if (data.nonManagedVictims > data.totalVictims) {
-    addIssue(
-      ctx,
-      "nonManagedVictims",
-      "Số người bị nạn không QL không được lớn hơn tổng số người bị nạn",
-    );
-  }
-  if (data.nonManagedFemaleVictims > data.totalFemaleVictims) {
-    addIssue(
-      ctx,
-      "nonManagedFemaleVictims",
-      "Số lao động nữ không QL không được lớn hơn tổng số lao động nữ bị nạn",
-    );
-  }
-  if (data.nonManagedFatalVictims > data.totalFatalVictims) {
-    addIssue(
-      ctx,
-      "nonManagedFatalVictims",
-      "Số người chết không QL không được lớn hơn tổng số người chết",
-    );
-  }
-  if (
-    data.nonManagedSeverelyInjuredVictims > data.totalSeverelyInjuredVictims
-  ) {
-    addIssue(
-      ctx,
-      "nonManagedSeverelyInjuredVictims",
-      "Số người bị thương nặng không QL không được lớn hơn tổng số người bị thương nặng",
-    );
-  }
-
+  // ----- Không QL -----
   if (data.nonManagedFemaleVictims > data.nonManagedVictims) {
     addIssue(
       ctx,
@@ -242,11 +212,7 @@ export const updateAccidentReportSchema = z
     stampedReport: pdfField,
   })
   .superRefine((data, ctx) => {
-    if (
-      data.totalEmployees != null &&
-      data.femaleEmployees != null &&
-      data.femaleEmployees > data.totalEmployees
-    ) {
+    if (data.femaleEmployees > data.totalEmployees) {
       addIssue(
         ctx,
         "femaleEmployees",

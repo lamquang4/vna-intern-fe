@@ -16,13 +16,13 @@ import {
   CreateEnterpriseData,
   createEnterpriseSchema,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
-import {
-  DocumentField,
-  DocumentRow,
-} from "@/libs/shared/tts/models/enterprise.model";
 import EnterpriseFileField from "../EnterpriseFileField";
 import { formatTaxCode } from "@/libs/core/utils/formatters";
 import { PreviewFile } from "@/libs/tts/utils/filePreview";
+import {
+  DocumentField,
+  EnterpriseDocumentRow,
+} from "@/libs/shared/tts/models/enterprise.model";
 
 interface Props {
   onContinue: (
@@ -121,7 +121,7 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
     );
   };
 
-  const documents: DocumentRow<PreviewFile>[] = [
+  const documents: EnterpriseDocumentRow<PreviewFile>[] = [
     {
       id: "businessLicense",
       name: "Giấy phép kinh doanh",

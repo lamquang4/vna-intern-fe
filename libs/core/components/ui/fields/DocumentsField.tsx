@@ -7,31 +7,32 @@ import { Input } from "@/libs/core/components/ui/Input";
 import { Label } from "@/libs/core/components/ui/Label";
 import { ALLOWED_DOCUMENT_MIME_TYPES } from "@/libs/core/constants/limits";
 import type { TableColumn } from "@/libs/core/models/component.model";
-import type {
-  DocumentField,
-  DocumentRow,
-} from "@/libs/shared/tts/models/enterprise.model";
+import type { DocumentRow } from "@/libs/shared/core/models/common.model";
 import {
   getFileName,
   getFileSizeLabel,
   type PreviewFile,
 } from "@/libs/tts/utils/filePreview";
-import FilePreviewModal from "./FilePreviewModal";
+import FilePreviewModal from "@/libs/core/components/ui/FilePreviewModal";
 
-interface Props<TFile extends PreviewFile> {
-  documents: DocumentRow<TFile>[];
-  onSelect?: (id: DocumentField, file: File) => void;
-  onRemove?: (document: DocumentRow<TFile>) => void;
+const DEFAULT_ACCEPT = ALLOWED_DOCUMENT_MIME_TYPES.join(",");
+
+interface Props<TFile extends PreviewFile, TId extends string> {
+  documents: DocumentRow<TFile, TId>[];
+  onSelect?: (id: TId, file: File) => void;
+  onRemove?: (document: DocumentRow<TFile, TId>) => void;
+  accept?: string;
 }
 
-function DocumentsField<TFile extends PreviewFile>({
+function DocumentsField<TFile extends PreviewFile, TId extends string>({
   documents,
   onSelect,
   onRemove,
-}: Props<TFile>) {
+  accept = DEFAULT_ACCEPT,
+}: Props<TFile, TId>) {
   const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
 
-  const columns: TableColumn<DocumentRow<TFile>>[] = [
+  const columns: TableColumn<DocumentRow<TFile, TId>>[] = [
     { key: "name", header: "Loại tài liệu", cell: (row) => row.name },
     {
       key: "fileName",
@@ -49,17 +50,26 @@ function DocumentsField<TFile extends PreviewFile>({
       cell: (row) => (
         <div className="flex items-center gap-3">
           {row.file && (
-            <Button type="button" onClick={() => setPreviewFile(row.file)}>
+            <Button
+              type="button"
+              aria-label="Xem trước tệp"
+              title="Xem trước tệp"
+              onClick={() => setPreviewFile(row.file)}
+            >
               <Eye size={22} className="text-muted-foreground" />
             </Button>
           )}
 
           {onSelect && (
-            <Label className="relative inline-flex items-center !cursor-pointer">
+            <Label
+              className="relative inline-flex items-center !cursor-pointer"
+              title="Chọn tệp"
+            >
               <ArrowUpToLine size={22} className="text-success" />
               <Input
                 type="file"
-                accept={ALLOWED_DOCUMENT_MIME_TYPES.join(",")}
+                accept={accept}
+                aria-label="Chọn tệp"
                 className="absolute inset-0 size-full opacity-0"
                 onChange={(e) => {
                   const file = e.currentTarget.files?.[0];
@@ -71,7 +81,12 @@ function DocumentsField<TFile extends PreviewFile>({
           )}
 
           {onRemove && row.file && (
-            <Button type="button" onClick={() => onRemove(row)}>
+            <Button
+              type="button"
+              aria-label="Xóa tệp"
+              title="Xóa tệp"
+              onClick={() => onRemove(row)}
+            >
               <Trash size={22} className="text-error" />
             </Button>
           )}

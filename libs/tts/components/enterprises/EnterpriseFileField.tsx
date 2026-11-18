@@ -16,7 +16,7 @@ import {
   getFileSizeLabel,
   type PreviewFile,
 } from "@/libs/tts/utils/filePreview";
-import FilePreviewModal from "./FilePreviewModal";
+import FilePreviewModal from "../../../core/components/ui/FilePreviewModal";
 
 interface Props<TFile extends PreviewFile> {
   documents: DocumentRow<TFile>[];

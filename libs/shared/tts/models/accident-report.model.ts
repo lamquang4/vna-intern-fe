@@ -1,4 +1,5 @@
-import { FileResponse } from "../../core/models/common.model";
+import { PreviewFile } from "@/libs/tts/utils/filePreview";
+import { DocumentRow, FileResponse } from "../../core/models/common.model";
 import {
   AccidentReportPeriod,
   AccidentReportReviewStatus,

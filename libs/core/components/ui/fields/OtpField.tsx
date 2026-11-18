@@ -140,9 +140,7 @@ function OtpField({
           onClick={handleResend}
           disabled={!canResend}
           className={`transition-all ${
-            canResend
-              ? "text-primary cursor-pointer"
-              : "text-muted-foreground cursor-not-allowed"
+            canResend ? "text-primary font-medium" : "text-muted-foreground"
           }`}
         >
           Gửi lại

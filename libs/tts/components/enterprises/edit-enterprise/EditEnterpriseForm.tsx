@@ -27,8 +27,8 @@ import {
 } from "@/libs/shared/tts/schemas/enterprise.schema";
 import type {
   DocumentField,
-  DocumentRow,
   EnterpriseDetailResponse,
+  EnterpriseDocumentRow,
 } from "@/libs/shared/tts/models/enterprise.model";
 import type { PreviewFile } from "@/libs/tts/utils/filePreview";
 import EnterpriseFileField from "../EnterpriseFileField";
@@ -56,7 +56,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [documentToDelete, setDocumentToDelete] =
-    useState<DocumentRow<PreviewFile> | null>(null);
+    useState<EnterpriseDocumentRow<PreviewFile> | null>(null);
 
   const isMePage = !enterpriseId;
 
@@ -193,7 +193,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
     );
   };
 
-  const documents: DocumentRow<PreviewFile>[] = [
+  const documents: EnterpriseDocumentRow<PreviewFile>[] = [
     {
       id: "businessLicense",
       name: "Giấy phép kinh doanh",
