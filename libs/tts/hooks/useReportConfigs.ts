@@ -5,7 +5,6 @@ import type {
   ApiResponse,
   ErrorResponse,
 } from "@/libs/shared/core/models/common.model";
-import type { ReportConfigYearsResponse } from "@/libs/shared/tts/models/report-config.model";
 import { reportConfigApis } from "../services/apis/reportConfigApis";
 
 export const reportConfigKeys = {
@@ -14,10 +13,7 @@ export const reportConfigKeys = {
 };
 
 export const useGetReportConfigYears = () => {
-  return useQuery<
-    ApiResponse<ReportConfigYearsResponse>,
-    AxiosError<ErrorResponse>
-  >({
+  return useQuery<ApiResponse<number[]>, AxiosError<ErrorResponse>>({
     queryKey: reportConfigKeys.years(),
     queryFn: () => reportConfigApis.getReportConfigYears(),
   });

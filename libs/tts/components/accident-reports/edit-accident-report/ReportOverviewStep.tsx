@@ -44,7 +44,21 @@ function ReportOverviewStep({ report, summary, disabled = false }: Props) {
 
   return (
     <>
-      <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-6">
+        {report?.note &&
+          (report?.status === AccidentReportStatus.APPROVED ||
+            report?.status === AccidentReportStatus.DECLINED) && (
+            <FloatingTextarea
+              label="Ghi chú"
+              required
+              minRows={6}
+              maxRows={12}
+              value={report?.note}
+              readOnly
+              disabled
+            />
+          )}
+
         <DocumentsField
           documents={documents}
           accept={`${MIME_PDF},.pdf`}
@@ -58,20 +72,6 @@ function ReportOverviewStep({ report, summary, disabled = false }: Props) {
                   })
           }
         />
-
-        {report?.note &&
-          (report?.status === AccidentReportStatus.APPROVED ||
-            report?.status === AccidentReportStatus.DECLINED) && (
-            <FloatingTextarea
-              label="Ghi chú"
-              required
-              minRows={8}
-              maxRows={16}
-              value={report?.note}
-              readOnly
-              disabled
-            />
-          )}
 
         <AccidentReportSummaryTable summary={summary} />
       </div>

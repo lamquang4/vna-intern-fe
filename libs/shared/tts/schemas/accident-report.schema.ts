@@ -53,23 +53,42 @@ const expenseShape = {
   totalDaysOff: countField,
 };
 
-const addIssue = (ctx: z.RefinementCtx, path: string, message: string) =>
-  ctx.addIssue({ code: "custom", path: [path], message });
-
-const validateVictims = (
-  data: {
-    totalVictims: number;
-    totalFemaleVictims: number;
-    totalFatalVictims: number;
-    totalSeverelyInjuredVictims: number;
-    nonManagedVictims: number;
-    nonManagedFemaleVictims: number;
-    nonManagedFatalVictims: number;
-    nonManagedSeverelyInjuredVictims: number;
-  },
+const addIssue = (
   ctx: z.RefinementCtx,
-) => {
-  // ----- Tổng -----
+  path: string | (string | number)[],
+  message: string,
+) =>
+  ctx.addIssue({
+    code: "custom",
+    path: Array.isArray(path) ? path : [path],
+    message,
+  });
+
+type VictimValues = {
+  totalVictims: number;
+  totalFemaleVictims: number;
+  totalFatalVictims: number;
+  totalSeverelyInjuredVictims: number;
+  nonManagedVictims: number;
+  nonManagedFemaleVictims: number;
+  nonManagedFatalVictims: number;
+  nonManagedSeverelyInjuredVictims: number;
+};
+
+const hasAnyVictim = (data: VictimValues) =>
+  [
+    data.totalVictims,
+    data.totalFemaleVictims,
+    data.totalFatalVictims,
+    data.totalSeverelyInjuredVictims,
+    data.nonManagedVictims,
+    data.nonManagedFemaleVictims,
+    data.nonManagedFatalVictims,
+    data.nonManagedSeverelyInjuredVictims,
+  ].some((value) => value > 0);
+
+const validateVictims = (data: VictimValues, ctx: z.RefinementCtx) => {
+  // 1. Kiểm tra nội bộ nhóm (1) - Tổng số người bị nạn
   if (data.totalFemaleVictims > data.totalVictims) {
     addIssue(
       ctx,
@@ -104,7 +123,7 @@ const validateVictims = (
     );
   }
 
-  // ----- Không QL -----
+  // 2. Kiểm tra nội bộ nhóm (2) - Người bị nạn không QL
   if (data.nonManagedFemaleVictims > data.nonManagedVictims) {
     addIssue(
       ctx,
@@ -140,6 +159,39 @@ const validateVictims = (
   }
 };
 
+// Có chi phí / ngày nghỉ thì phải có người bị nạn (> 0)
+const expenseRequireVictimFields = [
+  { key: "medicalExpense", label: "Chi phí y tế" },
+  {
+    key: "salaryExpenseDuringTreatment",
+    label: "Chi phí trả lương trong thời gian điều trị",
+  },
+  { key: "compensationExpense", label: "Chi phí bồi thường trợ cấp" },
+  { key: "totalDaysOff", label: "Tổng số ngày nghỉ vì TNLĐ" },
+] as const;
+
+const validateExpenseRequireVictims = (
+  data: VictimValues & {
+    medicalExpense: number;
+    salaryExpenseDuringTreatment: number;
+    compensationExpense: number;
+    totalDaysOff: number;
+  },
+  ctx: z.RefinementCtx,
+) => {
+  if (hasAnyVictim(data)) return;
+
+  for (const { key, label } of expenseRequireVictimFields) {
+    if (data[key] > 0) {
+      addIssue(
+        ctx,
+        key,
+        `Chưa có người bị nạn nào nên ${label.toLowerCase()} phải bằng 0`,
+      );
+    }
+  }
+};
+
 const withTotalExpense = <
   T extends {
     medicalExpense: number;
@@ -170,17 +222,19 @@ const accidentStatsSchema = z
       addIssue(
         ctx,
         "fatalCases",
-        "Số vụ có người chết không được lớn hơn tổng số vụ",
+        "Tổng số vụ có người chết không được lớn hơn tổng số vụ",
       );
     }
     if (data.totalCasesWithTwoOrMoreVictims > data.totalCases) {
       addIssue(
         ctx,
         "totalCasesWithTwoOrMoreVictims",
-        "Số vụ có từ 2 người bị nạn trở lên không được lớn hơn tổng số vụ",
+        "Tổng số vụ có từ 2 người bị nạn trở lên không được lớn hơn tổng số vụ",
       );
     }
+
     validateVictims(data, ctx);
+    validateExpenseRequireVictims(data, ctx);
   })
   .transform(withTotalExpense);
 
@@ -196,8 +250,51 @@ const accidentDetailSchema = z
     ...expenseShape,
     propertyDamageExpense: moneyField,
   })
-  .superRefine(validateVictims)
+  .superRefine((data, ctx) => {
+    // Nhóm (1) và nhóm (2) độc lập nhau trong từng chi tiết: có thể (1) = 0
+    // hoặc (2) = 0, nhưng không được cả hai nhóm cùng = 0.
+    if (!hasAnyVictim(data)) {
+      const message =
+        "Mỗi chi tiết TNLĐ phải có số liệu ở nhóm (1) hoặc nhóm (2), không được để cả hai nhóm đều bằng 0";
+      addIssue(ctx, "totalVictims", message);
+      addIssue(ctx, "nonManagedVictims", message);
+    }
+
+    validateVictims(data, ctx);
+    validateExpenseRequireVictims(data, ctx);
+  })
   .transform(withTotalExpense);
+
+// ---------- Ràng buộc chéo: chi tiết TNLĐ <-> tổng số vụ TNLĐ ----------
+
+const detailCrossCheckFields = [
+  { key: "totalVictims", label: "Tổng số người bị nạn" },
+  { key: "totalFemaleVictims", label: "Số LĐ nữ bị nạn" },
+  { key: "totalFatalVictims", label: "Số người chết" },
+  { key: "totalSeverelyInjuredVictims", label: "Số người bị thương nặng" },
+  { key: "nonManagedVictims", label: "Số người bị nạn không QL" },
+  { key: "nonManagedFemaleVictims", label: "LĐ nữ bị nạn không QL" },
+  { key: "nonManagedFatalVictims", label: "Số người chết không QL" },
+  {
+    key: "nonManagedSeverelyInjuredVictims",
+    label: "Người bị thương nặng không QL",
+  },
+  { key: "medicalExpense", label: "Chi phí y tế" },
+  {
+    key: "salaryExpenseDuringTreatment",
+    label: "Chi phí trả lương trong thời gian điều trị",
+  },
+  { key: "compensationExpense", label: "Chi phí bồi thường trợ cấp" },
+  { key: "totalDaysOff", label: "Tổng số ngày nghỉ vì TNLĐ" },
+  { key: "propertyDamageExpense", label: "Thiệt hại tài sản" },
+] as const;
+
+const expenseRequireVictimKeySet = new Set<string>(
+  expenseRequireVictimFields.map((f) => f.key),
+);
+
+const EPSILON = 0.005;
+const formatNumber = (value: number) => value.toLocaleString("vi-VN");
 
 // ---------- Cập nhật báo cáo tai nạn lao động ----------
 
@@ -218,6 +315,84 @@ export const updateAccidentReportSchema = z
         "femaleEmployees",
         "Tổng số lao động nữ không được lớn hơn tổng số lao động của cơ sở",
       );
+    }
+
+    // Nếu không gửi accidentDetails (đang bấm Lưu ở bước 0 hoặc bước 1) => bỏ qua kiểm tra bước 2
+    if (data.accidentDetails === undefined) return;
+
+    const totals = data.accidentTotals;
+    const details = data.accidentDetails ?? [];
+
+    if (!totals) {
+      if (details.length > 0) {
+        addIssue(
+          ctx,
+          "accidentDetails",
+          "Vui lòng nhập mục Tổng số vụ TNLĐ trước khi khai báo chi tiết",
+        );
+      }
+      return;
+    }
+
+    if (totals.totalCases > 0 && details.length === 0) {
+      addIssue(
+        ctx,
+        "accidentDetails",
+        `Bạn đã khai báo ${totals.totalCases} vụ TNLĐ, vui lòng nhập thông tin chi tiết tương ứng`,
+      );
+      return;
+    }
+
+    if (details.length === 0) return;
+
+    for (const { key, label } of detailCrossCheckFields) {
+      const total = totals[key];
+      const sum = details.reduce((acc, detail) => acc + detail[key], 0);
+      const isExpenseKey = expenseRequireVictimKeySet.has(key);
+
+      let hasExceeded = false;
+      let hasInvalidZeroVictimExpense = false;
+
+      // Ưu tiên 1 & 2: Kiểm tra từng chi tiết
+      details.forEach((detail, index) => {
+        const value = detail[key];
+
+        if (isExpenseKey && !hasAnyVictim(detail) && value > 0) {
+          hasInvalidZeroVictimExpense = true;
+          return;
+        }
+
+        if (value - total > EPSILON) {
+          hasExceeded = true;
+          addIssue(
+            ctx,
+            ["accidentDetails", index, key],
+            `${label} không được lớn hơn tổng đã nhập ở bước Tai nạn lao động (${formatNumber(total)})`,
+          );
+        }
+      });
+
+      // Ưu tiên 3: Kiểm tra tổng các chi tiết phải bằng tổng ở bước Tai nạn lao động
+      if (
+        !hasExceeded &&
+        !hasInvalidZeroVictimExpense &&
+        Math.abs(sum - total) > EPSILON
+      ) {
+        const lastIndex = details.length - 1;
+        const diff = Math.abs(total - sum);
+        const diffText =
+          sum < total
+            ? `còn thiếu ${formatNumber(diff)}`
+            : `đang thừa ${formatNumber(diff)}`;
+
+        addIssue(
+          ctx,
+          ["accidentDetails", lastIndex, key],
+          details.length === 1
+            ? `${label} (${formatNumber(sum)}) phải bằng tổng đã nhập ở bước Tai nạn lao động (${formatNumber(total)})`
+            : `Tổng ${label.toLowerCase()} của các chi tiết (${formatNumber(sum)}, ${diffText}) phải bằng tổng đã nhập ở bước Tai nạn lao động (${formatNumber(total)})`,
+        );
+      }
     }
   }) satisfies z.ZodType<UpdateAccidentReportRequest>;
 

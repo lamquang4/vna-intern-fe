@@ -27,14 +27,13 @@ import {
 import {
   ACCIDENT_REPORT_PERIOD_OPTIONS,
   ACCIDENT_REPORT_STATUS_OPTIONS,
-  YEAR_OPTIONS,
 } from "@/libs/core/constants/options";
 import { useGetMe } from "../../hooks/useAuth";
-import { formatDate } from "@/libs/core/utils/formatters";
 import { Select } from "@/libs/core/components/ui/Select";
 import toast from "react-hot-toast";
 import NoteModal from "./NoteModal";
 import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
+import { useGetReportConfigYears } from "../../hooks/useReportConfigs";
 
 function AccidentReportList() {
   const searchParams = useSearchParams();
@@ -137,6 +136,14 @@ function AccidentReportList() {
   const accidentReports = data?.data ?? [];
   const totalElements = data?.totalElements ?? 0;
   const totalPages = data?.totalPages ?? 1;
+
+  const { data: dataYears } = useGetReportConfigYears();
+  const years = dataYears?.data ?? [];
+
+  const yearOptions = years.map((y) => ({
+    value: String(y),
+    label: String(y),
+  }));
 
   const reviewAccidentReportMutation = useReviewAccidentReport();
   const isReviewing = reviewAccidentReportMutation.isPending;
@@ -289,7 +296,7 @@ function AccidentReportList() {
 
             <Select
               searchable={false}
-              options={YEAR_OPTIONS()}
+              options={yearOptions}
               value={selectedYear}
               onChange={handleYearChange}
               className="w-25"

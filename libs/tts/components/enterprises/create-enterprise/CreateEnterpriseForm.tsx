@@ -16,13 +16,13 @@ import {
   CreateEnterpriseData,
   createEnterpriseSchema,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
-import EnterpriseFileField from "../EnterpriseFileField";
 import { formatTaxCode } from "@/libs/core/utils/formatters";
 import { PreviewFile } from "@/libs/tts/utils/filePreview";
 import {
   DocumentField,
   EnterpriseDocumentRow,
 } from "@/libs/shared/tts/models/enterprise.model";
+import DocumentsField from "@/libs/core/components/ui/fields/DocumentsField";
 
 interface Props {
   onContinue: (
@@ -385,7 +385,7 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
 
         <div className="flex flex-col gap-[20px]">
           <h5>File đính kèm</h5>
-          <EnterpriseFileField
+          <DocumentsField
             documents={documents}
             onSelect={handleSelectDocument}
             onRemove={(row) => handleRemoveDocument(row.id)}

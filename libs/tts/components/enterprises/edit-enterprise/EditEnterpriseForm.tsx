@@ -31,10 +31,10 @@ import type {
   EnterpriseDocumentRow,
 } from "@/libs/shared/tts/models/enterprise.model";
 import type { PreviewFile } from "@/libs/tts/utils/filePreview";
-import EnterpriseFileField from "../EnterpriseFileField";
 import ChangeEmailModal from "../../auth/ChangeEmailModal";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
+import DocumentsField from "@/libs/core/components/ui/fields/DocumentsField";
 
 interface Props {
   onContinue: (
@@ -494,7 +494,7 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
 
           <div className="flex flex-col gap-[30px]">
             <h5>File đính kèm</h5>
-            <EnterpriseFileField
+            <DocumentsField
               documents={documents}
               onSelect={handleSelectDocument}
               onRemove={(row) => setDocumentToDelete(row)}

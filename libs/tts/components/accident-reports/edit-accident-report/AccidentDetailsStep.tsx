@@ -144,7 +144,8 @@ function AccidentDetailsStep() {
 
         {desiredDetailsCount === 0 && (
           <p className="text-error">
-            Tổng số vụ tai nạn là 0, không có chi tiết vụ tai nạn cần khai báo.
+            Hiện tại tổng số vụ tai nạn đang là 0 nên không có chi tiết vụ tai
+            nạn nào.
           </p>
         )}
       </div>

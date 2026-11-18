@@ -2,8 +2,8 @@
 import { format, parseISO } from "date-fns";
 import { Button } from "@/libs/core/components/ui/Button";
 import type {
-  DocumentRow,
   EnterpriseDetailResponse,
+  EnterpriseDocumentRow,
 } from "@/libs/shared/tts/models/enterprise.model";
 import type {
   CreateEnterpriseData,
@@ -11,7 +11,7 @@ import type {
 } from "@/libs/shared/tts/schemas/enterprise.schema";
 import { type PreviewFile } from "@/libs/tts/utils/filePreview";
 import { InfoItem } from "./InfoItem";
-import EnterpriseFileField from "./EnterpriseFileField";
+import DocumentsField from "@/libs/core/components/ui/fields/DocumentsField";
 
 interface Props {
   data: CreateEnterpriseData | UpdateEnterpriseData;
@@ -37,7 +37,7 @@ function EnterpriseInfoReview({
   onConfirm,
   isLoading,
 }: Props) {
-  const documents: DocumentRow<PreviewFile>[] = [
+  const documents: EnterpriseDocumentRow<PreviewFile>[] = [
     {
       id: "businessLicense",
       name: "Giấy phép kinh doanh",
@@ -130,7 +130,7 @@ function EnterpriseInfoReview({
         <div className="flex flex-col gap-[20px]">
           <h5>File đính kèm</h5>
 
-          <EnterpriseFileField documents={documents} />
+          <DocumentsField documents={documents} />
         </div>
       </div>
 

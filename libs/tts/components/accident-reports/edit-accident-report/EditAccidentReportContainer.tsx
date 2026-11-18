@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeft, CircleCheck, CircleX, Printer, Save } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type FieldPath } from "react-hook-form";
 import { Button } from "@/libs/core/components/ui/Button";
 import { Select } from "@/libs/core/components/ui/Select";
@@ -102,6 +102,28 @@ const accidentDetailFields = [
 ];
 
 const lastStep = ACCIDENT_REPORT_STEP_OPTIONS.length - 1;
+
+const WATCHED_PREFIXES = [
+  "accidentDetails.",
+  "accidentTotals.",
+  "subsidizedAccident.",
+];
+
+const isWatchedPath = (path: string) =>
+  WATCHED_PREFIXES.some((prefix) => path.startsWith(prefix));
+
+const collectErrorPaths = (errors: unknown, prefix = ""): string[] => {
+  if (!errors || typeof errors !== "object") return [];
+  const node = errors as Record<string, unknown>;
+  if (typeof node.message === "string" && "type" in node) {
+    return prefix ? [prefix] : [];
+  }
+  return Object.entries(node).flatMap(([key, value]) =>
+    key === "ref"
+      ? []
+      : collectErrorPaths(value, prefix ? `${prefix}.${key}` : key),
+  );
+};
 
 function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   const router = useRouter();
@@ -208,6 +230,45 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
     stampedReport instanceof File &&
     stampedReport.type === MIME_PDF &&
     stampedReport.size <= MAX_ACCIDENT_REPORT_PDF_SIZE;
+
+  // Luôn giữ bản errors mới nhất để dùng trong subscription bên dưới
+  const { errors } = form.formState;
+  const errorsRef = useRef(errors);
+  useEffect(() => {
+    errorsRef.current = errors;
+  }, [errors]);
+
+  // Khi sửa 1 ô số liệu: validate lại các ô đang có lỗi để lỗi tự mất/cập nhật,
+  // không cần focus vào đúng ô đó nữa (mode "onBlur" chỉ validate ô vừa blur).
+  useEffect(() => {
+    const subscription = form.watch((_values, { name }) => {
+      if (!name || !isWatchedPath(name)) return;
+
+      const errorPaths = collectErrorPaths(errorsRef.current).filter(
+        isWatchedPath,
+      );
+      if (errorPaths.length === 0) return;
+
+      const paths = new Set(errorPaths);
+
+      // Sửa ô chi tiết thứ n: tính lại cùng trường ở mọi dòng chi tiết nếu
+      // trường đó đang có lỗi (vì lỗi "tổng lệch" nằm ở dòng chi tiết cuối)
+      if (name.startsWith("accidentDetails.")) {
+        const key = name.split(".")[2];
+        if (key && errorPaths.some((path) => path.endsWith(`.${key}`))) {
+          (form.getValues("accidentDetails") ?? []).forEach((_, index) =>
+            paths.add(`accidentDetails.${index}.${key}`),
+          );
+        }
+      }
+
+      void form.trigger([
+        ...paths,
+      ] as FieldPath<UpdateAccidentReportFormValues>[]);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   useEffect(() => {
     if (isFetchingReport || report) return;
@@ -446,10 +507,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
       )}
 
       <FormProvider {...form}>
-        <form
-          onSubmit={(event) => event.preventDefault()}
-          className="flex flex-col gap-6 w-full"
-        >
+        <form onSubmit={(event) => event.preventDefault()}>
           {canEdit && (
             <div className="flex w-full flex-col gap-[20px]">
               {activeStep === 0 && (
@@ -475,7 +533,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
             />
           )}
 
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-3 mt-10">
             {canNavigateSteps && activeStep > 0 && (
               <Button
                 type="button"
