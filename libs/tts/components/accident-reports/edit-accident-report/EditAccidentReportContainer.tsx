@@ -136,6 +136,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
 
   const reportQuery = useGetAccidentReportDetail(accidentReportId);
   const report = reportQuery.data?.data;
+  const accidentReportsPath = `/accident-reports?year=${report?.year ?? new Date().getFullYear()}&page=1`;
   const isFetchingReport = reportQuery.isLoading;
 
   const reviewMutation = useReviewAccidentReport();
@@ -274,8 +275,8 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
     if (isFetchingReport || report) return;
 
     toast.error("Không tìm thấy báo cáo TNLĐ");
-    router.replace("/accident-reports");
-  }, [isFetchingReport, report, router]);
+    router.replace(accidentReportsPath);
+  }, [accidentReportsPath, isFetchingReport, report, router]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -338,7 +339,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
       {
         onSuccess: () => {
           setReviewStatus(null);
-          router.replace("/accident-reports");
+          router.replace(accidentReportsPath);
         },
       },
     );
@@ -449,7 +450,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
     updateMutation.mutate(result.data, {
       onSuccess: () => {
         if (activeStep === lastStep) {
-          router.replace("/accident-reports");
+          router.replace(accidentReportsPath);
           return;
         }
         form.reset(form.getValues());
@@ -486,7 +487,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
         </h3>
 
         <Link
-          href="/accident-reports"
+          href={accidentReportsPath}
           className="flex items-center font-medium gap-1 text-muted-foreground hover:text-primary px-3 py-2"
         >
           <ChevronLeft size={20} /> <span>Trở về</span>

@@ -55,6 +55,7 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
 
   const { data } = useGetMe();
   const account = data?.data;
+  const accidentReportPath = `/accident-reports?year=${new Date().getFullYear()}&page=1`;
 
   const menuDataRoleAdmin: MenuGroup[] = [
     {
@@ -86,7 +87,7 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
         {
           icon: <BuildingComplex size={20} strokeWidth={2} />,
           label: "TNLĐ theo HĐLĐ",
-          path: "/accident-reports",
+          path: accidentReportPath,
         },
       ],
     },
@@ -109,7 +110,7 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
         {
           icon: <BuildingComplex size={20} strokeWidth={2} />,
           label: "TNLĐ theo HĐLĐ",
-          path: "/accident-reports",
+          path: accidentReportPath,
         },
       ],
     },
@@ -215,7 +216,7 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
                       <Link
                         href={item.path}
                         className={`${
-                          pathname === item.path
+                          pathname === item.path.split("?")[0]
                             ? "bg-white text-sidebar"
                             : "text-white"
                         } rounded-lg p-3 w-full cursor-pointer flex justify-between items-center`}

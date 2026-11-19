@@ -29,6 +29,7 @@ function OverallAccidentReport() {
     requestedYear > 0
       ? requestedYear
       : currentYear;
+  const accidentReportsPath = `/accident-reports?year=${year}&page=1`;
   const summaryQuery = useGetOverallAccidentReport(year);
 
   const handleYearChange = (value: string) => {
@@ -54,7 +55,7 @@ function OverallAccidentReport() {
             />
           </div>
           <Link
-            href="/accident-reports"
+            href={accidentReportsPath}
             className="flex items-center gap-1 px-3 py-2 font-medium text-muted-foreground hover:text-primary"
           >
             <ChevronLeft size={20} /> <span>Trở về</span>
