@@ -1,6 +1,6 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleCheck, CircleX, Printer, Save } from "lucide-react";
+import { CircleCheck, CircleX, Printer } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type FieldPath } from "react-hook-form";
@@ -518,10 +518,9 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
                 isUpdating ||
                 (activeStep === lastStep && !hasValidNewStampedReport)
               }
-              className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-white"
+              className="rounded-md bg-primary px-3 py-2 text-white"
             >
-              <Save size={18} />
-              <span>{activeStep === lastStep ? "Gửi báo cáo" : "Lưu"}</span>
+              {activeStep === lastStep ? "Gửi báo cáo" : "Lưu"}
             </Button>
           )}
 
