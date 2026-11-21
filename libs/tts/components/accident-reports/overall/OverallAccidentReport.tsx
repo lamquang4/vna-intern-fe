@@ -1,17 +1,23 @@
 "use client";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { Printer } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Select } from "@/libs/core/components/ui/Select";
 import { useGetOverallAccidentReport } from "../../../hooks/useAccidentReports";
 import OverallBusinessTable from "./OverallBusinessTable";
 import OverallClassificationTable from "./OverallClassificationTable";
 import { useGetReportConfigYears } from "@/libs/tts/hooks/useReportConfigs";
+import { Button } from "@/libs/core/components/ui/Button";
+import FormLayout from "../../layout/FormLayout";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { downloadOverallAccidentReportWord } from "@/libs/tts/utils/accidentReportOverallWordExport";
 
 function OverallAccidentReport() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const [isExportingReport, setIsExportingReport] = useState<boolean>(false);
 
   const { data: dataYears } = useGetReportConfigYears();
   const years = dataYears?.data ?? [];
@@ -29,8 +35,9 @@ function OverallAccidentReport() {
     requestedYear > 0
       ? requestedYear
       : currentYear;
-  const accidentReportsPath = `/accident-reports?year=${year}&page=1`;
+  const accidentReportsPath = `/accident-reports?year=${year}`;
   const summaryQuery = useGetOverallAccidentReport(year);
+  const summary = summaryQuery.data?.data;
 
   const handleYearChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -38,31 +45,51 @@ function OverallAccidentReport() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const summary = summaryQuery.data?.data;
+  const handlePrintReport = async () => {
+    if (!summary) {
+      toast.error("Chưa có dữ liệu báo cáo để tải Word");
+      return;
+    }
+
+    setIsExportingReport(true);
+
+    try {
+      await downloadOverallAccidentReportWord(summary, year);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Không thể xuất báo cáo Word",
+      );
+    } finally {
+      setIsExportingReport(false);
+    }
+  };
 
   return (
-    <div className="py-[30px] sm:px-[20px] px-[15px] flex flex-col gap-6 overflow-y-auto">
-      <div className="flex justify-between items-center gap-4 flex-wrap">
-        <h3>Báo cáo tổng hợp tai nạn lao động</h3>
-
-        <div className="flex gap-3 justify-center items-center flex-wrap">
-          <div className="w-28">
-            <Select
-              searchable={false}
-              options={yearOptions}
-              value={String(year)}
-              onChange={handleYearChange}
-            />
-          </div>
-          <Link
-            href={accidentReportsPath}
-            className="flex items-center gap-1 px-3 py-2 font-medium text-muted-foreground hover:text-primary"
-          >
-            <ChevronLeft size={20} /> <span>Trở về</span>
-          </Link>
+    <FormLayout
+      title="Báo cáo tổng hợp tai nạn lao động"
+      backHref={accidentReportsPath}
+      action={
+        <div className="w-28">
+          <Select
+            searchable={false}
+            options={yearOptions}
+            value={String(year)}
+            onChange={handleYearChange}
+          />
         </div>
-      </div>
-
+      }
+      actions={
+        <Button
+          type="button"
+          onClick={handlePrintReport}
+          disabled={isExportingReport || summaryQuery.isLoading || !summary}
+          className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
+        >
+          <Printer size={18} />
+          <span>In báo cáo</span>
+        </Button>
+      }
+    >
       <div className="flex flex-col gap-8">
         <section className="flex flex-col gap-3">
           <h5>I. Thông tin tổng quan</h5>
@@ -77,7 +104,7 @@ function OverallAccidentReport() {
           <OverallClassificationTable summary={summary} />
         </section>
       </div>
-    </div>
+    </FormLayout>
   );
 }
 

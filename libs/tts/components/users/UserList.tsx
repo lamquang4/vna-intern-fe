@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Pencil, KeyRound, Filter, Trash, CirclePlus } from "lucide-react";
+import { Pencil, KeyRound, Trash, CirclePlus, FunnelX } from "lucide-react";
 import { Button } from "@/libs/core/components/ui/Button";
 import type { UserResponse } from "@/libs/shared/tts/models/user.model";
 import DataTable from "@/libs/core/components/ui/DataTable";
@@ -15,35 +15,34 @@ import {
   useToggleUserStatus,
 } from "../../hooks/useUsers";
 import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { GetUsersParams } from "@/libs/shared/tts/models/params.model";
-import UserFilterModal from "./UserFilterModal";
 import { useGetMe } from "../../hooks/useAuth";
 import toast from "react-hot-toast";
+import { useGetAllRoles } from "../../hooks/useRoles";
+import { USER_STATUS_OPTIONS } from "@/libs/core/constants/options";
+
+const FILTER_KEYS = [
+  "fullname",
+  "username",
+  "email",
+  "position",
+  "roleName",
+  "isActive",
+];
 
 function UserList() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [toggleStatusId, setToggleStatusId] = useState<string | null>(null);
   const [initializePasswordModalOpen, setInitializePasswordModalOpen] =
     useState<boolean>(false);
-  const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
   const [username, setUsername] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
-
-  const FILTER_KEYS = [
-    "fullname",
-    "username",
-    "email",
-    "position",
-    "roleName",
-    "isActive",
-  ];
-  const activeFilterCount = FILTER_KEYS.filter((key) =>
-    searchParams.get(key),
-  ).length;
 
   const page = Number(searchParams.get("page")) || 1;
   const size = Number(searchParams.get("size")) || 12;
@@ -71,11 +70,19 @@ function UserList() {
   const totalElements = data?.totalElements ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
+  const { data: dataRoles } = useGetAllRoles();
+  const roles = dataRoles?.data;
+
   const toggleStatusMutation = useToggleUserStatus();
   const isTogglingStatus = toggleStatusMutation.isPending;
 
   const deleteUsersMutation = useDeleteUsers();
   const isDeletingUsers = deleteUsersMutation.isPending;
+
+  const roleOptions = (roles ?? []).map((role) => ({
+    value: role.name,
+    label: role.name,
+  }));
 
   const handleConfirmDialogDeleteUsers = () => {
     if (isDeletingUsers) return;
@@ -143,6 +150,18 @@ function UserList() {
     setUserId(userId);
   };
 
+  const hasActiveFilter = FILTER_KEYS.some((k) => searchParams.get(k));
+
+  const handleClearFilter = () => {
+    const next = new URLSearchParams(searchParams.toString());
+
+    FILTER_KEYS.forEach((k) => next.delete(k));
+    next.delete("page");
+
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
   const columns: TableColumn<UserResponse>[] = [
     {
       key: "actions",
@@ -164,15 +183,40 @@ function UserList() {
         </div>
       ),
     },
-    { key: "username", header: "Số tài khoản", cell: (u) => u.username },
+    {
+      key: "username",
+      header: "Số tài khoản",
+      cell: (u) => u.username,
+      filter: { type: "text", paramKey: "username" },
+    },
     {
       key: "fullname",
       header: "Họ và tên",
       cell: (u) => u.fullname,
+      filter: { type: "text", paramKey: "fullname" },
     },
-    { key: "email", header: "Email", cell: (u) => u.email },
-    { key: "roleName", header: "Vai trò", cell: (u) => u.roleName },
-    { key: "position", header: "Chức danh", cell: (u) => u.position },
+    {
+      key: "email",
+      header: "Email",
+      cell: (u) => u.email,
+      filter: { type: "text", paramKey: "email" },
+    },
+    {
+      key: "roleName",
+      header: "Vai trò",
+      cell: (u) => u.roleName,
+      filter: {
+        type: "select",
+        paramKey: "roleName",
+        options: roleOptions,
+      },
+    },
+    {
+      key: "position",
+      header: "Chức danh",
+      cell: (u) => u.position,
+      filter: { type: "text", paramKey: "position" },
+    },
     {
       key: "isActive",
       header: "Trạng thái",
@@ -183,6 +227,11 @@ function UserList() {
           disabled={isTogglingStatus}
         />
       ),
+      filter: {
+        type: "select",
+        paramKey: "isActive",
+        options: USER_STATUS_OPTIONS,
+      },
     },
   ];
 
@@ -206,23 +255,22 @@ function UserList() {
               </Button>
             )}
 
-            <Button
-              type="button"
-              onClick={() => setFilterOpen(true)}
-              className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 font-medium text-primary"
-            >
-              <Filter size={18} />
-              <span>
-                Bộ lọc{activeFilterCount > 0 && ` (${activeFilterCount})`}
-              </span>
-            </Button>
-
             <Link
               href="/users/create"
               className="rounded-md bg-primary px-3 py-2 font-medium text-white flex items-center gap-2"
             >
               <CirclePlus size={18} strokeWidth={2} /> <span>Thêm</span>
             </Link>
+
+            {hasActiveFilter && (
+              <Button
+                type="button"
+                onClick={handleClearFilter}
+                className="rounded-md bg-error px-3 py-2 font-medium text-white flex items-center gap-2"
+              >
+                <FunnelX size={18} /> <span>Xóa bộ lọc</span>
+              </Button>
+            )}
           </>
         }
         pagination={{ page, size, totalElements, totalPages }}
@@ -266,13 +314,6 @@ function UserList() {
           isLoading={isDeletingUsers}
           onConfirm={handleDeleteUsers}
           onClose={() => setDeleteOpen(false)}
-        />
-      )}
-
-      {filterOpen && (
-        <UserFilterModal
-          onClose={() => setFilterOpen(false)}
-          onClearSelection={() => setSelectedIds([])}
         />
       )}
     </>

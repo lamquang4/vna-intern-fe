@@ -3,7 +3,6 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parseISO } from "date-fns";
 import z from "zod";
-import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/fields/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
 import { useGetAllBusinessIndustries } from "@/libs/tts/hooks/useBusinessIndustries";
@@ -23,6 +22,8 @@ import {
   EnterpriseDocumentRow,
 } from "@/libs/shared/tts/models/enterprise.model";
 import DocumentsField from "@/libs/core/components/ui/fields/DocumentsField";
+
+export const CREATE_ENTERPRISE_FORM_ID = "create-enterprise-form";
 
 interface Props {
   onContinue: (
@@ -140,14 +141,15 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
   const handleRemoveDocument = (id: DocumentField) =>
     setValue(id, null, { shouldDirty: true, shouldValidate: true });
 
-  const handleCancel = () => {
-    reset();
-  };
-
   return (
     <form
+      id={CREATE_ENTERPRISE_FORM_ID}
       className="flex flex-col gap-6 w-full"
       onSubmit={handleSubmit(onSubmit)}
+      onReset={(e) => {
+        e.preventDefault();
+        reset();
+      }}
     >
       <div className="flex flex-col gap-[20px] w-full">
         <div className="flex flex-col gap-[20px]">
@@ -391,23 +393,6 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
             onRemove={(row) => handleRemoveDocument(row.id)}
           />
         </div>
-      </div>
-
-      <div className="flex items-center justify-center gap-3">
-        <Button
-          type="button"
-          onClick={handleCancel}
-          className="rounded-lg px-3 py-2 font-medium border border-border"
-        >
-          Hủy bỏ
-        </Button>
-
-        <Button
-          type="submit"
-          className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
-        >
-          Tiếp tục
-        </Button>
       </div>
     </form>
   );

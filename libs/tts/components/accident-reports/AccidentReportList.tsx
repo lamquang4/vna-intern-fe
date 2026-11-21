@@ -1,5 +1,5 @@
 "use client";
-import { CircleCheck, CircleX, Eye, Filter, Pencil } from "lucide-react";
+import { CircleCheck, CircleX, Eye, FunnelX, Pencil } from "lucide-react";
 import { Button } from "@/libs/core/components/ui/Button";
 import DataTable from "@/libs/core/components/ui/DataTable";
 import ListLayout from "../layout/ListLayout";
@@ -7,11 +7,7 @@ import { TableColumn } from "@/libs/core/models/component.model";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
-import AccidentReportFilterModal from "./AccidentReportFilterModal";
-import {
-  GetAccidentReportsMeParams,
-  GetAccidentReportsParams,
-} from "@/libs/shared/tts/models/params.model";
+import { GetAccidentReportsParams } from "@/libs/shared/tts/models/params.model";
 import {
   AccidentReportPeriod,
   AccidentReportReviewStatus,
@@ -34,6 +30,17 @@ import toast from "react-hot-toast";
 import NoteModal from "./NoteModal";
 import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
 import { useGetReportConfigYears } from "../../hooks/useReportConfigs";
+import { useGetHCMProvince, useGetHCMWards } from "../../hooks/useLocation";
+import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
+
+const FILTER_KEYS = [
+  "name",
+  "taxCode",
+  "reportPeriod",
+  "status",
+  "province",
+  "ward",
+];
 
 function AccidentReportList() {
   const searchParams = useSearchParams();
@@ -41,7 +48,6 @@ function AccidentReportList() {
   const pathname = usePathname();
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [filterOpen, setFilterOpen] = useState<boolean>(false);
   const [confirmStatus, setConfirmStatus] =
     useState<AccidentReportReviewStatus | null>(null);
   const [reviewStatus, setReviewStatus] =
@@ -54,19 +60,6 @@ function AccidentReportList() {
   const getPeriodLabel = (period: AccidentReportPeriod) =>
     ACCIDENT_REPORT_PERIOD_OPTIONS.find((o) => o.value === period)?.label ??
     period;
-
-  const FILTER_KEYS = [
-    "name",
-    "taxCode",
-    "reportPeriod",
-    "status",
-    "province",
-    "ward",
-    "year",
-  ];
-  const activeFilterCount = FILTER_KEYS.filter((key) =>
-    searchParams.get(key),
-  ).length;
 
   const page = Number(searchParams.get("page")) || 1;
   const size = Number(searchParams.get("size")) || 12;
@@ -83,18 +76,6 @@ function AccidentReportList() {
     status: searchParams.get("status") ?? undefined,
     province: searchParams.get("province") ?? undefined,
     ward: searchParams.get("ward") ?? undefined,
-    year: yearParam ? Number(yearParam) : undefined,
-  };
-
-  const meParams: GetAccidentReportsMeParams = {
-    page,
-    size,
-    name: searchParams.get("name") ?? undefined,
-    taxCode: searchParams.get("taxCode") ?? undefined,
-    reportPeriod:
-      (searchParams.get("reportPeriod") as AccidentReportPeriod | null) ??
-      undefined,
-    status: searchParams.get("status") ?? undefined,
     year: yearParam ? Number(yearParam) : undefined,
   };
 
@@ -124,7 +105,7 @@ function AccidentReportList() {
   );
 
   const { data: dataDN, isLoading: isLoadingDN } = useGetAccidentReportsMe(
-    meParams,
+    yearParam ? Number(yearParam) : undefined,
     isRoleDN,
   );
 
@@ -140,13 +121,60 @@ function AccidentReportList() {
   const { data: dataYears } = useGetReportConfigYears();
   const years = dataYears?.data ?? [];
 
+  const reviewAccidentReportMutation = useReviewAccidentReport();
+  const isReviewing = reviewAccidentReportMutation.isPending;
+
   const yearOptions = years.map((y) => ({
     value: String(y),
     label: String(y),
   }));
 
-  const reviewAccidentReportMutation = useReviewAccidentReport();
-  const isReviewing = reviewAccidentReportMutation.isPending;
+  const { data: province, isLoading: isFetchingProvince } = useGetHCMProvince();
+  const wards = useGetHCMWards();
+
+  const selectedProvince = searchParams.get("province") ?? "";
+  const selectedWard = searchParams.get("ward") ?? "";
+
+  const provinceOptions = [
+    { value: "", label: "Tất cả tỉnh/thành phố" },
+    ...(province
+      ? [{ value: province.province, label: province.province }]
+      : []),
+  ];
+
+  const wardOptions = [
+    { value: "", label: "Tất cả phường/xã" },
+    ...(wards ?? []).map((ward) => ({
+      value: ward.name,
+      label: ward.name,
+    })),
+  ];
+
+  const handleLocationChange = (changes: Record<string, string>) => {
+    const next = new URLSearchParams(searchParams.toString());
+
+    Object.entries(changes).forEach(([key, value]) => {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    });
+    next.set("page", "1");
+
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+  };
+
+  const submitReview = (status: AccidentReportReviewStatus, note?: string) => {
+    if (isReviewing || selectedIds.length === 0) return;
+
+    reviewAccidentReportMutation.mutate(
+      { accidentReportIds: selectedIds, status, note },
+      {
+        onSuccess: () => {
+          setReviewStatus(null);
+          setSelectedIds([]);
+        },
+      },
+    );
+  };
 
   const handleConfirmDialogReview = (status: AccidentReportReviewStatus) => {
     if (selectedIds.length === 0) return;
@@ -170,22 +198,32 @@ function AccidentReportList() {
   };
 
   const handleConfirmReview = () => {
-    setReviewStatus(confirmStatus);
+    if (!confirmStatus) return;
+
+    if (confirmStatus === AccidentReportReviewStatus.APPROVED) {
+      submitReview(confirmStatus);
+    } else {
+      setReviewStatus(confirmStatus);
+    }
+
     setConfirmStatus(null);
   };
 
   const handleReviewAccidentReport = (note: string) => {
-    if (!reviewStatus || isReviewing || selectedIds.length === 0) return;
+    if (!reviewStatus) return;
+    submitReview(reviewStatus, note);
+  };
 
-    reviewAccidentReportMutation.mutate(
-      { accidentReportIds: selectedIds, status: reviewStatus, note },
-      {
-        onSuccess: () => {
-          setReviewStatus(null);
-          setSelectedIds([]);
-        },
-      },
-    );
+  const hasActiveFilter = FILTER_KEYS.some((k) => searchParams.get(k));
+
+  const handleClearFilter = () => {
+    const next = new URLSearchParams(searchParams.toString());
+
+    FILTER_KEYS.forEach((k) => next.delete(k));
+    next.delete("page");
+
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
   const columns: TableColumn<AccidentReportResponse>[] = [
@@ -197,7 +235,6 @@ function AccidentReportList() {
           [
             AccidentReportStatus.ACCEPTED,
             AccidentReportStatus.APPROVED,
-            AccidentReportStatus.DECLINED,
             AccidentReportStatus.EXPIRED,
           ] as AccidentReportStatus[]
         ).includes(r.status);
@@ -218,15 +255,36 @@ function AccidentReportList() {
       },
     },
     {
+      key: "name",
+      header: "Tên doanh nghiệp",
+      cell: (r) => r.name,
+      filter: isRoleSo
+        ? {
+            type: "text",
+            paramKey: "name",
+            placeholder: "Nhập tên doanh nghiệp",
+          }
+        : undefined,
+    },
+    {
       key: "taxCode",
       header: "Mã số thuế",
       cell: (r) => r.taxCode,
+      filter: isRoleSo
+        ? { type: "text", paramKey: "taxCode", placeholder: "Nhập mã số thuế" }
+        : undefined,
     },
-    { key: "name", header: "Tên doanh nghiệp", cell: (r) => r.name },
     {
       key: "reportPeriod",
       header: "Kỳ báo cáo",
       cell: (r) => getPeriodLabel(r.reportPeriod),
+      filter: isRoleSo
+        ? {
+            type: "select",
+            paramKey: "reportPeriod",
+            options: ACCIDENT_REPORT_PERIOD_OPTIONS,
+          }
+        : undefined,
     },
     {
       key: "note",
@@ -252,20 +310,24 @@ function AccidentReportList() {
                   ? "bg-primary"
                   : isApproved
                     ? "bg-success"
-                    : isDeclined || isExpired
-                      ? "bg-error"
-                      : "bg-muted-foreground"
+                    : isDeclined
+                      ? "bg-warning"
+                      : isExpired
+                        ? "bg-error"
+                        : "bg-muted-foreground"
               }`}
             />
             <span
-              className={`font-normal ${
+              className={`font-medium ${
                 isAccepted
                   ? "text-primary"
                   : isApproved
                     ? "text-success"
-                    : isDeclined || isExpired
-                      ? "text-error"
-                      : ""
+                    : isDeclined
+                      ? "text-warning"
+                      : isExpired
+                        ? "text-error"
+                        : ""
               }`}
             >
               {getStatusLabel(r.status)}
@@ -273,6 +335,13 @@ function AccidentReportList() {
           </div>
         );
       },
+      filter: isRoleSo
+        ? {
+            type: "select",
+            paramKey: "status",
+            options: ACCIDENT_REPORT_STATUS_OPTIONS,
+          }
+        : undefined,
     },
   ];
 
@@ -283,17 +352,6 @@ function AccidentReportList() {
         count={totalElements}
         actions={
           <>
-            <Button
-              type="button"
-              onClick={() => setFilterOpen(true)}
-              className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 font-medium text-primary"
-            >
-              <Filter size={18} />
-              <span>
-                Bộ lọc {activeFilterCount > 0 && ` (${activeFilterCount})`}
-              </span>
-            </Button>
-
             <Select
               searchable={false}
               options={yearOptions}
@@ -312,31 +370,72 @@ function AccidentReportList() {
             )}
 
             {selectedIds.length > 0 && isRoleSo && (
-              <Button
-                type="button"
-                onClick={() =>
-                  handleConfirmDialogReview(AccidentReportStatus.APPROVED)
-                }
-                className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
-              >
-                <CircleCheck size={18} />
-                <span>Duyệt ({selectedIds.length})</span>
-              </Button>
+              <>
+                <Button
+                  type="button"
+                  disabled={isReviewing}
+                  onClick={() =>
+                    handleConfirmDialogReview(
+                      AccidentReportReviewStatus.DECLINED,
+                    )
+                  }
+                  className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
+                >
+                  <CircleX size={18} />
+                  <span>Từ chối ({selectedIds.length})</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  disabled={isReviewing}
+                  onClick={() =>
+                    handleConfirmDialogReview(
+                      AccidentReportReviewStatus.APPROVED,
+                    )
+                  }
+                  className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
+                >
+                  <CircleCheck size={18} />
+                  <span>Duyệt ({selectedIds.length})</span>
+                </Button>
+              </>
             )}
 
-            {selectedIds.length > 0 && isRoleSo && (
+            {isRoleSo && hasActiveFilter && (
               <Button
                 type="button"
-                onClick={() =>
-                  handleConfirmDialogReview(AccidentReportStatus.DECLINED)
-                }
-                className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
+                onClick={handleClearFilter}
+                className="rounded-md bg-error px-3 py-2 font-medium text-white flex items-center gap-2"
               >
-                <CircleX size={18} />
-                <span>Từ chối ({selectedIds.length})</span>
+                <FunnelX size={18} /> <span>Xóa bộ lọc</span>
               </Button>
             )}
           </>
+        }
+        filters={
+          isRoleSo ? (
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <FloatingSelect
+                label="Tỉnh/thành phố"
+                placeholder="Tất cả tỉnh/thành phố"
+                disabled={isFetchingProvince}
+                options={provinceOptions}
+                value={selectedProvince}
+                onChange={(val) =>
+                  handleLocationChange({ province: val, ward: "" })
+                }
+              />
+
+              <FloatingSelect
+                label="Phường/xã"
+                placeholder="Tất cả phường/xã"
+                disabled={!selectedProvince}
+                options={wardOptions}
+                value={selectedWard}
+                onChange={(val) => handleLocationChange({ ward: val })}
+              />
+            </div>
+          ) : undefined
         }
         pagination={{ page, size, totalElements, totalPages }}
       >
@@ -350,23 +449,15 @@ function AccidentReportList() {
         />
       </ListLayout>
 
-      {filterOpen && account?.roleCode && (
-        <AccidentReportFilterModal
-          onClose={() => setFilterOpen(false)}
-          roleCode={account.roleCode}
-          onClearSelection={() => setSelectedIds([])}
-        />
-      )}
-
       {confirmStatus && (
         <ConfirmDialog
           title={
-            confirmStatus === AccidentReportStatus.APPROVED
+            confirmStatus === AccidentReportReviewStatus.APPROVED
               ? "Xác nhận duyệt báo cáo"
               : "Xác nhận từ chối báo cáo"
           }
           description={`Bạn có chắc chắn muốn ${
-            confirmStatus === AccidentReportStatus.APPROVED
+            confirmStatus === AccidentReportReviewStatus.APPROVED
               ? "duyệt"
               : "từ chối"
           } ${selectedIds.length} báo cáo đã chọn?`}
@@ -380,7 +471,6 @@ function AccidentReportList() {
       {reviewStatus && (
         <NoteModal
           count={selectedIds.length}
-          status={reviewStatus}
           isLoading={isReviewing}
           onSubmit={handleReviewAccidentReport}
           onClose={() => setReviewStatus(null)}

@@ -1,5 +1,5 @@
 import EditAccidentReportContainer from "@/libs/tts/components/accident-reports/edit-accident-report/EditAccidentReportContainer";
-import LayoutPage from "@/libs/tts/components/layout/LayoutPage";
+import PageLayout from "@/libs/tts/components/layout/PageLayout";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -11,12 +11,12 @@ export default async function Page({ params, searchParams }: PageProps) {
   const mode = query.mode === "edit" ? "edit" : "view";
 
   return (
-    <LayoutPage>
+    <PageLayout>
       <EditAccidentReportContainer
         key={mode}
         accidentReportId={id}
         mode={mode}
       />
-    </LayoutPage>
+    </PageLayout>
   );
 }

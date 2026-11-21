@@ -11,10 +11,10 @@ import { parseThousands } from "@/libs/core/utils/formatters";
 import type { UpdateAccidentReportFormValues } from "@/libs/shared/tts/schemas/accident-report.schema";
 
 interface Props {
-  type: "accidentTotals" | "subsidizedAccident";
+  prefix: "accidentTotals" | "subsidizedAccident";
 }
 
-function AccidentStatsStep({ type }: Props) {
+function AccidentStatsStep({ prefix }: Props) {
   const { control, register, getFieldState, trigger } =
     useFormContext<UpdateAccidentReportFormValues>();
   const formState = useFormState({ control });
@@ -22,43 +22,43 @@ function AccidentStatsStep({ type }: Props) {
     getFieldState(name, formState).error?.message;
   const caseFieldDeps = useMemo<FieldPath<UpdateAccidentReportFormValues>[]>(
     () => [
-      `${type}.totalCases`,
-      `${type}.fatalCases`,
-      `${type}.totalCasesWithTwoOrMoreVictims`,
+      `${prefix}.totalCases`,
+      `${prefix}.fatalCases`,
+      `${prefix}.totalCasesWithTwoOrMoreVictims`,
     ],
-    [type],
+    [prefix],
   );
   const victimFieldDeps = useMemo<FieldPath<UpdateAccidentReportFormValues>[]>(
     () => [
-      `${type}.totalVictims`,
-      `${type}.totalFemaleVictims`,
-      `${type}.totalFatalVictims`,
-      `${type}.totalSeverelyInjuredVictims`,
+      `${prefix}.totalVictims`,
+      `${prefix}.totalFemaleVictims`,
+      `${prefix}.totalFatalVictims`,
+      `${prefix}.totalSeverelyInjuredVictims`,
     ],
-    [type],
+    [prefix],
   );
   const nonManagedVictimFieldDeps = useMemo<
     FieldPath<UpdateAccidentReportFormValues>[]
   >(
     () => [
-      `${type}.nonManagedVictims`,
-      `${type}.nonManagedFemaleVictims`,
-      `${type}.nonManagedFatalVictims`,
-      `${type}.nonManagedSeverelyInjuredVictims`,
+      `${prefix}.nonManagedVictims`,
+      `${prefix}.nonManagedFemaleVictims`,
+      `${prefix}.nonManagedFatalVictims`,
+      `${prefix}.nonManagedSeverelyInjuredVictims`,
     ],
-    [type],
+    [prefix],
   );
   const medicalExpense = useWatch({
     control,
-    name: `${type}.medicalExpense`,
+    name: `${prefix}.medicalExpense`,
   });
   const salaryExpense = useWatch({
     control,
-    name: `${type}.salaryExpenseDuringTreatment`,
+    name: `${prefix}.salaryExpenseDuringTreatment`,
   });
   const compensationExpense = useWatch({
     control,
-    name: `${type}.compensationExpense`,
+    name: `${prefix}.compensationExpense`,
   });
   const totalExpense =
     (Number(medicalExpense) || 0) +
@@ -89,26 +89,26 @@ function AccidentStatsStep({ type }: Props) {
 
         <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-4">
           <FloatingInput
-            {...registerNumberField(`${type}.totalCases`, caseFieldDeps)}
+            {...registerNumberField(`${prefix}.totalCases`, caseFieldDeps)}
             type="number"
             min={0}
             required
             label="Tổng số vụ"
             placeholder="Nhập tổng số vụ"
-            error={getError(`${type}.totalCases`)}
+            error={getError(`${prefix}.totalCases`)}
           />
           <FloatingInput
-            {...registerNumberField(`${type}.fatalCases`, caseFieldDeps)}
+            {...registerNumberField(`${prefix}.fatalCases`, caseFieldDeps)}
             type="number"
             min={0}
             required
             label="Tổng số vụ có người chết"
             placeholder="Nhập tổng số vụ có người chết"
-            error={getError(`${type}.fatalCases`)}
+            error={getError(`${prefix}.fatalCases`)}
           />
           <FloatingInput
             {...registerNumberField(
-              `${type}.totalCasesWithTwoOrMoreVictims`,
+              `${prefix}.totalCasesWithTwoOrMoreVictims`,
               caseFieldDeps,
             )}
             type="number"
@@ -116,26 +116,24 @@ function AccidentStatsStep({ type }: Props) {
             required
             label="Tổng số vụ có 2 người bị nạn trở lên"
             placeholder="Nhập tổng số vụ có 2 người bị nạn trở lên"
-            error={
-              getError(`${type}.totalCasesWithTwoOrMoreVictims`)
-            }
+            error={getError(`${prefix}.totalCasesWithTwoOrMoreVictims`)}
           />
         </div>
 
         <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-4">
           <FloatingInput
-            {...registerNumberField(`${type}.totalVictims`, victimFieldDeps)}
+            {...registerNumberField(`${prefix}.totalVictims`, victimFieldDeps)}
             type="number"
             min={0}
             required
             label="Tổng số người bị nạn"
             placeholder="Nhập tổng số người bị nạn"
-            error={getError(`${type}.totalVictims`)}
+            error={getError(`${prefix}.totalVictims`)}
           />
 
           <FloatingInput
             {...registerNumberField(
-              `${type}.totalFemaleVictims`,
+              `${prefix}.totalFemaleVictims`,
               victimFieldDeps,
             )}
             type="number"
@@ -143,12 +141,12 @@ function AccidentStatsStep({ type }: Props) {
             required
             label="Tổng số lao động nữ bị nạn"
             placeholder="Nhập tổng số lao động nữ bị nạn"
-            error={getError(`${type}.totalFemaleVictims`)}
+            error={getError(`${prefix}.totalFemaleVictims`)}
           />
 
           <FloatingInput
             {...registerNumberField(
-              `${type}.totalFatalVictims`,
+              `${prefix}.totalFatalVictims`,
               victimFieldDeps,
             )}
             type="number"
@@ -156,12 +154,12 @@ function AccidentStatsStep({ type }: Props) {
             required
             label="Tổng số người bị chết"
             placeholder="Nhập tổng số người bị chết"
-            error={getError(`${type}.totalFatalVictims`)}
+            error={getError(`${prefix}.totalFatalVictims`)}
           />
 
           <FloatingInput
             {...registerNumberField(
-              `${type}.totalSeverelyInjuredVictims`,
+              `${prefix}.totalSeverelyInjuredVictims`,
               victimFieldDeps,
             )}
             type="number"
@@ -169,16 +167,14 @@ function AccidentStatsStep({ type }: Props) {
             required
             label="Tổng số người bị thương nặng"
             placeholder="Nhập tổng số người bị thương nặng"
-            error={
-              getError(`${type}.totalSeverelyInjuredVictims`)
-            }
+            error={getError(`${prefix}.totalSeverelyInjuredVictims`)}
           />
         </div>
 
         <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-4">
           <FloatingInput
             {...registerNumberField(
-              `${type}.nonManagedVictims`,
+              `${prefix}.nonManagedVictims`,
               nonManagedVictimFieldDeps,
             )}
             type="number"
@@ -186,12 +182,12 @@ function AccidentStatsStep({ type }: Props) {
             required
             label="Số người bị nạn không QL"
             placeholder="Nhập số người bị nạn không QL"
-            error={getError(`${type}.nonManagedVictims`)}
+            error={getError(`${prefix}.nonManagedVictims`)}
           />
 
           <FloatingInput
             {...registerNumberField(
-              `${type}.nonManagedFemaleVictims`,
+              `${prefix}.nonManagedFemaleVictims`,
               nonManagedVictimFieldDeps,
             )}
             type="number"
@@ -199,14 +195,12 @@ function AccidentStatsStep({ type }: Props) {
             required
             label="Lao động nữ bị nạn không QL"
             placeholder="Nhập lao động nữ bị nạn không QL"
-            error={
-              getError(`${type}.nonManagedFemaleVictims`)
-            }
+            error={getError(`${prefix}.nonManagedFemaleVictims`)}
           />
 
           <FloatingInput
             {...registerNumberField(
-              `${type}.nonManagedFatalVictims`,
+              `${prefix}.nonManagedFatalVictims`,
               nonManagedVictimFieldDeps,
             )}
             type="number"
@@ -214,14 +208,12 @@ function AccidentStatsStep({ type }: Props) {
             required
             label="Số người chết không QL"
             placeholder="Nhập số người chết không QL"
-            error={
-              getError(`${type}.nonManagedFatalVictims`)
-            }
+            error={getError(`${prefix}.nonManagedFatalVictims`)}
           />
 
           <FloatingInput
             {...registerNumberField(
-              `${type}.nonManagedSeverelyInjuredVictims`,
+              `${prefix}.nonManagedSeverelyInjuredVictims`,
               nonManagedVictimFieldDeps,
             )}
             type="number"
@@ -229,9 +221,7 @@ function AccidentStatsStep({ type }: Props) {
             required
             label="Người bị thương nặng không QL"
             placeholder="Nhập người bị thương nặng không QL"
-            error={
-              getError(`${type}.nonManagedSeverelyInjuredVictims`)
-            }
+            error={getError(`${prefix}.nonManagedSeverelyInjuredVictims`)}
           />
         </div>
       </div>
@@ -241,38 +231,34 @@ function AccidentStatsStep({ type }: Props) {
 
         <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-4">
           <FloatingInput
-            {...register(`${type}.medicalExpense`, {
+            {...register(`${prefix}.medicalExpense`, {
               setValueAs: parseThousands,
             })}
             formatThousands
             label="Chi phí y tế"
             required
             placeholder="Nhập chi phí y tế"
-            error={getError(`${type}.medicalExpense`)}
+            error={getError(`${prefix}.medicalExpense`)}
           />
           <FloatingInput
-            {...register(`${type}.salaryExpenseDuringTreatment`, {
+            {...register(`${prefix}.salaryExpenseDuringTreatment`, {
               setValueAs: parseThousands,
             })}
             formatThousands
             label="Chi phí trả lương trong thời gian điều trị"
             required
             placeholder="Nhập chi phí trả lương trong thời gian điều trị"
-            error={
-              getError(`${type}.salaryExpenseDuringTreatment`)
-            }
+            error={getError(`${prefix}.salaryExpenseDuringTreatment`)}
           />
           <FloatingInput
-            {...register(`${type}.compensationExpense`, {
+            {...register(`${prefix}.compensationExpense`, {
               setValueAs: parseThousands,
             })}
             formatThousands
             label="Chi phí bồi thường trợ cấp"
             placeholder="Nhập chi phí bồi thường trợ cấp"
             required
-            error={
-              getError(`${type}.compensationExpense`)
-            }
+            error={getError(`${prefix}.compensationExpense`)}
           />
           <FloatingInput
             label="Tổng số tiền chi phí"
@@ -286,7 +272,7 @@ function AccidentStatsStep({ type }: Props) {
 
         <div className="grid grid-cols-1 gap-[15px] sm:grid-cols-2 lg:grid-cols-4">
           <FloatingInput
-            {...register(`${type}.totalDaysOff`, {
+            {...register(`${prefix}.totalDaysOff`, {
               setValueAs: (value: string) =>
                 value === "" ? null : Number(value),
             })}
@@ -295,18 +281,16 @@ function AccidentStatsStep({ type }: Props) {
             required
             label="Tổng số ngày nghỉ vì TNLĐ"
             placeholder="Nhập tổng số ngày nghỉ vì TNLĐ"
-            error={getError(`${type}.totalDaysOff`)}
+            error={getError(`${prefix}.totalDaysOff`)}
           />
           <FloatingInput
-            {...register(`${type}.propertyDamageExpense`, {
+            {...register(`${prefix}.propertyDamageExpense`, {
               setValueAs: parseThousands,
             })}
             formatThousands
             label="Thiệt hại tài sản"
             placeholder="Nhập thiệt hại tài sản"
-            error={
-              getError(`${type}.propertyDamageExpense`)
-            }
+            error={getError(`${prefix}.propertyDamageExpense`)}
           />
         </div>
       </div>

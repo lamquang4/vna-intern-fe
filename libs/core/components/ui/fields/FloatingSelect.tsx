@@ -13,6 +13,7 @@ export interface FloatingSelectProps {
   name?: string;
   required?: boolean;
   disabled?: boolean;
+  searchable?: boolean;
   error?: string;
 }
 
@@ -25,6 +26,7 @@ export function FloatingSelect({
   placeholder,
   required,
   disabled,
+  searchable = true,
   error,
 }: FloatingSelectProps) {
   return (
@@ -34,16 +36,23 @@ export function FloatingSelect({
       error={error}
       disabled={disabled}
     >
-      <Select
-        options={options}
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
-        placeholder={placeholder}
-        disabled={disabled}
-        error={error}
-        className="rounded-none border-0 bg-transparent focus:border-0"
-      />
+      <div className="relative -mt-1">
+        <Select
+          options={options}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          placeholder={placeholder}
+          disabled={disabled}
+          searchable={searchable}
+          error={error}
+          className={
+            searchable
+              ? "w-full rounded-none border-0 bg-transparent px-3 py-1.5 pr-10 focus:border-0"
+              : "w-full rounded-none border-0 bg-transparent px-3 py-1.5 focus:border-0"
+          }
+        />
+      </div>
     </FloatingFieldset>
   );
 }

@@ -88,7 +88,7 @@ const hasAnyVictim = (data: VictimValues) =>
   ].some((value) => value > 0);
 
 const validateVictims = (data: VictimValues, ctx: z.RefinementCtx) => {
-  // 1. Kiểm tra nội bộ nhóm (1) - Tổng số người bị nạn
+  // 1. Nhóm (1) - Tổng số người bị nạn
   if (data.totalFemaleVictims > data.totalVictims) {
     addIssue(
       ctx,
@@ -100,7 +100,7 @@ const validateVictims = (data: VictimValues, ctx: z.RefinementCtx) => {
     addIssue(
       ctx,
       "totalFatalVictims",
-      "Số người chết không được lớn hơn tổng số người bị nạn",
+      "Số người bị chết không được lớn hơn tổng số người bị nạn",
     );
   }
   if (data.totalSeverelyInjuredVictims > data.totalVictims) {
@@ -111,19 +111,17 @@ const validateVictims = (data: VictimValues, ctx: z.RefinementCtx) => {
     );
   }
   if (
-    data.totalFemaleVictims +
-      data.totalFatalVictims +
-      data.totalSeverelyInjuredVictims >
+    data.totalFatalVictims + data.totalSeverelyInjuredVictims !==
     data.totalVictims
   ) {
     addIssue(
       ctx,
       "totalVictims",
-      "LĐ nữ bị nạn + người chết + người bị thương nặng không được lớn hơn tổng số người bị nạn",
+      "Số người bị chết + số người bị thương nặng phải bằng tổng số người bị nạn",
     );
   }
 
-  // 2. Kiểm tra nội bộ nhóm (2) - Người bị nạn không QL
+  // 2. Nhóm (2) - Người bị nạn không QL
   if (data.nonManagedFemaleVictims > data.nonManagedVictims) {
     addIssue(
       ctx,
@@ -146,15 +144,13 @@ const validateVictims = (data: VictimValues, ctx: z.RefinementCtx) => {
     );
   }
   if (
-    data.nonManagedFemaleVictims +
-      data.nonManagedFatalVictims +
-      data.nonManagedSeverelyInjuredVictims >
+    data.nonManagedFatalVictims + data.nonManagedSeverelyInjuredVictims !==
     data.nonManagedVictims
   ) {
     addIssue(
       ctx,
       "nonManagedVictims",
-      "LĐ nữ + người chết + người bị thương nặng không QL không được lớn hơn số người bị nạn không QL",
+      "Số người chết không QL + người bị thương nặng không QL phải bằng số người bị nạn không QL",
     );
   }
 };

@@ -1,6 +1,5 @@
 "use client";
 import { format, parseISO } from "date-fns";
-import { Button } from "@/libs/core/components/ui/Button";
 import type {
   EnterpriseDetailResponse,
   EnterpriseDocumentRow,
@@ -22,9 +21,6 @@ interface Props {
   businessTypeName: string;
   businessIndustryName: string;
   taxCode?: string;
-  onBack: () => void;
-  onConfirm: () => void | Promise<void>;
-  isLoading: boolean;
 }
 
 function EnterpriseInfoReview({
@@ -33,9 +29,6 @@ function EnterpriseInfoReview({
   businessTypeName,
   businessIndustryName,
   taxCode,
-  onBack,
-  onConfirm,
-  isLoading,
 }: Props) {
   const documents: EnterpriseDocumentRow<PreviewFile>[] = [
     {
@@ -132,26 +125,6 @@ function EnterpriseInfoReview({
 
           <DocumentsField documents={documents} />
         </div>
-      </div>
-
-      <div className="flex items-center justify-center gap-3">
-        <Button
-          type="button"
-          onClick={onBack}
-          disabled={isLoading}
-          className="rounded-lg px-3 py-2 font-medium border border-border"
-        >
-          Trở về
-        </Button>
-
-        <Button
-          type="button"
-          onClick={onConfirm}
-          disabled={isLoading}
-          className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
-        >
-          Xác nhận
-        </Button>
       </div>
     </div>
   );

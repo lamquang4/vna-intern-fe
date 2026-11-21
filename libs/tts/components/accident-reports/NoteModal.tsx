@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingTextarea } from "@/libs/core/components/ui/fields/FloatingTextarea";
 import { Modal } from "@/libs/core/components/ui/Modal";
-import { AccidentReportStatus } from "@/libs/shared/tts/models/enums";
 import {
   ReviewNoteData,
   reviewNoteSchema,
@@ -15,14 +14,9 @@ interface Props {
   onSubmit: (note: string) => void;
   count: number;
   isLoading?: boolean;
-  status:
-    | typeof AccidentReportStatus.APPROVED
-    | typeof AccidentReportStatus.DECLINED;
 }
 
-function NoteModal({ onClose, onSubmit, count, isLoading, status }: Props) {
-  const isApprove = status === AccidentReportStatus.APPROVED;
-
+function NoteModal({ onClose, onSubmit, count, isLoading }: Props) {
   const {
     register,
     handleSubmit,
@@ -35,7 +29,7 @@ function NoteModal({ onClose, onSubmit, count, isLoading, status }: Props) {
 
   return (
     <Modal
-      title={isApprove ? "Duyệt báo cáo" : "Từ chối báo cáo"}
+      title={"Từ chối báo cáo"}
       onClose={onClose}
       className="max-w-[420px]"
       headerClassName={`bg-primary text-white uppercase`}
@@ -46,10 +40,7 @@ function NoteModal({ onClose, onSubmit, count, isLoading, status }: Props) {
       >
         <div className="flex-1 overflow-y-auto">
           <div className="flex flex-col gap-6">
-            <p>
-              Ghi chú lý do cho {isApprove ? "duyệt" : "từ chối"} {count} báo
-              cáo đã chọn
-            </p>
+            <p>Ghi chú lý do từ chối {count} báo cáo đã chọn</p>
 
             <FloatingTextarea
               label="Ghi chú"

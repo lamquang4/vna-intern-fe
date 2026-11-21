@@ -6,7 +6,6 @@ import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/fields/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
 import { Label } from "@/libs/core/components/ui/Label";
-import { ChevronLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import ChangeEmailModal from "../auth/ChangeEmailModal";
 import {
@@ -28,7 +27,6 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useGetAllRoles } from "../../hooks/useRoles";
 import { Switch } from "@/libs/core/components/ui/Switch";
-import Link from "next/link";
 import { GENDER_OPTIONS } from "@/libs/core/constants/options";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
@@ -38,6 +36,9 @@ import {
   OTP_RESEND_COOLDOWN_SECONDS,
 } from "@/libs/core/constants/limits";
 import type { OtpTimers } from "../../../core/components/ui/fields/OtpField";
+import FormLayout from "../layout/FormLayout";
+
+const FORM_ID = "edit-user-form";
 
 interface Props {
   userId?: string;
@@ -210,7 +211,6 @@ function EditUserForm({ userId = "" }: Props) {
     reset();
   };
 
-  // Chỉ truyền timer cho modal khi nó thuộc đúng email hiện tại
   const activeOtpTimers =
     otpTimers && otpTimers.email === user?.email
       ? {
@@ -220,280 +220,277 @@ function EditUserForm({ userId = "" }: Props) {
       : null;
 
   return (
-    <>
-      <div className="py-[20px] sm:px-[20px] px-[15px] flex flex-col gap-6 overflow-y-auto">
-        <div className="flex justify-between items-center gap-4 flex-wrap">
-          <h3>Chi tiết người dùng</h3>
-
-          <Link
-            href="/users"
-            className="flex items-center font-medium gap-1 text-muted-foreground hover:text-primary px-3 py-2"
+    <FormLayout
+      title="Chi tiết người dùng"
+      backHref="/users"
+      actions={
+        <>
+          <Button
+            type="button"
+            onClick={handleCancel}
+            disabled={isUpdating}
+            className="rounded-lg px-3 py-2 font-medium border border-border"
           >
-            <ChevronLeft size={20} /> <span>Trở về</span>
-          </Link>
-        </div>
+            Hủy bỏ
+          </Button>
 
-        <form
-          className="flex flex-col gap-6 w-full"
-          onSubmit={handleSubmit(onSubmit)}
-        >
-          <div className="grid w-full grid-cols-1 gap-[20px] lg:grid-cols-[3fr_7fr]">
-            <div className="flex w-full h-fit flex-col gap-6 rounded-md border border-border p-[15px]">
-              <Controller
-                name="avatar"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <AvatarUpload
-                    value={field.value}
-                    onChange={field.onChange}
-                    currentUrl={user?.avatarUrl}
-                    disabled={isFetchingUser}
-                    error={fieldState.error?.message}
-                  />
-                )}
-              />
+          <Button
+            form={FORM_ID}
+            disabled={isFetchingUser || isUpdating}
+            type="submit"
+            className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
+          >
+            Lưu
+          </Button>
+        </>
+      }
+      overlay={
+        <>
+          {modalOpen && (
+            <ChangeEmailModal
+              onClose={() => setModalOpen(false)}
+              email={user?.email || ""}
+              userId={isSelf ? undefined : userId}
+              skipOtp={skipChangeEmailOtp}
+              otpTimers={activeOtpTimers}
+              onOtpTimersChange={(timers) =>
+                setOtpTimers({ email: user?.email ?? "", ...timers })
+              }
+              onOtpVerified={() => setOtpTimers(null)}
+            />
+          )}
 
-              {!isAccountPage && currentAccount && (
-                <Label className="flex w-full cursor-pointer items-center justify-between gap-3">
-                  <h5>Kích hoạt</h5>
-
-                  <Switch disabled={isFetchingUser} {...register("isActive")} />
-                </Label>
+          {(isSendingOtp || isUpdating) && (
+            <Overlay>
+              <Loading size={55} color="white" thickness={8} />
+              <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+            </Overlay>
+          )}
+        </>
+      }
+    >
+      <form
+        id={FORM_ID}
+        className="flex flex-col gap-6 w-full"
+        onSubmit={handleSubmit(onSubmit)}
+      >
+        <div className="grid w-full grid-cols-1 gap-[20px] lg:grid-cols-[3fr_7fr]">
+          <div className="flex w-full h-fit flex-col gap-6 rounded-md border border-border p-[15px]">
+            <Controller
+              name="avatar"
+              control={control}
+              render={({ field, fieldState }) => (
+                <AvatarUpload
+                  value={field.value}
+                  onChange={field.onChange}
+                  currentUrl={user?.avatarUrl}
+                  disabled={isFetchingUser}
+                  error={fieldState.error?.message}
+                />
               )}
-            </div>
+            />
 
-            <div className="p-[15px] rounded-md flex flex-col gap-[20px] w-full border border-border">
-              <div className="flex flex-col gap-[20px]">
-                <h5>Thông tin cá nhân</h5>
+            {!isAccountPage && currentAccount && (
+              <Label className="flex w-full cursor-pointer items-center justify-between gap-3">
+                <h5>Kích hoạt</h5>
 
-                <div className="grid grid-cols-1 gap-[15px] lg:grid-cols-2">
-                  <FloatingInput
-                    label="Tên tài khoản"
-                    placeholder="Nhập tên tài khoản"
-                    type="text"
-                    value={user?.username ?? ""}
-                    required
-                    disabled
-                  />
+                <Switch disabled={isFetchingUser} {...register("isActive")} />
+              </Label>
+            )}
+          </div>
 
-                  <Controller
-                    name="fullname"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <FloatingInput
-                        {...field}
-                        label="Họ tên"
-                        placeholder="Nhập họ tên"
-                        type="text"
-                        required
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                </div>
+          <div className="p-[15px] rounded-md flex flex-col gap-[20px] w-full border border-border">
+            <div className="flex flex-col gap-[20px]">
+              <h5>Thông tin cá nhân</h5>
 
-                <div className="grid grid-cols-1 gap-[15px] lg:grid-cols-2">
-                  <Controller
-                    name="birthDate"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <FloatingInput
-                        label="Ngày sinh"
-                        type="date"
-                        dateValue={field.value ? parseISO(field.value) : null}
-                        onDateChange={(date) => {
-                          field.onChange(
-                            date ? format(date, "yyyy-MM-dd") : null,
-                          );
-                          field.onBlur();
-                        }}
-                        onBlur={field.onBlur}
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
+              <div className="grid grid-cols-1 gap-[15px] lg:grid-cols-2">
+                <FloatingInput
+                  label="Tên tài khoản"
+                  placeholder="Nhập tên tài khoản"
+                  type="text"
+                  value={user?.username ?? ""}
+                  required
+                  disabled
+                />
 
-                  <Controller
-                    name="gender"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <FloatingSelect
-                        label="Giới tính"
-                        placeholder="Chọn giới tính"
-                        options={GENDER_OPTIONS}
-                        name={field.name}
-                        value={field.value ?? ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-[15px] lg:grid-cols-2">
-                  <Controller
-                    name="position"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <FloatingInput
-                        {...field}
-                        value={field.value ?? ""}
-                        placeholder="Nhập chức danh"
-                        label="Chức danh"
-                        type="text"
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-
-                  <Controller
-                    name="roleId"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <FloatingSelect
-                        required
-                        label="Vai trò"
-                        placeholder="Chọn vai trò"
-                        options={roleOptions}
-                        disabled={isRoleLocked}
-                        name={field.name}
-                        value={field.value ?? ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-[15px] md:grid-cols-2">
-                  <FloatingInput
-                    label="Email"
-                    placeholder="Nhập email"
-                    type="text"
-                    value={user?.email ?? ""}
-                    disabled
-                  />
-
-                  <Button
-                    type="button"
-                    className="lg:justify-self-start justify-self-end text-primary font-medium"
-                    onClick={handleRequestChangeEmailOtp}
-                    disabled={isSendingOtp || isFetchingUser}
-                  >
-                    Thay đổi
-                  </Button>
-                </div>
+                <Controller
+                  name="fullname"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <FloatingInput
+                      {...field}
+                      label="Họ tên"
+                      placeholder="Nhập họ tên"
+                      type="text"
+                      required
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
               </div>
 
-              <hr className="border-border border-t" />
+              <div className="grid grid-cols-1 gap-[15px] lg:grid-cols-2">
+                <Controller
+                  name="birthDate"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <FloatingInput
+                      label="Ngày sinh"
+                      type="date"
+                      dateValue={field.value ? parseISO(field.value) : null}
+                      onDateChange={(date) => {
+                        field.onChange(
+                          date ? format(date, "yyyy-MM-dd") : null,
+                        );
+                        field.onBlur();
+                      }}
+                      onBlur={field.onBlur}
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
 
-              <div className="flex flex-col gap-[20px]">
-                <h5>Thông tin liên hệ</h5>
+                <Controller
+                  name="gender"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <FloatingSelect
+                      label="Giới tính"
+                      placeholder="Chọn giới tính"
+                      options={GENDER_OPTIONS}
+                      name={field.name}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
+              </div>
 
-                <div className="grid grid-cols-1 gap-[15px] lg:grid-cols-2">
-                  <Controller
-                    name="province"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <FloatingSelect
-                        label="Tỉnh/thành phố"
-                        placeholder="Chọn tỉnh/thành phố"
-                        disabled={isFetchingProvince}
-                        options={provinceOptions}
-                        name={field.name}
-                        value={field.value ?? ""}
-                        onChange={(val) => {
-                          field.onChange(val);
-                          setValue("ward", null, { shouldValidate: true });
-                        }}
-                        onBlur={field.onBlur}
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
+              <div className="grid grid-cols-1 gap-[15px] lg:grid-cols-2">
+                <Controller
+                  name="position"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <FloatingInput
+                      {...field}
+                      value={field.value ?? ""}
+                      placeholder="Nhập chức danh"
+                      label="Chức danh"
+                      type="text"
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
 
-                  <Controller
-                    name="ward"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <FloatingSelect
-                        label="Phường/xã"
-                        placeholder="Chọn phường/xã"
-                        disabled={!selectedProvince}
-                        options={wardOptions}
-                        name={field.name}
-                        value={field.value ?? ""}
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                </div>
+                <Controller
+                  name="roleId"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <FloatingSelect
+                      required
+                      label="Vai trò"
+                      placeholder="Chọn vai trò"
+                      options={roleOptions}
+                      disabled={isRoleLocked}
+                      name={field.name}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
+              </div>
 
-                <div className="grid grid-cols-1 gap-[15px] lg:grid-cols-2">
-                  <Controller
-                    name="address"
-                    control={control}
-                    render={({ field, fieldState }) => (
-                      <FloatingInput
-                        {...field}
-                        value={field.value ?? ""}
-                        placeholder="Nhập địa chỉ"
-                        label="Địa chỉ"
-                        type="text"
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                </div>
+              <div className="grid grid-cols-1 gap-[15px] md:grid-cols-2">
+                <FloatingInput
+                  label="Email"
+                  placeholder="Nhập email"
+                  type="text"
+                  value={user?.email ?? ""}
+                  disabled
+                />
+
+                <Button
+                  type="button"
+                  className="lg:justify-self-start justify-self-end text-primary font-medium"
+                  onClick={handleRequestChangeEmailOtp}
+                  disabled={isSendingOtp || isFetchingUser}
+                >
+                  Thay đổi
+                </Button>
+              </div>
+            </div>
+
+            <hr className="border-border border-t" />
+
+            <div className="flex flex-col gap-[20px]">
+              <h5>Thông tin liên hệ</h5>
+
+              <div className="grid grid-cols-1 gap-[15px] lg:grid-cols-2">
+                <Controller
+                  name="province"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <FloatingSelect
+                      label="Tỉnh/thành phố"
+                      placeholder="Chọn tỉnh/thành phố"
+                      disabled={isFetchingProvince}
+                      options={provinceOptions}
+                      name={field.name}
+                      value={field.value ?? ""}
+                      onChange={(val) => {
+                        field.onChange(val);
+                        setValue("ward", null, { shouldValidate: true });
+                      }}
+                      onBlur={field.onBlur}
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
+
+                <Controller
+                  name="ward"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <FloatingSelect
+                      label="Phường/xã"
+                      placeholder="Chọn phường/xã"
+                      disabled={!selectedProvince}
+                      options={wardOptions}
+                      name={field.name}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-[15px] lg:grid-cols-2">
+                <Controller
+                  name="address"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <FloatingInput
+                      {...field}
+                      value={field.value ?? ""}
+                      placeholder="Nhập địa chỉ"
+                      label="Địa chỉ"
+                      type="text"
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
               </div>
             </div>
           </div>
-
-          <div className="flex items-center justify-center gap-3">
-            <Button
-              type="button"
-              onClick={handleCancel}
-              className="rounded-lg px-3 py-2 font-medium border border-border"
-            >
-              Hủy bỏ
-            </Button>
-
-            <Button
-              disabled={isFetchingUser}
-              type="submit"
-              className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
-            >
-              Lưu
-            </Button>
-          </div>
-        </form>
-      </div>
-
-      {modalOpen && (
-        <ChangeEmailModal
-          onClose={() => setModalOpen(false)}
-          email={user?.email || ""}
-          userId={isSelf ? undefined : userId}
-          skipOtp={skipChangeEmailOtp}
-          otpTimers={activeOtpTimers}
-          onOtpTimersChange={(timers) =>
-            setOtpTimers({ email: user?.email ?? "", ...timers })
-          }
-          onOtpVerified={() => setOtpTimers(null)}
-        />
-      )}
-
-      {(isSendingOtp || isUpdating) && (
-        <Overlay>
-          <Loading size={55} color="white" thickness={8} />
-          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
-        </Overlay>
-      )}
-    </>
+        </div>
+      </form>
+    </FormLayout>
   );
 }
 

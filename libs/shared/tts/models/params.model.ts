@@ -28,11 +28,3 @@ export interface GetAccidentReportsParams extends PageParams {
   ward?: string;
   year?: number;
 }
-
-export interface GetAccidentReportsMeParams extends PageParams {
-  name?: string;
-  taxCode?: string;
-  reportPeriod?: AccidentReportPeriod;
-  status?: string;
-  year?: number;
-}

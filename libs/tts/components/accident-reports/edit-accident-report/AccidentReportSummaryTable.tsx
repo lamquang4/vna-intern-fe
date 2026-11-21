@@ -3,7 +3,7 @@ import type { AccidentReportSummaryResponse } from "@/libs/shared/tts/models/acc
 import {
   accidentDamageColumns,
   accidentSummaryColumns,
-} from "@/libs/tts/utils/accidentReportColumns";
+} from "@/libs/tts/utils/accidentReportSummaryColumns";
 import { buildSummaryRows } from "@/libs/tts/utils/accidentReportSummary";
 
 interface Props {

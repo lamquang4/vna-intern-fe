@@ -17,6 +17,10 @@ export function ToastProvider() {
             secondary: "#fff",
           },
         },
+        style: {
+          whiteSpace: "pre-line",
+          maxWidth: 420,
+        },
       }}
     />
   );

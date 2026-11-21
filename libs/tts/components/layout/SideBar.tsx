@@ -55,7 +55,7 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
 
   const { data } = useGetMe();
   const account = data?.data;
-  const accidentReportPath = `/accident-reports?year=${new Date().getFullYear()}&page=1`;
+  const accidentReportPath = `/accident-reports?year=${new Date().getFullYear()}`;
 
   const menuDataRoleAdmin: MenuGroup[] = [
     {
@@ -64,20 +64,12 @@ function SideBar({ menuOpen, onToggleMenu }: Props) {
         {
           icon: <UsersRound size={20} strokeWidth={2} />,
           label: "Người dùng",
-          key: "1a",
-          children: [
-            { label: "Danh sách người dùng", path: "/users" },
-            { label: "Thêm người dùng", path: "/users/create" },
-          ],
+          path: "/users",
         },
         {
           icon: <BuildingComplex size={20} strokeWidth={2} />,
           label: "Doanh nghiệp",
-          key: "2a",
-          children: [
-            { label: "Danh sách doanh nghiệp", path: "/enterprises" },
-            { label: "Thêm doanh nghiệp", path: "/enterprises/create" },
-          ],
+          path: "/enterprises",
         },
       ],
     },

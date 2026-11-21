@@ -1,11 +1,11 @@
 import CreateEnterpriseContainer from "@/libs/tts/components/enterprises/create-enterprise/CreateEnterpriseContainer";
-import LayoutPage from "@/libs/tts/components/layout/LayoutPage";
+import PageLayout from "@/libs/tts/components/layout/PageLayout";
 
 function page() {
   return (
-    <LayoutPage>
+    <PageLayout>
       <CreateEnterpriseContainer />
-    </LayoutPage>
+    </PageLayout>
   );
 }
 

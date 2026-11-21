@@ -8,7 +8,8 @@ export const getErrorMessage = (
   const message = error.response?.data?.message;
 
   if (Array.isArray(message)) {
-    return message[0] ?? fallback;
+    const messages = [...new Set(message.filter(Boolean))];
+    return messages.length > 0 ? messages.join("\n") : fallback;
   }
 
   return message ?? fallback;

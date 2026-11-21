@@ -4,6 +4,7 @@ interface Props {
   title: string;
   count?: number;
   actions?: React.ReactNode;
+  filters?: React.ReactNode; // thêm
   children: React.ReactNode;
   pagination?: {
     page: number;
@@ -17,16 +18,22 @@ function ListLayout({
   title,
   count = 0,
   actions,
+  filters,
   pagination,
   children,
 }: Props) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-wrap items-center justify-between gap-4 py-[30px] sm:px-[20px] px-[15px]">
-        <h3>
-          {title} {""} {`(${count})`}
-        </h3>
-        <div className="flex items-center gap-3">{actions}</div>
+      <div className="py-[30px] sm:px-[20px] px-[15px] flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3>
+            {title} {""} {`(${count})`}
+          </h3>
+
+          <div className="flex items-center gap-3">{actions}</div>
+        </div>
+
+        {filters && filters}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">

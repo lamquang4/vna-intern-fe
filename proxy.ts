@@ -8,7 +8,11 @@ import type {
 import { RoleCode } from "./libs/shared/tts/models/enums";
 
 const LOGIN_PATH = "/";
-const DEFAULT_AUTH_PATH = "/account";
+const ACCOUNT_PATH = "/account";
+const ENTERPRISE_PATH = "/enterprise";
+
+const getDefaultAuthPath = (role?: string | null): string =>
+  role === RoleCode.DOANH_NGHIEP ? ENTERPRISE_PATH : ACCOUNT_PATH;
 
 // Route cần đăng nhập
 const PRIVATE_ROUTES: {
@@ -78,12 +82,12 @@ export function proxy(request: NextRequest) {
 
     const { roles } = privateRoute;
     if (roles && (!role || !roles.includes(role))) {
-      return redirectTo(request, DEFAULT_AUTH_PATH);
+      return redirectTo(request, getDefaultAuthPath(role));
     }
   }
 
   if (isPublicOnly && isAuthenticated) {
-    return redirectTo(request, DEFAULT_AUTH_PATH);
+    return redirectTo(request, getDefaultAuthPath(role));
   }
 
   return NextResponse.next();
@@ -98,6 +102,6 @@ export const config = {
     "/users/:path*",
     "/enterprises/:path*",
     "/enterprise/:path*",
-    "/accident-reports/:path",
+    "/accident-reports/:path*",
   ],
 };

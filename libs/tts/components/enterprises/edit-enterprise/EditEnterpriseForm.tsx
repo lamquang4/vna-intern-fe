@@ -36,6 +36,8 @@ import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
 import DocumentsField from "@/libs/core/components/ui/fields/DocumentsField";
 
+export const EDIT_ENTERPRISE_FORM_ID = "edit-enterprise-form";
+
 interface Props {
   onContinue: (
     data: UpdateEnterpriseData,
@@ -105,7 +107,6 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
     control,
     handleSubmit,
     setValue,
-    reset,
     formState: { errors },
   } = useForm<
     z.input<typeof updateEnterpriseSchema>,
@@ -224,13 +225,10 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
     setDocumentToDelete(null);
   };
 
-  const handleCancel = () => {
-    reset(serverValues);
-  };
-
   return (
     <>
       <form
+        id={EDIT_ENTERPRISE_FORM_ID}
         className="flex flex-col gap-6 w-full"
         onSubmit={handleSubmit(onSubmit)}
       >
@@ -500,24 +498,6 @@ function EditEnterpriseForm({ onContinue, initialData, enterpriseId }: Props) {
               onRemove={(row) => setDocumentToDelete(row)}
             />
           </div>
-        </div>
-
-        <div className="flex items-center justify-center gap-3">
-          <Button
-            type="button"
-            onClick={handleCancel}
-            className="rounded-lg px-3 py-2 font-medium border border-border"
-          >
-            Hủy bỏ
-          </Button>
-
-          <Button
-            type="submit"
-            disabled={isFetchingEnterprise}
-            className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
-          >
-            Tiếp tục
-          </Button>
         </div>
       </form>
 

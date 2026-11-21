@@ -206,7 +206,6 @@ export function Select({
   };
 
   return (
-    // w-full + min-w-0: không cho wrapper bị nội dung dài đẩy rộng ra
     <div ref={wrapperRef} className="relative w-full min-w-0">
       {searchable ? (
         <Input
@@ -240,8 +239,8 @@ export function Select({
           }}
           onKeyDown={handleKeyDown}
           className={twMerge(
-            "flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-left outline-none transition-colors",
-            "focus:border-primary disabled:cursor-not-allowed disabled:opacity-50",
+            "flex w-full min-w-0 items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-left outline-none transition-colors",
+            "focus:border-primary",
             className,
           )}
         >

@@ -11,10 +11,7 @@ import type {
   ReviewAccidentReportsRequest,
   UpdateAccidentReportRequest,
 } from "@/libs/shared/tts/models/accident-report.model";
-import {
-  GetAccidentReportsMeParams,
-  GetAccidentReportsParams,
-} from "@/libs/shared/tts/models/params.model";
+import { GetAccidentReportsParams } from "@/libs/shared/tts/models/params.model";
 
 const BASE = "/accident-reports";
 
@@ -55,10 +52,12 @@ export const accidentReportApis = {
       .then((r) => r.data),
 
   // Lấy danh sách phân trang báo cáo TNLĐ của tài khoản DN đang đăng nhập
-  getAccidentReportsMe: (params?: GetAccidentReportsMeParams) =>
+  getAccidentReportsMe: (year?: number) =>
     axiosInstance
-      .get<PageResponse<AccidentReportResponse>>(`${BASE}/me`, { params })
-      .then((r) => r.data),
+      .get<PageResponse<AccidentReportResponse>>(`${BASE}/me`, {
+        params: { year },
+      })
+      .then(({ data }) => data),
 
   // Cập nhật báo cáo TNLĐ (role Doanh nghiệp)
   updateAccidentReport: (id: string, data: UpdateAccidentReportRequest) =>

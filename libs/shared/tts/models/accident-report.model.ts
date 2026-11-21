@@ -119,7 +119,7 @@ export interface UpdateAccidentReportRequest {
 export interface ReviewAccidentReportsRequest {
   accidentReportIds: string[];
   status: AccidentReportReviewStatus;
-  note: string;
+  note?: string | null;
 }
 
 // response

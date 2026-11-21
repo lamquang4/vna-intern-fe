@@ -1,11 +1,21 @@
 import { ReactNode } from "react";
 
+export type ColumnFilter =
+  | { type: "text"; paramKey: string; placeholder?: string }
+  | {
+      type: "select";
+      paramKey: string;
+      options: SelectOption[];
+      placeholder?: string;
+    };
+
 export interface TableColumn<T> {
   key: string;
-  header: React.ReactNode; // chữ hoặc component
-  cell: (row: T, index: number) => React.ReactNode;
+  header: string;
   className?: string;
   headerClassName?: string;
+  cell: (row: T, index: number) => React.ReactNode;
+  filter?: ColumnFilter;
 }
 
 export interface SelectOption {
@@ -16,13 +26,13 @@ export interface SelectOption {
 export interface GroupTableColumn<T> {
   key: string;
   header: string;
-  field?: keyof T & string; 
-  cell?: (row: T) => ReactNode; 
-  rowSpan?: (row: T) => number; 
+  field?: keyof T & string;
+  cell?: (row: T) => ReactNode;
+  rowSpan?: (row: T) => number;
   align?: "left" | "center";
-  children?: GroupTableColumn<T>[]; 
+  children?: GroupTableColumn<T>[];
 }
 
 export type GroupTableRow<T> =
   | { id: string; data: T; bold?: boolean }
-  | { id: string; section: string }; 
+  | { id: string; section: string };

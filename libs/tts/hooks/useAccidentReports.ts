@@ -20,12 +20,10 @@ import type {
   ReviewAccidentReportsRequest,
   UpdateAccidentReportRequest,
 } from "@/libs/shared/tts/models/accident-report.model";
-import type {
-  GetAccidentReportsMeParams,
-  GetAccidentReportsParams,
-} from "@/libs/shared/tts/models/params.model";
+import type { GetAccidentReportsParams } from "@/libs/shared/tts/models/params.model";
 import { getErrorMessage } from "@/libs/core/utils/errorUtil";
 import { accidentReportApis } from "../services/apis/accidentReportApis";
+import { reportConfigKeys } from "./useReportConfigs";
 
 export const accidentReportKeys = {
   all: ["accident-reports"] as const,
@@ -33,8 +31,7 @@ export const accidentReportKeys = {
   listParams: (params?: GetAccidentReportsParams) =>
     [...accidentReportKeys.lists(), params] as const,
   myLists: () => [...accidentReportKeys.all, "my-list"] as const,
-  myListParams: (params?: GetAccidentReportsMeParams) =>
-    [...accidentReportKeys.myLists(), params] as const,
+  myList: (year?: number) => [...accidentReportKeys.myLists(), year] as const,
   detail: (id: string) => [...accidentReportKeys.all, "detail", id] as const,
   summary: (id: string) => [...accidentReportKeys.all, "summary", id] as const,
   overall: (year?: number) =>
@@ -46,32 +43,41 @@ export const useGetAccidentReports = (
   params?: GetAccidentReportsParams,
   enabled = true,
 ) => {
+  const queryClient = useQueryClient();
+
   return useQuery<
     PageResponse<AccidentReportResponse>,
     AxiosError<ErrorResponse>
   >({
     queryKey: accidentReportKeys.listParams(params),
-    queryFn: () => accidentReportApis.getAccidentReports(params),
+    queryFn: async () => {
+      const res = await accidentReportApis.getAccidentReports(params);
+      queryClient.invalidateQueries({ queryKey: reportConfigKeys.years() });
+      return res;
+    },
     placeholderData: keepPreviousData,
     enabled,
-    refetchInterval: 60_000, // 1 phút, chỉ chạy khi tab đang hiển thị
+    refetchInterval: 60_000,
   });
 };
 
 // Danh sách phân trang của tài khoản DN đang đăng nhập
-export const useGetAccidentReportsMe = (
-  params?: GetAccidentReportsMeParams,
-  enabled = true,
-) => {
+export const useGetAccidentReportsMe = (year?: number, enabled = true) => {
+  const queryClient = useQueryClient();
+
   return useQuery<
     PageResponse<AccidentReportResponse>,
     AxiosError<ErrorResponse>
   >({
-    queryKey: accidentReportKeys.myListParams(params),
-    queryFn: () => accidentReportApis.getAccidentReportsMe(params),
+    queryKey: accidentReportKeys.myList(year),
+    queryFn: async () => {
+      const res = await accidentReportApis.getAccidentReportsMe(year);
+      queryClient.invalidateQueries({ queryKey: reportConfigKeys.years() });
+      return res;
+    },
     placeholderData: keepPreviousData,
     enabled,
-    refetchInterval: 60_000, // 1 phút, chỉ chạy khi tab đang hiển thị
+    refetchInterval: 60_000,
   });
 };
 

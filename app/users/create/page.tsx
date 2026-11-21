@@ -1,11 +1,11 @@
-import LayoutPage from "@/libs/tts/components/layout/LayoutPage";
+import PageLayout from "@/libs/tts/components/layout/PageLayout";
 import CreateUserForm from "@/libs/tts/components/users/CreateUserForm";
 
 function page() {
   return (
-    <LayoutPage>
+    <PageLayout>
       <CreateUserForm />
-    </LayoutPage>
+    </PageLayout>
   );
 }
 
