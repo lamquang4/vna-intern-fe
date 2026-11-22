@@ -79,15 +79,17 @@ function OverallAccidentReport() {
         </div>
       }
       actions={
-        <Button
-          type="button"
-          onClick={handlePrintReport}
-          disabled={isExportingReport || summaryQuery.isLoading || !summary}
-          className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
-        >
-          <Printer size={18} />
-          <span>In báo cáo</span>
-        </Button>
+        <div className="flex items-center justify-center gap-3">
+          <Button
+            type="button"
+            onClick={handlePrintReport}
+            disabled={isExportingReport || summaryQuery.isLoading || !summary}
+            className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
+          >
+            <Printer size={18} />
+            <span>In báo cáo</span>
+          </Button>
+        </div>
       }
     >
       <div className="flex flex-col gap-8">

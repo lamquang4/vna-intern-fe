@@ -1,5 +1,6 @@
 import EditAccidentReportContainer from "@/libs/tts/components/accident-reports/edit-accident-report/EditAccidentReportContainer";
 import PageLayout from "@/libs/tts/components/layout/PageLayout";
+import { Suspense } from "react";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -12,11 +13,13 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   return (
     <PageLayout>
-      <EditAccidentReportContainer
-        key={mode}
-        accidentReportId={id}
-        mode={mode}
-      />
+      <Suspense>
+        <EditAccidentReportContainer
+          key={mode}
+          accidentReportId={id}
+          mode={mode}
+        />
+      </Suspense>
     </PageLayout>
   );
 }

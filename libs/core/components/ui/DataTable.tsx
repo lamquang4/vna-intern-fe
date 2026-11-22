@@ -219,7 +219,7 @@ function DataTable<T>({
             data.map((row, index) => {
               const id = getRowId(row);
               return (
-                <tr key={id} className="border-b border-border hover:bg-muted">
+                <tr key={id} className="border-b border-border">
                   {selectable && (
                     <td className="p-4">
                       <Input

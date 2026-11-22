@@ -138,6 +138,8 @@ export interface AccidentReportDetailResponse {
   year: number;
   reportPeriod: AccidentReportPeriod;
   status: AccidentReportStatus;
+  submittedAt?: string | null;
+  reviewedAt?: string | null;
 
   // Thông tin doanh nghiệp
   companyName: string;

@@ -84,99 +84,102 @@ function EditEnterpriseContainer({ enterpriseId = "" }: Props) {
   };
 
   return (
-    <FormLayout
-      title="Chi tiết doanh nghiệp"
-      backHref={`${isMePage ? "" : "/enterprises"}`}
-      actions={
-        step === 1 ? (
-          <>
-            <Button
-              type="button"
-              onClick={handleCancel}
-              disabled={isUpdating}
-              className="rounded-lg px-3 py-2 font-medium border border-border"
-            >
-              Hủy bỏ
-            </Button>
+    <>
+      <FormLayout
+        title="Chi tiết doanh nghiệp"
+        backHref={`${isMePage ? "" : "/enterprises"}`}
+        actions={
+          <div className="flex items-center justify-center gap-3">
+            {step === 1 ? (
+              <>
+                <Button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={isUpdating}
+                  className="rounded-lg px-3 py-2 font-medium border border-border"
+                >
+                  Hủy bỏ
+                </Button>
 
-            <Button
-              type="submit"
-              form={EDIT_ENTERPRISE_FORM_ID}
-              className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
-            >
-              Tiếp tục
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              type="button"
-              onClick={handleBack}
-              disabled={isUpdating}
-              className="rounded-lg px-3 py-2 font-medium border border-border"
-            >
-              Quay lại
-            </Button>
+                <Button
+                  type="submit"
+                  form={EDIT_ENTERPRISE_FORM_ID}
+                  className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
+                >
+                  Tiếp tục
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={isUpdating}
+                  className="rounded-lg px-3 py-2 font-medium border border-border"
+                >
+                  Quay lại
+                </Button>
 
-            <Button
-              type="button"
-              onClick={handleConfirm}
-              disabled={isUpdating}
-              className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
-            >
-              Xác nhận
-            </Button>
-          </>
-        )
-      }
-      overlay={
-        isUpdating && (
-          <Overlay>
-            <Loading size={55} color="white" thickness={8} />
-            <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
-          </Overlay>
-        )
-      }
-    >
-      <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
-        <div className="flex gap-2 items-center">
-          <div
-            className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
-          >
-            1
+                <Button
+                  type="button"
+                  onClick={handleConfirm}
+                  disabled={isUpdating}
+                  className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
+                >
+                  Xác nhận
+                </Button>
+              </>
+            )}
           </div>
-          <span>Thông tin doanh nghiệp</span>
+        }
+      >
+        <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
+          <div className="flex gap-2 items-center">
+            <div
+              className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
+            >
+              1
+            </div>
+            <span>Thông tin doanh nghiệp</span>
+          </div>
+
+          <div className="flex gap-2 items-center">
+            <div
+              className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
+            >
+              2
+            </div>
+            <span>Xác nhận đăng ký</span>
+          </div>
         </div>
 
-        <div className="flex gap-2 items-center">
-          <div
-            className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
-          >
-            2
-          </div>
-          <span>Xác nhận đăng ký</span>
-        </div>
-      </div>
-
-      {step === 1 ? (
-        <EditEnterpriseForm
-          key={formKey}
-          onContinue={handleContinue}
-          initialData={formData}
-          enterpriseId={enterpriseId}
-        />
-      ) : (
-        formData && (
-          <EnterpriseInfoReview
-            data={formData}
-            existingFiles={existingFiles}
-            businessTypeName={businessTypeName}
-            businessIndustryName={businessIndustryName}
-            taxCode={taxCode}
+        {step === 1 ? (
+          <EditEnterpriseForm
+            key={formKey}
+            onContinue={handleContinue}
+            initialData={formData}
+            enterpriseId={enterpriseId}
           />
-        )
+        ) : (
+          formData && (
+            <EnterpriseInfoReview
+              data={formData}
+              existingFiles={existingFiles}
+              businessTypeName={businessTypeName}
+              businessIndustryName={businessIndustryName}
+              taxCode={taxCode}
+            />
+          )
+        )}
+      </FormLayout>
+
+      {isUpdating && (
+        <Overlay>
+          <Loading size={55} color="white" thickness={8} />
+          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+        </Overlay>
       )}
-    </FormLayout>
+    </>
   );
 }
 

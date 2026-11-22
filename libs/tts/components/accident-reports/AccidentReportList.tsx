@@ -32,6 +32,7 @@ import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
 import { useGetReportConfigYears } from "../../hooks/useReportConfigs";
 import { useGetHCMProvince, useGetHCMWards } from "../../hooks/useLocation";
 import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
+import { formatDate } from "@/libs/core/utils/formatters";
 
 const FILTER_KEYS = [
   "name",
@@ -41,6 +42,25 @@ const FILTER_KEYS = [
   "province",
   "ward",
 ];
+
+export const getStatusLabel = (status: AccidentReportStatus) =>
+  ACCIDENT_REPORT_STATUS_OPTIONS.find((o) => o.value === status)?.label ??
+  status;
+
+export const getStatusClass = (status: AccidentReportStatus) => {
+  switch (status) {
+    case AccidentReportStatus.ACCEPTED:
+      return "bg-primary/10 text-primary";
+    case AccidentReportStatus.APPROVED:
+      return "bg-success/10 text-success";
+    case AccidentReportStatus.DECLINED:
+      return "bg-warning/10 text-warning";
+    case AccidentReportStatus.EXPIRED:
+      return "bg-error/10 text-error";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+};
 
 function AccidentReportList() {
   const searchParams = useSearchParams();
@@ -162,6 +182,22 @@ function AccidentReportList() {
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   };
 
+  const selectedReports = accidentReports.filter((r) =>
+    selectedIds.includes(r.accidentReportId),
+  );
+
+  const canApprove =
+    selectedReports.length > 0 &&
+    selectedReports.every(
+      (r) =>
+        r.status === AccidentReportStatus.ACCEPTED ||
+        r.status === AccidentReportStatus.DECLINED,
+    );
+
+  const canDecline =
+    selectedReports.length > 0 &&
+    selectedReports.every((r) => r.status === AccidentReportStatus.ACCEPTED);
+
   const submitReview = (status: AccidentReportReviewStatus, note?: string) => {
     if (isReviewing || selectedIds.length === 0) return;
 
@@ -183,13 +219,21 @@ function AccidentReportList() {
       accidentReports.map((r) => [r.accidentReportId, r]),
     );
 
-    const hasInvalid = selectedIds.some(
-      (id) => reportById.get(id)?.status !== AccidentReportStatus.ACCEPTED,
-    );
+    const allowedStatuses: AccidentReportStatus[] =
+      status === AccidentReportReviewStatus.APPROVED
+        ? [AccidentReportStatus.ACCEPTED, AccidentReportStatus.DECLINED]
+        : [AccidentReportStatus.ACCEPTED];
+
+    const hasInvalid = selectedIds.some((id) => {
+      const report = reportById.get(id);
+      return !report || !allowedStatuses.includes(report.status);
+    });
 
     if (hasInvalid) {
       toast.error(
-        "Chỉ được duyệt hoặc từ chối các báo cáo có trạng thái là đã tiếp nhận",
+        status === AccidentReportReviewStatus.APPROVED
+          ? "Chỉ được duyệt các báo cáo có trạng thái là đã tiếp nhận hoặc đã từ chối"
+          : "Chỉ được từ chối các báo cáo có trạng thái là đã tiếp nhận",
       );
       return;
     }
@@ -296,45 +340,13 @@ function AccidentReportList() {
     {
       key: "status",
       header: "Trạng thái",
-      cell: (r) => {
-        const isAccepted = r.status === AccidentReportStatus.ACCEPTED;
-        const isApproved = r.status === AccidentReportStatus.APPROVED;
-        const isDeclined = r.status === AccidentReportStatus.DECLINED;
-        const isExpired = r.status === AccidentReportStatus.EXPIRED;
-
-        return (
-          <div className="flex items-center gap-2">
-            <div
-              className={`size-3 rounded-full ${
-                isAccepted
-                  ? "bg-primary"
-                  : isApproved
-                    ? "bg-success"
-                    : isDeclined
-                      ? "bg-warning"
-                      : isExpired
-                        ? "bg-error"
-                        : "bg-muted-foreground"
-              }`}
-            />
-            <span
-              className={`font-medium ${
-                isAccepted
-                  ? "text-primary"
-                  : isApproved
-                    ? "text-success"
-                    : isDeclined
-                      ? "text-warning"
-                      : isExpired
-                        ? "text-error"
-                        : ""
-              }`}
-            >
-              {getStatusLabel(r.status)}
-            </span>
-          </div>
-        );
-      },
+      cell: (r) => (
+        <span
+          className={`inline-flex items-center rounded-full px-3 py-1 font-normal ${getStatusClass(r.status)}`}
+        >
+          {getStatusLabel(r.status)}
+        </span>
+      ),
       filter: isRoleSo
         ? {
             type: "select",
@@ -343,15 +355,24 @@ function AccidentReportList() {
           }
         : undefined,
     },
+    {
+      key: "createdAt",
+      header: "Ngày tạo",
+      cell: (r) => formatDate(r.createdAt),
+    },
+    {
+      key: "updatedAt",
+      header: "Ngày cập nhật",
+      cell: (r) => formatDate(r.updatedAt),
+    },
   ];
 
   return (
     <>
       <ListLayout
-        title="Báo cáo TNLĐ"
-        count={totalElements}
+        title={`Báo cáo TNLĐ (${totalElements})`}
         actions={
-          <>
+          <div className="flex items-center justify-center gap-3">
             <Select
               searchable={false}
               options={yearOptions}
@@ -371,33 +392,37 @@ function AccidentReportList() {
 
             {selectedIds.length > 0 && isRoleSo && (
               <>
-                <Button
-                  type="button"
-                  disabled={isReviewing}
-                  onClick={() =>
-                    handleConfirmDialogReview(
-                      AccidentReportReviewStatus.DECLINED,
-                    )
-                  }
-                  className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
-                >
-                  <CircleX size={18} />
-                  <span>Từ chối ({selectedIds.length})</span>
-                </Button>
+                {canDecline && (
+                  <Button
+                    type="button"
+                    disabled={isReviewing}
+                    onClick={() =>
+                      handleConfirmDialogReview(
+                        AccidentReportReviewStatus.DECLINED,
+                      )
+                    }
+                    className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
+                  >
+                    <CircleX size={18} />
+                    <span>Từ chối ({selectedIds.length})</span>
+                  </Button>
+                )}
 
-                <Button
-                  type="button"
-                  disabled={isReviewing}
-                  onClick={() =>
-                    handleConfirmDialogReview(
-                      AccidentReportReviewStatus.APPROVED,
-                    )
-                  }
-                  className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
-                >
-                  <CircleCheck size={18} />
-                  <span>Duyệt ({selectedIds.length})</span>
-                </Button>
+                {canApprove && (
+                  <Button
+                    type="button"
+                    disabled={isReviewing}
+                    onClick={() =>
+                      handleConfirmDialogReview(
+                        AccidentReportReviewStatus.APPROVED,
+                      )
+                    }
+                    className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
+                  >
+                    <CircleCheck size={18} />
+                    <span>Duyệt ({selectedIds.length})</span>
+                  </Button>
+                )}
               </>
             )}
 
@@ -410,9 +435,9 @@ function AccidentReportList() {
                 <FunnelX size={18} /> <span>Xóa bộ lọc</span>
               </Button>
             )}
-          </>
+          </div>
         }
-        filters={
+        others={
           isRoleSo ? (
             <div className="flex flex-col gap-3 sm:flex-row">
               <FloatingSelect

@@ -239,10 +239,9 @@ function EnterpriseList() {
   return (
     <>
       <ListLayout
-        title="Doanh nghiệp"
-        count={totalElements}
+        title={`Doanh nghiệp (${totalElements})`}
         actions={
-          <>
+          <div className="flex items-center justify-center gap-3">
             {selectedIds.length > 0 && (
               <Button
                 type="button"
@@ -272,7 +271,7 @@ function EnterpriseList() {
                 <FunnelX size={18} /> <span>Xóa bộ lọc</span>
               </Button>
             )}
-          </>
+          </div>
         }
         pagination={{ page, size, totalElements, totalPages }}
       >

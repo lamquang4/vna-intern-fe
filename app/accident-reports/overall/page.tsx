@@ -5,9 +5,7 @@ import PageLayout from "@/libs/tts/components/layout/PageLayout";
 function Page() {
   return (
     <PageLayout>
-      <Suspense
-        fallback={<div className="p-6">Đang tải báo cáo tổng hợp...</div>}
-      >
+      <Suspense>
         <OverallAccidentReport />
       </Suspense>
     </PageLayout>

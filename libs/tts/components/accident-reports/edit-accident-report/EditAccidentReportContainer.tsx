@@ -8,6 +8,7 @@ import { Button } from "@/libs/core/components/ui/Button";
 import { Select } from "@/libs/core/components/ui/Select";
 import {
   ACCIDENT_REPORT_PERIOD_OPTIONS,
+  ACCIDENT_REPORT_STATUS_OPTIONS,
   ACCIDENT_REPORT_STEP_OPTIONS,
 } from "@/libs/core/constants/options";
 import {
@@ -44,6 +45,8 @@ import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
 import FormLayout from "../../layout/FormLayout";
 import { downloadAccidentReportSummaryWord } from "@/libs/tts/utils/accidentReportSummaryWordExport";
+import { formatDate } from "@/libs/core/utils/formatters";
+import { getStatusClass, getStatusLabel } from "../AccidentReportList";
 
 interface Props {
   accidentReportId: string;
@@ -147,6 +150,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   const isRoleSo = currentAccount?.data.roleCode === RoleCode.SO;
   const isRoleDN = currentAccount?.data.roleCode === RoleCode.DOANH_NGHIEP;
   const isAccepted = report?.status === AccidentReportStatus.ACCEPTED;
+  const isDeclined = report?.status === AccidentReportStatus.DECLINED;
   const isViewOnly =
     !!report &&
     (
@@ -159,7 +163,12 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
 
   const canEdit =
     mode === "edit" && !isLoadingAccount && isRoleDN && !!report && !isViewOnly;
-  const canReview = isRoleSo && isAccepted;
+
+  const canApprove = isRoleSo && (isAccepted || isDeclined);
+
+  const canDecline = isRoleSo && isAccepted;
+  const canReview = canApprove || canDecline;
+
   const isReadOnly = !canEdit;
   const canNavigateSteps = mode === "edit" && canEdit;
 
@@ -299,12 +308,17 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
     router,
   ]);
 
-  const handleConfirmDialogReview = (status: AccidentReportReviewStatus) => {
-    if (!canReview || isReviewing) return;
+  const isReviewAllowed = (status: AccidentReportReviewStatus) =>
+    status === AccidentReportReviewStatus.APPROVED ? canApprove : canDecline;
 
-    if (report?.status !== AccidentReportStatus.ACCEPTED) {
+  const handleConfirmDialogReview = (status: AccidentReportReviewStatus) => {
+    if (isReviewing) return;
+
+    if (!isReviewAllowed(status)) {
       toast.error(
-        "Chỉ được duyệt hoặc từ chối báo cáo có trạng thái đã tiếp nhận",
+        status === AccidentReportReviewStatus.APPROVED
+          ? "Chỉ được duyệt báo cáo có trạng thái đã tiếp nhận hoặc đã từ chối"
+          : "Chỉ được từ chối báo cáo có trạng thái đã tiếp nhận",
       );
       return;
     }
@@ -313,13 +327,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   };
 
   const submitReview = (status: AccidentReportReviewStatus, note?: string) => {
-    if (
-      !canReview ||
-      isReviewing ||
-      report?.status !== AccidentReportStatus.ACCEPTED
-    ) {
-      return;
-    }
+    if (isReviewing || !isReviewAllowed(status)) return;
 
     reviewMutation.mutate(
       {
@@ -340,10 +348,8 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
     if (!confirmStatus) return;
 
     if (confirmStatus === AccidentReportReviewStatus.APPROVED) {
-      // Duyệt: không cần ghi chú, gọi API luôn
       submitReview(confirmStatus);
     } else {
-      // Từ chối: mở modal nhập ghi chú
       setReviewStatus(confirmStatus);
     }
 
@@ -488,174 +494,208 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   };
 
   return (
-    <FormLayout
-      title={
-        <>
-          Báo cáo TNLĐ - Kỳ báo cáo{" "}
-          {report ? getPeriodLabel(report.reportPeriod) : ""} - Năm{" "}
-          {report?.year}
-        </>
-      }
-      backHref={accidentReportsPath}
-      actions={
-        <>
-          {canNavigateSteps && activeStep > 0 && (
-            <Button
-              type="button"
-              onClick={goToPreviousStep}
-              disabled={isUpdating}
-              className="rounded-md border border-primary px-3 py-2 text-primary"
-            >
-              Quay lại
-            </Button>
-          )}
+    <>
+      <FormLayout
+        title={
+          <>
+            Báo cáo TNLĐ - Kỳ báo cáo{" "}
+            {report ? getPeriodLabel(report.reportPeriod) : ""} - Năm{" "}
+            {report?.year}
+          </>
+        }
+        backHref={accidentReportsPath}
+        others={
+          <>
+            {report && (
+              <div className="flex flex-wrap items-center gap-5">
+                <span
+                  className={`rounded-md px-3 py-1.5 font-normal ${getStatusClass(report.status)}`}
+                >
+                  {getStatusLabel(report.status)}
+                </span>
 
-          {canEdit && (
-            <Button
-              type="button"
-              onClick={saveCurrentStep}
-              disabled={
-                isUpdating ||
-                (activeStep === lastStep && !hasValidNewStampedReport)
-              }
-              className="rounded-md bg-primary px-3 py-2 text-white"
-            >
-              {activeStep === lastStep ? "Gửi báo cáo" : "Lưu"}
-            </Button>
-          )}
+                {report.submittedAt && (
+                  <span>
+                    Ngày nộp: <strong>{formatDate(report.submittedAt)}</strong>
+                  </span>
+                )}
 
-          {canReview && (
-            <>
+                {report.reviewedAt && (
+                  <span>
+                    Ngày duyệt: <strong>{formatDate(report.reviewedAt)}</strong>
+                  </span>
+                )}
+              </div>
+            )}
+          </>
+        }
+        actions={
+          <div className="flex items-center justify-center gap-3">
+            {canNavigateSteps && activeStep > 0 && (
               <Button
                 type="button"
-                onClick={() =>
-                  handleConfirmDialogReview(AccidentReportStatus.APPROVED)
-                }
-                disabled={isReviewing}
-                className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
+                onClick={goToPreviousStep}
+                disabled={isUpdating}
+                className="rounded-md border border-primary px-3 py-2 text-primary"
               >
-                <CircleCheck size={18} />
-                <span>Duyệt</span>
+                Quay lại
               </Button>
+            )}
 
+            {canEdit && (
               <Button
                 type="button"
-                onClick={() =>
-                  handleConfirmDialogReview(AccidentReportStatus.DECLINED)
+                onClick={saveCurrentStep}
+                disabled={
+                  isUpdating ||
+                  (activeStep === lastStep && !hasValidNewStampedReport)
                 }
-                disabled={isReviewing}
-                className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
+                className="rounded-md bg-primary px-3 py-2 text-white"
               >
-                <CircleX size={18} />
-                <span>Từ chối</span>
+                {activeStep === lastStep ? "Gửi báo cáo" : "Lưu"}
               </Button>
-            </>
-          )}
+            )}
 
-          {activeStep === lastStep && (
-            <Button
-              type="button"
-              onClick={handlePrintReport}
-              disabled={isExportingReport || summaryQuery.isLoading || !summary}
-              className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
-            >
-              <Printer size={18} />
-              <span>In báo cáo</span>
-            </Button>
-          )}
+            {canReview && (
+              <>
+                {canApprove && (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      handleConfirmDialogReview(
+                        AccidentReportReviewStatus.APPROVED,
+                      )
+                    }
+                    disabled={isReviewing}
+                    className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
+                  >
+                    <CircleCheck size={18} />
+                    <span>Duyệt</span>
+                  </Button>
+                )}
 
-          {canNavigateSteps && activeStep < lastStep && (
-            <Button
-              type="button"
-              onClick={goToNextStep}
-              disabled={isUpdating}
-              className="rounded-md border border-primary px-3 py-2 text-primary"
-            >
-              Tiếp tục
-            </Button>
-          )}
-        </>
-      }
-      overlay={
-        <>
-          {confirmStatus && (
-            <ConfirmDialog
-              title={
-                confirmStatus === AccidentReportStatus.APPROVED
-                  ? "Xác nhận duyệt báo cáo"
-                  : "Xác nhận từ chối báo cáo"
-              }
-              description={`Bạn có chắc chắn muốn ${
-                confirmStatus === AccidentReportStatus.APPROVED
-                  ? "duyệt"
-                  : "từ chối"
-              } báo cáo này?`}
-              confirmText="Xác nhận"
-              cancelText="Hủy bỏ"
-              onConfirm={handleConfirmReview}
-              onClose={() => setConfirmStatus(null)}
-            />
-          )}
+                {canDecline && (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      handleConfirmDialogReview(
+                        AccidentReportReviewStatus.DECLINED,
+                      )
+                    }
+                    disabled={isReviewing}
+                    className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
+                  >
+                    <CircleX size={18} />
+                    <span>Từ chối</span>
+                  </Button>
+                )}
+              </>
+            )}
 
-          {reviewStatus && (
-            <NoteModal
-              count={1}
-              isLoading={isReviewing}
-              onSubmit={handleReviewAccidentReport}
-              onClose={() => setReviewStatus(null)}
-            />
-          )}
+            {activeStep === lastStep && (
+              <Button
+                type="button"
+                onClick={handlePrintReport}
+                disabled={
+                  isExportingReport || summaryQuery.isLoading || !summary
+                }
+                className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
+              >
+                <Printer size={18} />
+                <span>In báo cáo</span>
+              </Button>
+            )}
 
-          {isUpdating && (
-            <Overlay>
-              <Loading size={55} color="white" thickness={8} />
-              <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
-            </Overlay>
-          )}
-        </>
-      }
-    >
-      {canNavigateSteps && (
-        <Select
-          options={ACCIDENT_REPORT_STEP_OPTIONS}
-          value={String(activeStep)}
-          onChange={(value) => setCurrentStep(Number(value))}
-          disabled={isUpdating}
-          searchable={false}
+            {canNavigateSteps && activeStep < lastStep && (
+              <Button
+                type="button"
+                onClick={goToNextStep}
+                disabled={isUpdating}
+                className="rounded-md border border-primary px-3 py-2 text-primary"
+              >
+                Tiếp tục
+              </Button>
+            )}
+          </div>
+        }
+      >
+        {canNavigateSteps && (
+          <Select
+            options={ACCIDENT_REPORT_STEP_OPTIONS}
+            value={String(activeStep)}
+            onChange={(value) => setCurrentStep(Number(value))}
+            disabled={isUpdating}
+            searchable={false}
+          />
+        )}
+
+        <FormProvider {...form}>
+          <form onSubmit={(event) => event.preventDefault()}>
+            {canEdit && (
+              <div className="flex w-full flex-col gap-[20px]">
+                {activeStep === 0 && (
+                  <BusinessInfoStep
+                    companyName={report?.companyName}
+                    businessIndustryName={report?.businessIndustryName}
+                    businessTypeName={report?.businessTypeName}
+                  />
+                )}
+                {activeStep === 1 && (
+                  <AccidentStatsStep prefix="accidentTotals" />
+                )}
+                {activeStep === 2 && <AccidentDetailsStep />}
+                {activeStep === 3 && (
+                  <AccidentStatsStep prefix="subsidizedAccident" />
+                )}
+              </div>
+            )}
+
+            {activeStep === lastStep && (
+              <ReportOverviewStep
+                report={report}
+                summary={summary}
+                disabled={isReadOnly || isUpdating}
+              />
+            )}
+          </form>
+        </FormProvider>
+      </FormLayout>
+
+      {confirmStatus && (
+        <ConfirmDialog
+          title={
+            confirmStatus === AccidentReportReviewStatus.APPROVED
+              ? "Xác nhận duyệt báo cáo"
+              : "Xác nhận từ chối báo cáo"
+          }
+          description={`Bạn có chắc chắn muốn ${
+            confirmStatus === AccidentReportReviewStatus.APPROVED
+              ? "duyệt"
+              : "từ chối"
+          } báo cáo này?`}
+          confirmText="Xác nhận"
+          cancelText="Hủy bỏ"
+          onConfirm={handleConfirmReview}
+          onClose={() => setConfirmStatus(null)}
         />
       )}
 
-      <FormProvider {...form}>
-        <form onSubmit={(event) => event.preventDefault()}>
-          {canEdit && (
-            <div className="flex w-full flex-col gap-[20px]">
-              {activeStep === 0 && (
-                <BusinessInfoStep
-                  companyName={report?.companyName}
-                  businessIndustryName={report?.businessIndustryName}
-                  businessTypeName={report?.businessTypeName}
-                />
-              )}
-              {activeStep === 1 && (
-                <AccidentStatsStep prefix="accidentTotals" />
-              )}
-              {activeStep === 2 && <AccidentDetailsStep />}
-              {activeStep === 3 && (
-                <AccidentStatsStep prefix="subsidizedAccident" />
-              )}
-            </div>
-          )}
+      {reviewStatus && (
+        <NoteModal
+          count={1}
+          isLoading={isReviewing}
+          onSubmit={handleReviewAccidentReport}
+          onClose={() => setReviewStatus(null)}
+        />
+      )}
 
-          {activeStep === lastStep && (
-            <ReportOverviewStep
-              report={report}
-              summary={summary}
-              disabled={isReadOnly || isUpdating}
-            />
-          )}
-        </form>
-      </FormProvider>
-    </FormLayout>
+      {isUpdating && (
+        <Overlay>
+          <Loading size={55} color="white" thickness={8} />
+          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+        </Overlay>
+      )}
+    </>
   );
 }
 
