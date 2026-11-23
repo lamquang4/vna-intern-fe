@@ -506,27 +506,31 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
         backHref={accidentReportsPath}
         others={
           <>
-            {report && (
-              <div className="flex flex-wrap items-center gap-5">
-                <span
-                  className={`rounded-md px-3 py-1.5 font-normal ${getStatusClass(report.status)}`}
-                >
-                  {getStatusLabel(report.status)}
-                </span>
-
-                {report.submittedAt && (
-                  <span>
-                    Ngày nộp: <strong>{formatDate(report.submittedAt)}</strong>
+            {report &&
+              (report?.status === AccidentReportStatus.APPROVED ||
+                report?.status === AccidentReportStatus.DECLINED) && (
+                <div className="flex flex-wrap items-center gap-5">
+                  <span
+                    className={`rounded-md px-3 py-1.5 font-normal ${getStatusClass(report.status)}`}
+                  >
+                    {getStatusLabel(report.status)}
                   </span>
-                )}
 
-                {report.reviewedAt && (
-                  <span>
-                    Ngày duyệt: <strong>{formatDate(report.reviewedAt)}</strong>
-                  </span>
-                )}
-              </div>
-            )}
+                  {report.submittedAt && (
+                    <span>
+                      Ngày nộp:{" "}
+                      <strong>{formatDate(report.submittedAt)}</strong>
+                    </span>
+                  )}
+
+                  {report.reviewedAt && (
+                    <span>
+                      Ngày duyệt:{" "}
+                      <strong>{formatDate(report.reviewedAt)}</strong>
+                    </span>
+                  )}
+                </div>
+              )}
           </>
         }
         actions={
