@@ -39,12 +39,20 @@ export function parseThousands(raw: unknown): number | null {
   return digits === "" ? null : Number(digits);
 }
 
-export function formatDate(value?: string | null): string {
+export function formatDate(value?: string | Date | null): string {
   if (!value) return "";
 
-  const date = parseISO(value);
+  const date = typeof value === "string" ? parseISO(value) : value;
 
   return isValid(date) ? format(date, "dd/MM/yyyy", { locale: vi }) : "";
+}
+
+export function parseDate(value?: string | Date | null): Date | null {
+  if (!value) return null;
+
+  const date = typeof value === "string" ? parseISO(value.slice(0, 10)) : value;
+
+  return isValid(date) ? date : null;
 }
 
 export const formatNumber = (value?: number | null) =>

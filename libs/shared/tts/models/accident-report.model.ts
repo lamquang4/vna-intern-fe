@@ -127,9 +127,13 @@ export interface AccidentReportResponse {
   accidentReportId: string;
   name: string;
   taxCode: string;
+  year: number;
   reportPeriod: AccidentReportPeriod;
   status: AccidentReportStatus;
   note: string;
+  deadlineAt?: string | null;
+  submittedAt?: string | null;
+  reviewedAt?: string | null;
   createdAt: string;
   updatedAt?: string | null;
 }
@@ -138,6 +142,7 @@ export interface AccidentReportDetailResponse {
   year: number;
   reportPeriod: AccidentReportPeriod;
   status: AccidentReportStatus;
+  deadlineAt?: string | null;
   submittedAt?: string | null;
   reviewedAt?: string | null;
 

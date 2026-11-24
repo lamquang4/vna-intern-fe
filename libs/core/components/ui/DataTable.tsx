@@ -16,6 +16,8 @@ interface Props<T> {
   isLoading?: boolean;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
+  isRowSelectable?: (row: T) => boolean;
+  onSelectionRejected?: (row: T) => void;
 }
 
 function DataTable<T>({
@@ -25,6 +27,8 @@ function DataTable<T>({
   isLoading = false,
   selectedIds,
   onSelectionChange,
+  isRowSelectable,
+  onSelectionRejected,
 }: Props<T>) {
   const router = useRouter();
   const pathname = usePathname();
@@ -33,7 +37,10 @@ function DataTable<T>({
   const selectable = !!selectedIds && !!onSelectionChange;
   const colSpan = columns.length + (selectable ? 1 : 0);
 
-  const pageIds = data.map(getRowId);
+  const selectablePageRows = isRowSelectable
+    ? data.filter(isRowSelectable)
+    : data;
+  const pageIds = selectablePageRows.map(getRowId);
   const allSelected =
     pageIds.length > 0 && pageIds.every((id) => selectedIds?.includes(id));
 
@@ -138,7 +145,7 @@ function DataTable<T>({
                   aria-label="Chọn tất cả"
                   checked={allSelected}
                   onChange={toggleAll}
-                  disabled={data.length === 0}
+                  disabled={pageIds.length === 0}
                   className="size-4.5"
                 />
               </th>
@@ -218,15 +225,24 @@ function DataTable<T>({
           ) : (
             data.map((row, index) => {
               const id = getRowId(row);
+              const rowSelectable = isRowSelectable
+                ? isRowSelectable(row)
+                : true;
               return (
                 <tr key={id} className="border-b border-border">
                   {selectable && (
-                    <td className="p-4">
+                    <td
+                      className="p-4"
+                      onClick={() => {
+                        if (!rowSelectable) onSelectionRejected?.(row);
+                      }}
+                    >
                       <Input
                         type="checkbox"
                         aria-label="Chọn dòng"
                         checked={selectedIds.includes(id)}
                         onChange={() => toggleOne(id)}
+                        disabled={!rowSelectable}
                         className="size-4.5"
                       />
                     </td>

@@ -111,13 +111,13 @@ const validateVictims = (data: VictimValues, ctx: z.RefinementCtx) => {
     );
   }
   if (
-    data.totalFatalVictims + data.totalSeverelyInjuredVictims !==
+    data.totalFatalVictims + data.totalSeverelyInjuredVictims >
     data.totalVictims
   ) {
     addIssue(
       ctx,
       "totalVictims",
-      "Số người bị chết + số người bị thương nặng phải bằng tổng số người bị nạn",
+      "Số người bị chết + số người bị thương nặng không được lớn hơn tổng số người bị nạn",
     );
   }
 
@@ -144,13 +144,13 @@ const validateVictims = (data: VictimValues, ctx: z.RefinementCtx) => {
     );
   }
   if (
-    data.nonManagedFatalVictims + data.nonManagedSeverelyInjuredVictims !==
+    data.nonManagedFatalVictims + data.nonManagedSeverelyInjuredVictims >
     data.nonManagedVictims
   ) {
     addIssue(
       ctx,
       "nonManagedVictims",
-      "Số người chết không QL + người bị thương nặng không QL phải bằng số người bị nạn không QL",
+      "Số người chết không QL + người bị thương nặng không QL không được lớn hơn số người bị nạn không QL",
     );
   }
 };

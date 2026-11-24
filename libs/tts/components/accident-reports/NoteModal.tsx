@@ -38,37 +38,35 @@ function NoteModal({ onClose, onSubmit, count, isLoading }: Props) {
         className="flex flex-col flex-1 min-h-0"
         onSubmit={handleSubmit((data) => onSubmit(data.note))}
       >
-        <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col gap-6">
-            <p>Ghi chú lý do từ chối {count} báo cáo đã chọn</p>
+        <div className="flex flex-col gap-6">
+          <p>Ghi chú lý do từ chối {count} báo cáo đã chọn</p>
 
-            <FloatingTextarea
-              label="Ghi chú"
-              placeholder="Nhập ghi chú lý do"
-              required
-              minRows={8}
-              maxRows={16}
-              error={errors.note?.message}
-              {...register("note")}
-            />
+          <FloatingTextarea
+            label="Ghi chú"
+            placeholder="Nhập ghi chú lý do"
+            required
+            minRows={8}
+            maxRows={16}
+            error={errors.note?.message}
+            {...register("note")}
+          />
 
-            <div className="flex items-center justify-end gap-3">
-              <Button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg px-3 py-2 font-medium border border-border"
-              >
-                Hủy bỏ
-              </Button>
+          <div className="flex items-center justify-end gap-3">
+            <Button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-3 py-2 font-medium border border-border"
+            >
+              Hủy bỏ
+            </Button>
 
-              <Button
-                disabled={isLoading}
-                type="submit"
-                className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
-              >
-                Lưu
-              </Button>
-            </div>
+            <Button
+              disabled={isLoading}
+              type="submit"
+              className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
+            >
+              Lưu
+            </Button>
           </div>
         </div>
       </form>

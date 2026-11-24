@@ -17,18 +17,14 @@ function AccountInfoReviewModal({ taxCode, onClose }: Props) {
     >
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-6">
-            <div className="flex min-w-0 gap-1.5">
-              <span>Tên tài khoản:</span>
-              <span className="break-words font-medium">{taxCode}</span>
-            </div>
+          <div className="flex flex-col gap-3">
+            <p>
+              Tên tài khoản: <strong>{taxCode}</strong>
+            </p>
 
-            <div className="flex min-w-0 gap-1.5">
-              <span>Mật khẩu:</span>
-              <span className="break-words font-medium">
-                {DEFAULT_PASSWORD}
-              </span>
-            </div>
+            <p>
+              Mật khẩu: <strong>{DEFAULT_PASSWORD}</strong>
+            </p>
           </div>
 
           <div className="flex items-center justify-center gap-3">

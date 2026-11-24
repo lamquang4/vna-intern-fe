@@ -26,11 +26,8 @@ interface Props {
   userId?: string;
   email: string;
   skipOtp: boolean;
-  // Mốc thời gian OTP do cha lưu (null/undefined = chưa có, OtpField tự bắt đầu mới)
   otpTimers?: OtpTimers | null;
-  // Gửi lại OTP trong modal thành công -> báo cha lưu mốc mới
   onOtpTimersChange?: (timers: OtpTimers) => void;
-  // Xác thực OTP thành công -> cha xóa timer (mã đã dùng)
   onOtpVerified?: () => void;
 }
 
@@ -113,7 +110,7 @@ function ChangeEmailModal({
         }
       >
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2 items-center">
+          <div className="flex flex-col gap-3 items-center">
             {step === 1 ? (
               <>
                 <p>Chúng tôi đã gửi mã xác nhận qua email cũ</p>
