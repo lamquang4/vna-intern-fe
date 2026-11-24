@@ -82,6 +82,7 @@ Một số chức năng được giới hạn theo vai trò người dùng, ch�
 |                              | Tổng hợp báo cáo theo năm           |
 |                              | In báo cáo ra word                  |
 |                              | Xem xét duyệt hoặc từ chối báo cáo  |
+|                              | Gia hạn báo cáo                     |
 
 ## Cấu trúc thư mục
 

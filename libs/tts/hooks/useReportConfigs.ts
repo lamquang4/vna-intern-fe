@@ -5,12 +5,14 @@ import type {
   ApiResponse,
   ErrorResponse,
 } from "@/libs/shared/core/models/common.model";
-import {
-  reportConfigApis,
-  type ReportDeadlineExtension,
-} from "../services/apis/reportConfigApis";
+import { reportConfigApis } from "../services/apis/reportConfigApis";
 import { toast } from "react-hot-toast";
 import { getErrorMessage } from "@/libs/core/utils/errorUtil";
+import {
+  ConfigureReportDeadlineRequest,
+  ExtendReportDeadlineRequest,
+  ReportDeadlineExtensionResponse,
+} from "@/libs/shared/tts/models/report-config.model";
 
 export const reportConfigKeys = {
   all: ["report-configs"] as const,
@@ -43,14 +45,9 @@ export const useExtendReportDeadline = () => {
   const queryClient = useQueryClient();
 
   return useMutation<
-    ApiResponse<ReportDeadlineExtension>,
+    ApiResponse<ReportDeadlineExtensionResponse>,
     AxiosError<ErrorResponse>,
-    {
-      accidentReportId: string;
-      period: "SIX_MONTHS" | "FULL_YEAR";
-      year: number;
-      deadlineAt: string;
-    }
+    ExtendReportDeadlineRequest
   >({
     mutationFn: reportConfigApis.extendReportDeadline,
     onSuccess: (res, variables) => {
@@ -63,7 +60,9 @@ export const useExtendReportDeadline = () => {
       toast.success(res.message || "Gia hạn thời hạn nộp báo cáo thành công");
     },
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Gia hạn thời hạn nộp báo cáo thất bại"));
+      toast.error(
+        getErrorMessage(error, "Gia hạn thời hạn nộp báo cáo thất bại"),
+      );
     },
   });
 };
@@ -72,13 +71,9 @@ export const useConfigureReportDeadline = () => {
   const queryClient = useQueryClient();
 
   return useMutation<
-    ApiResponse<{ message: string }>,
+    ApiResponse<null>,
     AxiosError<ErrorResponse>,
-    {
-      period: "SIX_MONTHS" | "FULL_YEAR";
-      year: number;
-      deadlineAt: string;
-    }
+    ConfigureReportDeadlineRequest
   >({
     mutationFn: reportConfigApis.configureReportDeadline,
     onSuccess: (res) => {

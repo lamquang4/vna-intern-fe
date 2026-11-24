@@ -1,6 +1,12 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronLeft, ChevronRight, CircleCheck, CircleX, Printer } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  CircleCheck,
+  CircleX,
+  Printer,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type FieldPath } from "react-hook-form";
@@ -147,10 +153,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
       .get("reviewIds")
       ?.split(",")
       .filter((id) => id.length > 0) ?? [];
-  const reviewIndex = Math.max(
-    0,
-    Number(searchParams.get("reviewIndex")) || 0,
-  );
+  const reviewIndex = Math.max(0, Number(searchParams.get("reviewIndex")) || 0);
   const isReviewSequence = reviewIds.length > 0;
 
   const navigateReview = (index: number) => {
@@ -162,9 +165,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
       reviewIndex: String(index),
     });
 
-    router.push(
-      `/accident-reports/${reviewIds[index]}?${params.toString()}`,
-    );
+    router.push(`/accident-reports/${reviewIds[index]}?${params.toString()}`);
   };
 
   const reviewMutation = useReviewAccidentReport();
@@ -568,7 +569,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
         }
         actions={
           <div className="flex items-center justify-center gap-3">
-            {isReviewSequence && (
+            {isReviewSequence && reviewIndex > 0 && (
               <>
                 <Button
                   type="button"
@@ -579,9 +580,11 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
                   <ChevronLeft size={18} />
                   <span>Trước đó</span>
                 </Button>
-                <span className="text-sm text-muted-foreground">
+
+                <span className="text-muted-foreground">
                   {reviewIndex + 1}/{reviewIds.length}
                 </span>
+
                 <Button
                   type="button"
                   onClick={() => navigateReview(reviewIndex + 1)}
@@ -593,6 +596,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
                 </Button>
               </>
             )}
+
             {canNavigateSteps && activeStep > 0 && (
               <Button
                 type="button"
@@ -642,44 +646,43 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
                 Tiếp tục
               </Button>
             )}
-          </div>
-        }
-        bottomActions={
-          canReview ? (
-            <div className="flex items-center gap-3">
-              {canDecline && (
-                <Button
-                  type="button"
-                  onClick={() =>
-                    handleConfirmDialogReview(
-                      AccidentReportReviewStatus.DECLINED,
-                    )
-                  }
-                  disabled={isReviewing}
-                  className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
-                >
-                  <CircleX size={18} />
-                  <span>Từ chối</span>
-                </Button>
-              )}
 
-              {canApprove && (
-                <Button
-                  type="button"
-                  onClick={() =>
-                    handleConfirmDialogReview(
-                      AccidentReportReviewStatus.APPROVED,
-                    )
-                  }
-                  disabled={isReviewing}
-                  className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
-                >
-                  <CircleCheck size={18} />
-                  <span>Duyệt</span>
-                </Button>
-              )}
-            </div>
-          ) : undefined
+            {canReview && (
+              <div className="flex items-center justify-center gap-3">
+                {canDecline && (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      handleConfirmDialogReview(
+                        AccidentReportReviewStatus.DECLINED,
+                      )
+                    }
+                    disabled={isReviewing}
+                    className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
+                  >
+                    <CircleX size={18} />
+                    <span>Từ chối</span>
+                  </Button>
+                )}
+
+                {canApprove && (
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      handleConfirmDialogReview(
+                        AccidentReportReviewStatus.APPROVED,
+                      )
+                    }
+                    disabled={isReviewing}
+                    className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
+                  >
+                    <CircleCheck size={18} />
+                    <span>Duyệt</span>
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         }
       >
         {canNavigateSteps && (

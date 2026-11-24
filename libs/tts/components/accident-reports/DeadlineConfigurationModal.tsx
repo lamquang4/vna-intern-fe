@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { format, isValid, parseISO } from "date-fns";
+import { useMemo } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format, parseISO } from "date-fns";
 import { Button } from "@/libs/core/components/ui/Button";
 import { Modal } from "@/libs/core/components/ui/Modal";
 import { FloatingInput } from "@/libs/core/components/ui/fields/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
 import { ACCIDENT_REPORT_PERIOD_OPTIONS } from "@/libs/core/constants/options";
 import { AccidentReportPeriod } from "@/libs/shared/tts/models/enums";
+import {
+  createConfigureReportDeadlineSchema,
+  type ConfigureReportDeadlineData,
+} from "@/libs/shared/tts/schemas/report-config.schema";
 import { useConfigureReportDeadline } from "../../hooks/useReportConfigs";
 
 interface Props {
@@ -15,131 +21,121 @@ interface Props {
   year: number;
 }
 
+const getDefaultDeadline = (period: AccidentReportPeriod, year: number) =>
+  period === AccidentReportPeriod.SIX_MONTHS
+    ? `${year}-07-05`
+    : `${year + 1}-01-10`;
+
 export function DeadlineConfigurationModal({ onClose, year }: Props) {
-  const [period, setPeriod] = useState<AccidentReportPeriod>(
-    AccidentReportPeriod.SIX_MONTHS,
-  );
-  const [deadline, setDeadline] = useState("");
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const configureMutation = useConfigureReportDeadline();
 
-  useEffect(() => {
-    setError("");
-  }, [deadline, period]);
+  const schema = useMemo(
+    () => createConfigureReportDeadlineSchema(year),
+    [year],
+  );
 
-  const getDefaultDeadline = () =>
-    period === AccidentReportPeriod.SIX_MONTHS
-      ? `${year}-07-05`
-      : `${year + 1}-01-10`;
-
-  const handleSubmit = () => {
-    if (!deadline) {
-      setError("Vui lòng nhập hạn nộp.");
-      return;
-    }
-
-    const selected = parseISO(deadline);
-    const validYear =
-      period === AccidentReportPeriod.SIX_MONTHS
-        ? selected.getFullYear() === year
-        : selected.getFullYear() === year ||
-          selected.getFullYear() === year + 1;
-    if (!isValid(selected) || !validYear) {
-      setError(
-        period === AccidentReportPeriod.SIX_MONTHS
-          ? `Ngày hạn nộp 6 tháng phải nằm trong năm ${year}.`
-          : `Ngày hạn nộp cả năm phải nằm trong năm ${year} hoặc ${year + 1}.`,
-      );
-      return;
-    }
-
-    configureMutation.mutate(
-      { period, year, deadlineAt: deadline },
-      {
-        onSuccess: (res) => setSuccessMessage(res.data?.message || ""),
+  const { control, handleSubmit, setValue, getValues, trigger } =
+    useForm<ConfigureReportDeadlineData>({
+      resolver: zodResolver(schema),
+      mode: "onBlur",
+      defaultValues: {
+        period: AccidentReportPeriod.SIX_MONTHS,
+        deadlineAt: "",
       },
-    );
-  };
+    });
 
-  if (successMessage) {
-    return (
-      <Modal
-        title="Cấu hình thời hạn thành công"
-        onClose={onClose}
-        className="max-w-[500px]"
-        headerClassName="bg-warning text-white uppercase"
-      >
-        <div className="flex flex-col gap-6">
-          <p className="text-center">{successMessage}</p>
-          <Button
-            type="button"
-            onClick={onClose}
-            className="w-full rounded-lg bg-primary px-3 py-2 font-medium text-white"
-          >
-            Xác nhận
-          </Button>
-        </div>
-      </Modal>
-    );
-  }
+  const period = useWatch({ control, name: "period" });
+
+  const onSubmit = (values: ConfigureReportDeadlineData) =>
+    configureMutation.mutate({ ...values, year }, { onSuccess: onClose });
 
   return (
     <Modal
       title="Cấu hình thời hạn báo cáo"
       onClose={onClose}
-      className="max-w-[520px] !overflow-visible [&>div]:!overflow-visible"
-      headerClassName="bg-warning text-white uppercase rounded-t-lg"
+      className="max-w-[450px]"
+      headerClassName="bg-primary text-white uppercase"
     >
-      <div className="flex flex-col gap-5">
-        <FloatingSelect
-          label="Loại báo cáo"
-          options={ACCIDENT_REPORT_PERIOD_OPTIONS}
-          value={period}
-          onChange={(value) => setPeriod(value as AccidentReportPeriod)}
-        />
+      <form
+        className="flex flex-col flex-1 min-h-0"
+        onSubmit={handleSubmit(onSubmit)}
+      >
+        <div className="flex flex-col gap-6">
+          <Controller
+            name="period"
+            control={control}
+            render={({ field, fieldState }) => (
+              <FloatingSelect
+                required
+                label="Kỳ báo cáo"
+                options={ACCIDENT_REPORT_PERIOD_OPTIONS}
+                placeholder="Chọn kỳ báo cáo"
+                name={field.name}
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value);
 
-        <div className="relative z-50 [&_.react-datepicker-popper]:!z-[999]">
-          <FloatingInput
-            label="Hạn nộp"
-            type="date"
-            required
-            dateValue={deadline ? parseISO(deadline) : null}
-            onDateChange={(date) =>
-              setDeadline(date ? format(date, "yyyy-MM-dd") : "")
-            }
-            error={error}
+                  if (getValues("deadlineAt")) trigger("deadlineAt");
+                }}
+                onBlur={field.onBlur}
+                error={fieldState.error?.message}
+              />
+            )}
           />
-        </div>
 
-        <div className="flex items-center justify-between gap-3">
-          <Button
-            type="button"
-            onClick={() => setDeadline(getDefaultDeadline())}
-            className="rounded-lg border border-border px-3 py-2 font-medium"
-          >
-            Mặc định
-          </Button>
+          <Controller
+            name="deadlineAt"
+            control={control}
+            render={({ field, fieldState }) => (
+              <FloatingInput
+                label="Hạn nộp"
+                type="date"
+                required
+                dateValue={field.value ? parseISO(field.value) : null}
+                onDateChange={(date) => {
+                  field.onChange(date ? format(date, "yyyy-MM-dd") : "");
+                  field.onBlur();
+                }}
+                onBlur={field.onBlur}
+                error={fieldState.error?.message}
+              />
+            )}
+          />
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3">
             <Button
               type="button"
-              onClick={onClose}
+              onClick={() =>
+                setValue("deadlineAt", getDefaultDeadline(period, year), {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
               className="rounded-lg border border-border px-3 py-2 font-medium"
             >
-              Hủy bỏ
+              Mặc định
             </Button>
-            <Button
-              type="button"
-              disabled={configureMutation.isPending}
-              onClick={handleSubmit}
-              className="rounded-lg bg-primary px-3 py-2 font-medium text-white"
-            >
-              Xác nhận
-            </Button>
+
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                onClick={onClose}
+                disabled={configureMutation.isPending}
+                className="rounded-lg border border-border px-3 py-2 font-medium"
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                type="submit"
+                disabled={configureMutation.isPending}
+                className="rounded-lg bg-primary px-3 py-2 font-medium text-white"
+              >
+                Xác nhận
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </form>
     </Modal>
   );
 }

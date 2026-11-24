@@ -1,5 +1,5 @@
 "use client";
-import { Clock, Eye, FunnelX, Pencil, ClipboardCheck } from "lucide-react";
+import { Clock, Eye, FunnelX, Pencil } from "lucide-react";
 import { Button } from "@/libs/core/components/ui/Button";
 import DataTable from "@/libs/core/components/ui/DataTable";
 import ListLayout from "../layout/ListLayout";
@@ -200,9 +200,7 @@ function AccidentReportList() {
       reviewIndex: "0",
     });
 
-    router.push(
-      `/accident-reports/${selectedIds[0]}?${params.toString()}`,
-    );
+    router.push(`/accident-reports/${selectedIds[0]}?${params.toString()}`);
   };
 
   const hasActiveFilter = FILTER_KEYS.some((k) => searchParams.get(k));
@@ -236,14 +234,9 @@ function AccidentReportList() {
               <Eye size={22} className="text-muted-foreground" />
             </Link>
             {isRoleSo && r.status === AccidentReportStatus.EXPIRED && (
-              <button
-                type="button"
-                title="Gia hạn"
-                onClick={() => setDeadlineReport(r)}
-                className="cursor-pointer text-primary hover:opacity-80"
-              >
-                <Clock size={22} />
-              </button>
+              <Button type="button" onClick={() => setDeadlineReport(r)}>
+                <Clock size={22} className="text-primary" />
+              </Button>
             )}
             {isRoleDN && !isViewOnly && (
               <Link href={`/accident-reports/${r.accidentReportId}?mode=edit`}>
@@ -360,10 +353,9 @@ function AccidentReportList() {
               <Button
                 type="button"
                 onClick={handleStartReview}
-                className="flex items-center gap-2 rounded-md bg-teal-600 px-3 py-2 font-medium text-white"
+                className="rounded-md bg-success px-3 py-2 font-medium text-white"
               >
-                <ClipboardCheck size={18} />
-                <span>Xét duyệt ({selectedIds.length})</span>
+                Xét duyệt ({selectedIds.length})
               </Button>
             )}
 
@@ -416,9 +408,7 @@ function AccidentReportList() {
             report.status === AccidentReportStatus.ACCEPTED
           }
           onSelectionRejected={() =>
-            toast.error(
-              "Chỉ được chọn báo cáo đang ở trạng thái đã tiếp nhận",
-            )
+            toast.error("Chỉ được chọn báo cáo đang ở trạng thái đã tiếp nhận")
           }
         />
       </ListLayout>

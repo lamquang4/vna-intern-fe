@@ -26,11 +26,8 @@ interface Props {
   userId?: string;
   email: string;
   skipOtp: boolean;
-  // Mốc thời gian OTP do cha lưu (null/undefined = chưa có, OtpField tự bắt đầu mới)
   otpTimers?: OtpTimers | null;
-  // Gửi lại OTP trong modal thành công -> báo cha lưu mốc mới
   onOtpTimersChange?: (timers: OtpTimers) => void;
-  // Xác thực OTP thành công -> cha xóa timer (mã đã dùng)
   onOtpVerified?: () => void;
 }
 
