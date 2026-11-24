@@ -110,7 +110,7 @@ function ChangeEmailModal({
         }
       >
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2 items-center">
+          <div className="flex flex-col gap-3 items-center">
             {step === 1 ? (
               <>
                 <p>Chúng tôi đã gửi mã xác nhận qua email cũ</p>

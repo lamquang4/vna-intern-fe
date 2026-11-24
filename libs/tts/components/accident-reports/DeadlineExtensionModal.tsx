@@ -97,7 +97,7 @@ export function DeadlineExtensionModal({ report, onClose }: Props) {
         onSubmit={handleSubmit(onSubmit)}
       >
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <p>
               Doanh nghiệp: <strong>{report.name}</strong>
             </p>
