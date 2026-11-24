@@ -8,7 +8,11 @@ import type {
 import { RoleCode } from "./libs/shared/tts/models/enums";
 
 const LOGIN_PATH = "/";
-const DEFAULT_AUTH_PATH = "/account";
+const ACCOUNT_PATH = "/account";
+const ENTERPRISE_PATH = "/enterprise";
+
+const getDefaultAuthPath = (role?: string | null): string =>
+  role === RoleCode.DOANH_NGHIEP ? ENTERPRISE_PATH : ACCOUNT_PATH;
 
 // Route cần đăng nhập
 const PRIVATE_ROUTES: {
@@ -19,6 +23,8 @@ const PRIVATE_ROUTES: {
   { path: "/users", roles: [RoleCode.SO] },
   { path: "/enterprises", roles: [RoleCode.SO] },
   { path: "/enterprise", roles: [RoleCode.DOANH_NGHIEP] },
+  { path: "/accident-reports/overall", roles: [RoleCode.SO] },
+  { path: "/accident-reports", roles: [RoleCode.DOANH_NGHIEP, RoleCode.SO] },
 ];
 
 // Đã đăng nhập thì không cần truy cập
@@ -76,12 +82,12 @@ export function proxy(request: NextRequest) {
 
     const { roles } = privateRoute;
     if (roles && (!role || !roles.includes(role))) {
-      return redirectTo(request, DEFAULT_AUTH_PATH);
+      return redirectTo(request, getDefaultAuthPath(role));
     }
   }
 
   if (isPublicOnly && isAuthenticated) {
-    return redirectTo(request, DEFAULT_AUTH_PATH);
+    return redirectTo(request, getDefaultAuthPath(role));
   }
 
   return NextResponse.next();
@@ -96,5 +102,6 @@ export const config = {
     "/users/:path*",
     "/enterprises/:path*",
     "/enterprise/:path*",
+    "/accident-reports/:path*",
   ],
 };

@@ -1,6 +1,6 @@
 "use client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { memo } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { Select } from "./Select";
 import { Button } from "./Button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -19,12 +19,38 @@ function Pagination({ totalPages, page, size, totalElements }: Props) {
   const start = (page - 1) * size + 1;
   const end = Math.min(start + size - 1, totalElements);
 
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingIndex !== null) {
+      inputRef.current?.focus();
+    }
+  }, [editingIndex]);
+
   const goToPage = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
     params.set("size", size.toString());
 
     router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const cancelEdit = () => {
+    setEditingIndex(null);
+    setInputValue("");
+  };
+
+  const submitEdit = () => {
+    const target = parseInt(inputValue, 10);
+
+    if (!Number.isNaN(target)) {
+      const safePage = Math.min(Math.max(target, 1), totalPages);
+      if (safePage !== page) goToPage(safePage);
+    }
+
+    cancelEdit();
   };
 
   const getPageNumbers = () => {
@@ -65,12 +91,43 @@ function Pagination({ totalPages, page, size, totalElements }: Props) {
 
         {getPageNumbers().map((pageNumber, index) => {
           if (pageNumber === "...") {
+            if (editingIndex === index) {
+              return (
+                <input
+                  key={`ellipsis-input-${index}`}
+                  ref={inputRef}
+                  type="text"
+                  inputMode="numeric"
+                  value={inputValue}
+                  placeholder="..."
+                  maxLength={String(totalPages).length}
+                  onChange={(e) =>
+                    setInputValue(e.target.value.replace(/\D/g, ""))
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      submitEdit();
+                    } else if (e.key === "Escape") {
+                      cancelEdit();
+                    }
+                  }}
+                  onBlur={cancelEdit}
+                  className="h-8.5 w-12 text-center border border-primary outline-none bg-background"
+                />
+              );
+            }
+
             return (
               <Button
                 type="button"
-                disabled
                 key={`ellipsis-${index}`}
-                className="group h-8.5 w-8.5 flex justify-center items-center border border-border"
+                title="Nhập số trang"
+                onClick={() => {
+                  setInputValue("");
+                  setEditingIndex(index);
+                }}
+                className="group h-8.5 w-8.5 flex justify-center items-center border border-border hover:bg-muted"
               >
                 ...
               </Button>
@@ -104,22 +161,24 @@ function Pagination({ totalPages, page, size, totalElements }: Props) {
       <div className="flex shrink-0 items-center gap-2">
         <span className="whitespace-nowrap">Số dòng mỗi trang</span>
         <Select
+          searchable={false}
+          className="w-18"
           value={size}
-          onChange={(e) => {
-            const newSize = e.target.value;
+          onChange={(value) => {
             const params = new URLSearchParams(searchParams.toString());
-            params.set("size", newSize);
+
+            params.set("size", value);
             params.set("page", "1");
 
             router.push(`${pathname}?${params.toString()}`);
           }}
-          className="p-1.5 border border-border"
-        >
-          <option value="12">12</option>
-          <option value="24">24</option>
-          <option value="36">36</option>
-          <option value="48">48</option>
-        </Select>
+          options={[
+            { value: 12, label: "12" },
+            { value: 24, label: "24" },
+            { value: 36, label: "36" },
+            { value: 48, label: "48" },
+          ]}
+        />
       </div>
 
       <p>

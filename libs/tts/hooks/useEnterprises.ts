@@ -23,6 +23,7 @@ import type {
 import type { GetEnterprisesParams } from "@/libs/shared/tts/models/params.model";
 import { enterpriseApis } from "../services/apis/enterpriseApis";
 import { getErrorMessage } from "@/libs/core/utils/errorUtil";
+import { accidentReportKeys } from "./useAccidentReports";
 
 export const enterpriseKeys = {
   all: ["enterprises"] as const,
@@ -102,6 +103,8 @@ export const useUpdateEnterprise = (enterpriseId: string) => {
         queryKey: enterpriseKeys.detail(enterpriseId),
       });
 
+      queryClient.invalidateQueries({ queryKey: accidentReportKeys.all });
+
       toast.success(res.message || "Cập nhật doanh nghiệp thành công");
     },
 
@@ -124,6 +127,8 @@ export const useUpdateEnterpriseMe = () => {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: enterpriseKeys.me() });
 
+      queryClient.invalidateQueries({ queryKey: accidentReportKeys.all });
+
       toast.success(res.message || "Cập nhật doanh nghiệp thành công");
     },
 
@@ -145,6 +150,8 @@ export const useDeleteEnterprises = () => {
 
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: enterpriseKeys.all });
+
+      queryClient.invalidateQueries({ queryKey: accidentReportKeys.all });
 
       toast.success(res.message || "Xóa doanh nghiệp thành công");
     },

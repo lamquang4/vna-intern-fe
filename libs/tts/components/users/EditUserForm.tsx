@@ -6,7 +6,6 @@ import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/fields/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
 import { Label } from "@/libs/core/components/ui/Label";
-import { ChevronLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import ChangeEmailModal from "../auth/ChangeEmailModal";
 import {
@@ -28,21 +27,31 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useGetAllRoles } from "../../hooks/useRoles";
 import { Switch } from "@/libs/core/components/ui/Switch";
-import Link from "next/link";
 import { GENDER_OPTIONS } from "@/libs/core/constants/options";
-import { getRequiredRoleCode } from "@/libs/core/utils/validators";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
 import { RoleCode } from "@/libs/shared/tts/models/enums";
+import {
+  OTP_EXPIRE_SECONDS,
+  OTP_RESEND_COOLDOWN_SECONDS,
+} from "@/libs/core/constants/limits";
+import type { OtpTimers } from "../../../core/components/ui/fields/OtpField";
+import FormLayout from "../layout/FormLayout";
+
+const FORM_ID = "edit-user-form";
 
 interface Props {
   userId?: string;
+}
+interface StoredOtpTimers extends OtpTimers {
+  email: string;
 }
 
 function EditUserForm({ userId = "" }: Props) {
   const router = useRouter();
 
   const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [otpTimers, setOtpTimers] = useState<StoredOtpTimers | null>(null);
 
   const editUserSchema = z.union([updateUserSchema, updateMeSchema]);
 
@@ -57,21 +66,18 @@ function EditUserForm({ userId = "" }: Props) {
   const user = activeQuery.data?.data;
   const currentAccount = meQuery.data?.data;
 
-  const isCurrentUser =
-    !isAccountPage &&
-    !!user?.username &&
-    !!currentAccount?.username &&
-    user.username === currentAccount.username;
+  const isSelf =
+    isAccountPage ||
+    (!!user?.username && user.username === currentAccount?.username);
 
-  const isSelf = isAccountPage || isCurrentUser;
-
+  // Sở sửa doanh nghiệp -> không cần OTP khi đổi email
   const skipChangeEmailOtp =
     !isSelf &&
     currentAccount?.roleCode === RoleCode.SO &&
     user?.roleCode === RoleCode.DOANH_NGHIEP;
 
-  const requiredRoleCode = getRequiredRoleCode(user?.username ?? "");
-  const isRoleLocked = requiredRoleCode !== null;
+  // Role đã cố định theo tài khoản, không cho đổi
+  const isRoleLocked = !!user?.roleCode;
 
   const updateMeMutation = useUpdateMe();
   const updateUserMutation = useUpdateUser(userId);
@@ -85,13 +91,11 @@ function EditUserForm({ userId = "" }: Props) {
 
   useEffect(() => {
     if (isFetchingUser || isAccountPage) return;
-
     if (!user) {
       toast.error("Không tìm thấy người dùng");
       router.replace("/users");
-      return;
     }
-  }, [isFetchingUser, isAccountPage, isCurrentUser, user, router]);
+  }, [isFetchingUser, isAccountPage, user, router]);
 
   const { register, control, handleSubmit, setValue, resetField, reset } =
     useForm<
@@ -128,11 +132,8 @@ function EditUserForm({ userId = "" }: Props) {
   const wards = useGetHCMWards();
 
   const roleOptions = (roles ?? [])
-    .filter((role) => !requiredRoleCode || role.code === requiredRoleCode)
-    .map((role) => ({
-      value: role.roleId,
-      label: role.name,
-    }));
+    .filter((role) => !user?.roleCode || role.code === user.roleCode)
+    .map((role) => ({ value: role.roleId, label: role.name }));
 
   const provinceOptions = province
     ? [{ value: province.province, label: province.province }]
@@ -177,11 +178,28 @@ function EditUserForm({ userId = "" }: Props) {
       return;
     }
 
+    if (
+      otpTimers &&
+      otpTimers.email === user.email &&
+      Date.now() < otpTimers.cooldownEndTime
+    ) {
+      setModalOpen(true);
+      return;
+    }
+
+    const targetEmail = user.email;
+
     // OTP gửi đến email hiện tại của tài khoản đang đổi email
     sendOtpMutation.mutate(
-      { email: user.email, purpose: "CHANGE_EMAIL" },
+      { email: targetEmail, purpose: "CHANGE_EMAIL" },
       {
         onSuccess: (res) => {
+          const now = Date.now();
+          setOtpTimers({
+            email: targetEmail,
+            expireEndTime: now + OTP_EXPIRE_SECONDS * 1000,
+            cooldownEndTime: now + OTP_RESEND_COOLDOWN_SECONDS * 1000,
+          });
           toast.success(res.message || "Đã gửi mã xác thực đến email");
           setModalOpen(true);
         },
@@ -193,21 +211,43 @@ function EditUserForm({ userId = "" }: Props) {
     reset();
   };
 
+  const activeOtpTimers =
+    otpTimers && otpTimers.email === user?.email
+      ? {
+          expireEndTime: otpTimers.expireEndTime,
+          cooldownEndTime: otpTimers.cooldownEndTime,
+        }
+      : null;
+
   return (
     <>
-      <div className="py-[20px] sm:px-[20px] px-[15px] flex flex-col gap-6 overflow-y-auto">
-        <div className="flex justify-between items-center gap-4 flex-wrap">
-          <h3>Chi tiết người dùng</h3>
+      <FormLayout
+        title="Chi tiết người dùng"
+        backHref="/users"
+        actions={
+          <div className="flex items-center justify-center gap-3">
+            <Button
+              type="button"
+              onClick={handleCancel}
+              disabled={isUpdating}
+              className="rounded-lg px-3 py-2 font-medium border border-border"
+            >
+              Hủy bỏ
+            </Button>
 
-          <Link
-            href="/users"
-            className="flex items-center font-medium gap-1 text-muted-foreground hover:text-primary px-3 py-2"
-          >
-            <ChevronLeft size={20} /> <span>Trở về</span>
-          </Link>
-        </div>
-
+            <Button
+              form={FORM_ID}
+              disabled={isFetchingUser || isUpdating}
+              type="submit"
+              className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
+            >
+              Lưu
+            </Button>
+          </div>
+        }
+      >
         <form
+          id={FORM_ID}
           className="flex flex-col gap-6 w-full"
           onSubmit={handleSubmit(onSubmit)}
         >
@@ -227,7 +267,7 @@ function EditUserForm({ userId = "" }: Props) {
                 )}
               />
 
-              {!isAccountPage && !isCurrentUser && currentAccount && (
+              {!isAccountPage && currentAccount && (
                 <Label className="flex w-full cursor-pointer items-center justify-between gap-3">
                   <h5>Kích hoạt</h5>
 
@@ -426,26 +466,8 @@ function EditUserForm({ userId = "" }: Props) {
               </div>
             </div>
           </div>
-
-          <div className="flex items-center justify-center gap-3">
-            <Button
-              type="button"
-              onClick={handleCancel}
-              className="rounded-lg px-3.5 py-2 font-medium border border-border"
-            >
-              Hủy bỏ
-            </Button>
-
-            <Button
-              disabled={isFetchingUser}
-              type="submit"
-              className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
-            >
-              Lưu
-            </Button>
-          </div>
         </form>
-      </div>
+      </FormLayout>
 
       {modalOpen && (
         <ChangeEmailModal
@@ -453,10 +475,15 @@ function EditUserForm({ userId = "" }: Props) {
           email={user?.email || ""}
           userId={isSelf ? undefined : userId}
           skipOtp={skipChangeEmailOtp}
+          otpTimers={activeOtpTimers}
+          onOtpTimersChange={(timers) =>
+            setOtpTimers({ email: user?.email ?? "", ...timers })
+          }
+          onOtpVerified={() => setOtpTimers(null)}
         />
       )}
 
-      {isSendingOtp && (
+      {(isSendingOtp || isUpdating) && (
         <Overlay>
           <Loading size={55} color="white" thickness={8} />
           <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>

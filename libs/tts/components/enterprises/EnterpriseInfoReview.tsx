@@ -1,17 +1,16 @@
 "use client";
 import { format, parseISO } from "date-fns";
-import { Button } from "@/libs/core/components/ui/Button";
 import type {
-  DocumentRow,
   EnterpriseDetailResponse,
+  EnterpriseDocumentRow,
 } from "@/libs/shared/tts/models/enterprise.model";
 import type {
   CreateEnterpriseData,
   UpdateEnterpriseData,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
-import { type PreviewFile } from "@/libs/tts/utils/filePreviewUtil";
+import { type PreviewFile } from "@/libs/tts/utils/filePreview";
 import { InfoItem } from "./InfoItem";
-import DocumentsField from "./DocumentsField";
+import DocumentsField from "@/libs/core/components/ui/fields/DocumentsField";
 
 interface Props {
   data: CreateEnterpriseData | UpdateEnterpriseData;
@@ -22,9 +21,6 @@ interface Props {
   businessTypeName: string;
   businessIndustryName: string;
   taxCode?: string;
-  onBack: () => void;
-  onConfirm: () => void | Promise<void>;
-  isLoading: boolean;
 }
 
 function EnterpriseInfoReview({
@@ -33,11 +29,8 @@ function EnterpriseInfoReview({
   businessTypeName,
   businessIndustryName,
   taxCode,
-  onBack,
-  onConfirm,
-  isLoading,
 }: Props) {
-  const documents: DocumentRow<PreviewFile>[] = [
+  const documents: EnterpriseDocumentRow<PreviewFile>[] = [
     {
       id: "businessLicense",
       name: "Giấy phép kinh doanh",
@@ -132,26 +125,6 @@ function EnterpriseInfoReview({
 
           <DocumentsField documents={documents} />
         </div>
-      </div>
-
-      <div className="flex items-center justify-center gap-3">
-        <Button
-          type="button"
-          onClick={onBack}
-          disabled={isLoading}
-          className="rounded-lg px-3.5 py-2 font-medium border border-border"
-        >
-          Trở về
-        </Button>
-
-        <Button
-          type="button"
-          onClick={onConfirm}
-          disabled={isLoading}
-          className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
-        >
-          Xác nhận
-        </Button>
       </div>
     </div>
   );

@@ -35,3 +35,9 @@ export interface FileResponse {
   size: number; // bytes
   url: string;
 }
+
+export interface DocumentRow<TFile = File, TId extends string = string> {
+  id: TId;
+  name: string;
+  file: TFile | null;
+}

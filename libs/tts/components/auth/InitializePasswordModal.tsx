@@ -64,38 +64,36 @@ function InitializePasswordModal({ onClose, username, userId }: Props) {
         className="flex flex-col flex-1 min-h-0"
         onSubmit={handleSubmit(onSubmit)}
       >
-        <div className="flex-1 overflow-y-auto">
-          <div className="flex flex-col gap-6">
-            <p>
-              Khởi tạo mật khẩu cho tài khoản <strong>{username}</strong>
-            </p>
+        <div className="flex flex-col gap-6">
+          <p>
+            Khởi tạo mật khẩu cho tài khoản <strong>{username}</strong>
+          </p>
 
-            <FloatingInput
-              label="Mật khẩu"
-              placeholder="Nhập lại mật khẩu"
-              type="password"
-              required
-              error={errors.password?.message}
-              {...register("password")}
-            />
+          <FloatingInput
+            label="Mật khẩu"
+            placeholder="Nhập lại mật khẩu"
+            type="password"
+            required
+            error={errors.password?.message}
+            {...register("password")}
+          />
 
-            <div className="flex items-center justify-end gap-3">
-              <Button
-                type="button"
-                onClick={handleCancel}
-                className="rounded-lg px-3.5 py-2 font-medium border border-border"
-              >
-                Hủy bỏ
-              </Button>
+          <div className="flex items-center justify-end gap-3">
+            <Button
+              type="button"
+              onClick={handleCancel}
+              className="rounded-lg px-3 py-2 font-medium border border-border"
+            >
+              Hủy bỏ
+            </Button>
 
-              <Button
-                disabled={isInitializingPassword}
-                type="submit"
-                className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
-              >
-                Lưu
-              </Button>
-            </div>
+            <Button
+              disabled={isInitializingPassword}
+              type="submit"
+              className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
+            >
+              Lưu
+            </Button>
           </div>
         </div>
       </form>

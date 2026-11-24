@@ -1,11 +1,17 @@
 "use client";
-import { forwardRef, type ChangeEvent, type FocusEventHandler } from "react";
+import {
+  forwardRef,
+  type ChangeEvent,
+  type FocusEventHandler,
+  type ReactNode,
+} from "react";
+import { createPortal } from "react-dom";
 import DatePicker from "react-datepicker";
 import { CalendarDays } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import "react-datepicker/dist/react-datepicker.css";
 import { Input, type InputProps } from "../Input";
-import { formatDateInput } from "../../../utils/formatters";
+import { formatDateTyping } from "../../../utils/formatters";
 
 export interface DateFieldProps {
   value?: Date | null;
@@ -22,7 +28,7 @@ const DateTrigger = forwardRef<HTMLInputElement, InputProps>(
   ({ onChange, ...props }, ref) => {
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
       const inputType = (e.nativeEvent as InputEvent).inputType ?? "";
-      e.target.value = formatDateInput(
+      e.target.value = formatDateTyping(
         e.target.value,
         inputType.startsWith("delete"),
       );
@@ -35,6 +41,9 @@ const DateTrigger = forwardRef<HTMLInputElement, InputProps>(
   },
 );
 DateTrigger.displayName = "DateTrigger";
+
+const PopperPortal = ({ children }: { children?: ReactNode }) =>
+  createPortal(children, document.body);
 
 export function DateField({
   value,
@@ -58,7 +67,10 @@ export function DateField({
         strictParsing
         disabled={disabled}
         wrapperClassName="block w-full"
-        popperClassName="!z-50"
+        popperClassName="!z-[9999]"
+        popperContainer={PopperPortal}
+        popperPlacement="bottom-start"
+        popperProps={{ strategy: "fixed" }}
         showMonthDropdown
         showYearDropdown
         dropdownMode="select"
@@ -75,7 +87,7 @@ export function DateField({
       />
       <CalendarDays
         size={20}
-        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+        className="pointer-events-none absolute right-3 top-1/2 z-0 -translate-y-1/2 text-muted-foreground"
       />
     </div>
   );

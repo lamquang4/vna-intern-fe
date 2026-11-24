@@ -1,13 +1,13 @@
-import LayoutPage from "@/libs/tts/components/layout/LayoutPage";
+import PageLayout from "@/libs/tts/components/layout/PageLayout";
 import UserList from "@/libs/tts/components/users/UserList";
 import { Suspense } from "react";
 
 function page() {
   return (
     <Suspense>
-      <LayoutPage>
+      <PageLayout>
         <UserList />
-      </LayoutPage>
+      </PageLayout>
     </Suspense>
   );
 }

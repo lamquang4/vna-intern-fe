@@ -7,7 +7,7 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-function LayoutPage({ children }: LayoutProps) {
+function PageLayout({ children }: LayoutProps) {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
   const toggleMenu = () => {
@@ -39,4 +39,4 @@ function LayoutPage({ children }: LayoutProps) {
   );
 }
 
-export default LayoutPage;
+export default PageLayout;

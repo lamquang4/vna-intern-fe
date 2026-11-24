@@ -1,7 +1,9 @@
 "use client";
 import { useState } from "react";
 import EnterpriseInfoReview from "../EnterpriseInfoReview";
-import EditEnterpriseForm from "./EditEnterpriseForm";
+import EditEnterpriseForm, {
+  EDIT_ENTERPRISE_FORM_ID,
+} from "./EditEnterpriseForm";
 import { EnterpriseDetailResponse } from "@/libs/shared/tts/models/enterprise.model";
 import {
   UpdateEnterpriseData,
@@ -11,8 +13,10 @@ import {
   useUpdateEnterprise,
   useUpdateEnterpriseMe,
 } from "@/libs/tts/hooks/useEnterprises";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { Overlay } from "@/libs/core/components/ui/Overlay";
+import Loading from "@/libs/core/components/ui/Loading";
+import { Button } from "@/libs/core/components/ui/Button";
+import FormLayout from "../../layout/FormLayout";
 
 interface Props {
   enterpriseId?: string;
@@ -29,6 +33,7 @@ function EditEnterpriseContainer({ enterpriseId = "" }: Props) {
   const [existingFiles, setExistingFiles] = useState<
     Pick<EnterpriseDetailResponse, "businessLicense" | "otherDocument">
   >({ businessLicense: null, otherDocument: null });
+  const [formKey, setFormKey] = useState<number>(0);
 
   const updateMeMutation = useUpdateEnterpriseMe();
   const updateMutation = useUpdateEnterprise(enterpriseId);
@@ -73,62 +78,108 @@ function EditEnterpriseContainer({ enterpriseId = "" }: Props) {
     }
   };
 
+  const handleCancel = () => {
+    setFormData(null);
+    setFormKey((key) => key + 1);
+  };
+
   return (
-    <div className="py-[30px] sm:px-[20px] px-[15px] flex flex-col gap-6 overflow-y-auto">
-      <div className="flex justify-between items-center gap-4 flex-wrap">
-        <h3>Chi tiết doanh nghiệp</h3>
+    <>
+      <FormLayout
+        title="Chi tiết doanh nghiệp"
+        backHref={`${isMePage ? "" : "/enterprises"}`}
+        actions={
+          <div className="flex items-center justify-center gap-3">
+            {step === 1 ? (
+              <>
+                <Button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={isUpdating}
+                  className="rounded-lg px-3 py-2 font-medium border border-border"
+                >
+                  Hủy bỏ
+                </Button>
 
-        {!isMePage && (
-          <Link
-            href="/enterprises"
-            className="flex items-center font-medium gap-1 text-muted-foreground hover:text-primary px-3 py-2"
-          >
-            <ChevronLeft size={20} /> <span>Trở về</span>
-          </Link>
-        )}
-      </div>
+                <Button
+                  type="submit"
+                  form={EDIT_ENTERPRISE_FORM_ID}
+                  className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
+                >
+                  Tiếp tục
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={isUpdating}
+                  className="rounded-lg px-3 py-2 font-medium border border-border"
+                >
+                  Quay lại
+                </Button>
 
-      <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
-        <div className="flex gap-2 items-center">
-          <div
-            className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
-          >
-            1
+                <Button
+                  type="button"
+                  onClick={handleConfirm}
+                  disabled={isUpdating}
+                  className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
+                >
+                  Xác nhận
+                </Button>
+              </>
+            )}
           </div>
-          <span>Thông tin doanh nghiệp</span>
+        }
+      >
+        <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
+          <div className="flex gap-2 items-center">
+            <div
+              className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
+            >
+              1
+            </div>
+            <span>Thông tin doanh nghiệp</span>
+          </div>
+
+          <div className="flex gap-2 items-center">
+            <div
+              className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
+            >
+              2
+            </div>
+            <span>Xác nhận đăng ký</span>
+          </div>
         </div>
 
-        <div className="flex gap-2 items-center">
-          <div
-            className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
-          >
-            2
-          </div>
-          <span>Xác nhận đăng ký</span>
-        </div>
-      </div>
-
-      {step === 1 ? (
-        <EditEnterpriseForm
-          onContinue={handleContinue}
-          initialData={formData}
-          enterpriseId={enterpriseId}
-        />
-      ) : (
-        formData && (
-          <EnterpriseInfoReview
-            data={formData}
-            existingFiles={existingFiles}
-            businessTypeName={businessTypeName}
-            businessIndustryName={businessIndustryName}
-            taxCode={taxCode}
-            onBack={handleBack}
-            onConfirm={handleConfirm}
-            isLoading={isUpdating}
+        {step === 1 ? (
+          <EditEnterpriseForm
+            key={formKey}
+            onContinue={handleContinue}
+            initialData={formData}
+            enterpriseId={enterpriseId}
           />
-        )
+        ) : (
+          formData && (
+            <EnterpriseInfoReview
+              data={formData}
+              existingFiles={existingFiles}
+              businessTypeName={businessTypeName}
+              businessIndustryName={businessIndustryName}
+              taxCode={taxCode}
+            />
+          )
+        )}
+      </FormLayout>
+
+      {isUpdating && (
+        <Overlay>
+          <Loading size={55} color="white" thickness={8} />
+          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+        </Overlay>
       )}
-    </div>
+    </>
   );
 }
 

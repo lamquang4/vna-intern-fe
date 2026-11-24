@@ -4,7 +4,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Modal } from "@/libs/core/components/ui/Modal";
 import { Button } from "@/libs/core/components/ui/Button";
-import OtpField from "@/libs/core/components/ui/fields/OtpField";
+import OtpField, { OtpTimers } from "@/libs/core/components/ui/fields/OtpField";
 import {
   VerifyRegisterEnterpriseEmailOtpData,
   verifyRegisterEnterpriseEmailOtpSchema,
@@ -18,9 +18,17 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   email: string;
+  otpTimers?: OtpTimers | null;
+  onOtpTimersChange?: (timers: OtpTimers) => void;
 }
 
-function RegisterEnterpriseOtpModal({ onClose, onSuccess, email }: Props) {
+function RegisterEnterpriseOtpModal({
+  onClose,
+  onSuccess,
+  email,
+  otpTimers,
+  onOtpTimersChange,
+}: Props) {
   const [isOtpExpired, setIsOtpExpired] = useState<boolean>(false);
 
   const resendOtpMutation = useResendOtp();
@@ -83,6 +91,9 @@ function RegisterEnterpriseOtpModal({ onClose, onSuccess, email }: Props) {
                 }
                 isResending={resendOtpMutation.isPending}
                 onExpiredChange={setIsOtpExpired}
+                initialExpireEndTime={otpTimers?.expireEndTime}
+                initialCooldownEndTime={otpTimers?.cooldownEndTime}
+                onTimersChange={onOtpTimersChange}
               />
             )}
           />
@@ -91,7 +102,7 @@ function RegisterEnterpriseOtpModal({ onClose, onSuccess, email }: Props) {
             <Button
               disabled={isSubmitting || isOtpExpired}
               type="submit"
-              className="w-full px-3.5 py-2 rounded-lg font-medium bg-primary text-white"
+              className="w-full px-3 py-2 rounded-lg font-medium bg-primary text-white"
             >
               Xác nhận
             </Button>
@@ -99,7 +110,7 @@ function RegisterEnterpriseOtpModal({ onClose, onSuccess, email }: Props) {
             <Button
               type="button"
               onClick={handleCancel}
-              className="w-full text-center rounded-lg px-3.5 py-2 font-medium border border-border"
+              className="w-full text-center rounded-lg px-3 py-2 font-medium border border-border"
             >
               Hủy bỏ
             </Button>

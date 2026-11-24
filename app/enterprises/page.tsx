@@ -1,13 +1,13 @@
 import EnterpriseList from "@/libs/tts/components/enterprises/EnterpriseList";
-import LayoutPage from "@/libs/tts/components/layout/LayoutPage";
+import PageLayout from "@/libs/tts/components/layout/PageLayout";
 import { Suspense } from "react";
 
 function page() {
   return (
     <Suspense>
-      <LayoutPage>
+      <PageLayout>
         <EnterpriseList />
-      </LayoutPage>
+      </PageLayout>
     </Suspense>
   );
 }

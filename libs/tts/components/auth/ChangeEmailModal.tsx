@@ -17,16 +17,29 @@ import {
   useResendOtp,
   useVerifyChangeEmailOtp,
 } from "../../hooks/useAuth";
-import OtpField from "../../../core/components/ui/fields/OtpField";
+import OtpField, {
+  OtpTimers,
+} from "../../../core/components/ui/fields/OtpField";
 
 interface Props {
   onClose: () => void;
   userId?: string;
   email: string;
   skipOtp: boolean;
+  otpTimers?: OtpTimers | null;
+  onOtpTimersChange?: (timers: OtpTimers) => void;
+  onOtpVerified?: () => void;
 }
 
-function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
+function ChangeEmailModal({
+  onClose,
+  userId,
+  email,
+  skipOtp,
+  otpTimers,
+  onOtpTimersChange,
+  onOtpVerified,
+}: Props) {
   const [step, setStep] = useState<1 | 2>(skipOtp ? 2 : 1);
   const [isOtpExpired, setIsOtpExpired] = useState<boolean>(false);
 
@@ -63,6 +76,7 @@ function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
       {
         onSuccess: () => {
           form1.reset();
+          onOtpVerified?.();
           setStep(2);
         },
       },
@@ -96,7 +110,7 @@ function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
         }
       >
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2 items-center">
+          <div className="flex flex-col gap-3 items-center">
             {step === 1 ? (
               <>
                 <p>Chúng tôi đã gửi mã xác nhận qua email cũ</p>
@@ -127,6 +141,9 @@ function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
                   }
                   isResending={resendOtpMutation.isPending}
                   onExpiredChange={setIsOtpExpired}
+                  initialExpireEndTime={otpTimers?.expireEndTime}
+                  initialCooldownEndTime={otpTimers?.cooldownEndTime}
+                  onTimersChange={onOtpTimersChange}
                 />
               )}
             />
@@ -145,7 +162,7 @@ function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
             <Button
               disabled={isSubmitting || (step === 1 && isOtpExpired)}
               type="submit"
-              className="w-full rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
+              className="w-full rounded-lg px-3 py-2 font-medium bg-primary text-white"
             >
               {step === 1 ? "Xác nhận" : "Lưu"}
             </Button>
@@ -153,7 +170,7 @@ function ChangeEmailModal({ onClose, userId, email, skipOtp }: Props) {
             <Button
               type="button"
               onClick={onClose}
-              className="w-full rounded-lg px-3.5 py-2 font-medium border border-border"
+              className="w-full rounded-lg px-3 py-2 font-medium border border-border"
             >
               Hủy bỏ
             </Button>

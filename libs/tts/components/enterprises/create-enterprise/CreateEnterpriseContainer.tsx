@@ -1,18 +1,29 @@
 "use client";
 import { useState } from "react";
-import CreateEnterpriseForm from "./CreateEnterpriseForm";
+import CreateEnterpriseForm, {
+  CREATE_ENTERPRISE_FORM_ID,
+} from "./CreateEnterpriseForm";
 import EnterpriseInfoReview from "../EnterpriseInfoReview";
 import { CreateEnterpriseData } from "@/libs/shared/tts/schemas/enterprise.schema";
 import { useCreateEnterprise } from "@/libs/tts/hooks/useEnterprises";
 import { useSendOtp } from "@/libs/tts/hooks/useAuth";
 import AccountInfoReviewModal from "../AccountInfoReviewModal";
 import { usePathname, useRouter } from "next/navigation";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 import { toast } from "react-hot-toast";
 import RegisterEnterpriseOtpModal from "./RegisterEnterpriseOtpModal";
 import { Overlay } from "@/libs/core/components/ui/Overlay";
 import Loading from "@/libs/core/components/ui/Loading";
+import {
+  OTP_EXPIRE_SECONDS,
+  OTP_RESEND_COOLDOWN_SECONDS,
+} from "@/libs/core/constants/limits";
+import type { OtpTimers } from "@/libs/core/components/ui/fields/OtpField";
+import FormLayout from "../../layout/FormLayout";
+import { Button } from "@/libs/core/components/ui/Button";
+
+interface StoredOtpTimers extends OtpTimers {
+  email: string;
+}
 
 function CreateEnterpriseContainer() {
   const pathname = usePathname();
@@ -28,11 +39,13 @@ function CreateEnterpriseContainer() {
 
   const [isOtpModalOpen, setIsOtpModalOpen] = useState<boolean>(false);
   const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
+  const [otpTimers, setOtpTimers] = useState<StoredOtpTimers | null>(null);
 
   const createEnterpriseMutation = useCreateEnterprise();
   const sendOtpMutation = useSendOtp();
 
   const isSendingOtp = sendOtpMutation.isPending;
+  const isCreating = createEnterpriseMutation.isPending;
 
   const handleContinue = (
     data: CreateEnterpriseData,
@@ -50,10 +63,25 @@ function CreateEnterpriseContainer() {
       return;
     }
 
+    if (
+      otpTimers &&
+      otpTimers.email === data.email &&
+      Date.now() < otpTimers.cooldownEndTime
+    ) {
+      setIsOtpModalOpen(true);
+      return;
+    }
+
     sendOtpMutation.mutate(
       { email: data.email, purpose: "REGISTER_ENTERPRISE" },
       {
         onSuccess: (res) => {
+          const now = Date.now();
+          setOtpTimers({
+            email: data.email,
+            expireEndTime: now + OTP_EXPIRE_SECONDS * 1000,
+            cooldownEndTime: now + OTP_RESEND_COOLDOWN_SECONDS * 1000,
+          });
           toast.success(res.message || "Đã gửi mã xác thực đến email");
           setIsOtpModalOpen(true);
         },
@@ -63,6 +91,8 @@ function CreateEnterpriseContainer() {
 
   const handleOtpVerified = () => {
     if (formData) setVerifiedEmail(formData.email);
+    // OTP đã dùng, lần sau phải gửi mã mới
+    setOtpTimers(null);
     setIsOtpModalOpen(false);
     setStep(2);
   };
@@ -76,7 +106,7 @@ function CreateEnterpriseContainer() {
   };
 
   const handleConfirm = () => {
-    if (!formData || createEnterpriseMutation.isPending) return;
+    if (!formData || isCreating) return;
 
     createEnterpriseMutation.mutate(formData, {
       onSuccess: () => {
@@ -89,43 +119,85 @@ function CreateEnterpriseContainer() {
     router.replace(backHref);
   };
 
+  // Chỉ truyền timer cho modal khi nó thuộc đúng email hiện tại
+  const activeOtpTimers =
+    formData && otpTimers && otpTimers.email === formData.email
+      ? {
+          expireEndTime: otpTimers.expireEndTime,
+          cooldownEndTime: otpTimers.cooldownEndTime,
+        }
+      : null;
+
   return (
     <>
-      <div className="py-[30px] sm:px-[20px] px-[15px] flex flex-col gap-6 overflow-y-auto">
-        <div className="flex justify-between items-center gap-4 flex-wrap">
-          <h3>
-            {isPublicRegister ? "Đăng ký doanh nghiệp" : "Thêm doanh nghiệp"}
-          </h3>
+      <FormLayout
+        title={isPublicRegister ? "Đăng ký doanh nghiệp" : "Thêm doanh nghiệp"}
+        backHref={backHref}
+        actions={
+          <div className="flex items-center justify-center gap-3">
+            {step === 1 ? (
+              <>
+                <Button
+                  type="reset"
+                  form={CREATE_ENTERPRISE_FORM_ID}
+                  disabled={isSendingOtp}
+                  className="rounded-lg px-3 py-2 font-medium border border-border"
+                >
+                  Hủy bỏ
+                </Button>
 
-          <Link
-            href={backHref}
-            className="flex items-center font-medium gap-1 text-muted-foreground hover:text-primary px-3 py-2"
-          >
-            <ChevronLeft size={20} /> <span>Trở về</span>
-          </Link>
-        </div>
+                <Button
+                  type="submit"
+                  form={CREATE_ENTERPRISE_FORM_ID}
+                  disabled={isSendingOtp}
+                  className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
+                >
+                  Tiếp tục
+                </Button>
+              </>
+            ) : step === 2 || step === 3 ? (
+              <>
+                <Button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={isCreating}
+                  className="rounded-lg px-3 py-2 font-medium border border-border"
+                >
+                  Quay lại
+                </Button>
 
-        {step !== 3 && (
-          <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
-            <div className="flex gap-2 items-center">
-              <div
-                className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
-              >
-                1
-              </div>
-              <span>Thông tin doanh nghiệp</span>
-            </div>
-
-            <div className="flex gap-2 items-center">
-              <div
-                className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 2 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
-              >
-                2
-              </div>
-              <span>Xác nhận đăng ký</span>
-            </div>
+                <Button
+                  type="button"
+                  onClick={handleConfirm}
+                  disabled={isCreating}
+                  className="rounded-lg px-3 py-2 font-medium bg-primary text-white"
+                >
+                  Xác nhận
+                </Button>
+              </>
+            ) : null}
           </div>
-        )}
+        }
+      >
+        <div className="py-2 flex-wrap flex items-center justify-center lg:gap-8 gap-6">
+          <div className="flex gap-2 items-center">
+            <div
+              className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 1 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
+            >
+              1
+            </div>
+            <span>Thông tin doanh nghiệp</span>
+          </div>
+
+          <div className="flex gap-2 items-center">
+            <div
+              className={`size-6.5 rounded-full flex items-center font-medium justify-center ${step === 2 || step === 3 ? "bg-primary text-white" : "bg-muted-foreground/60 text-white"}`}
+            >
+              2
+            </div>
+            <span>Xác nhận đăng ký</span>
+          </div>
+        </div>
 
         {step === 1 && (
           <CreateEnterpriseForm
@@ -139,26 +211,20 @@ function CreateEnterpriseContainer() {
             data={formData}
             businessTypeName={businessTypeName}
             businessIndustryName={businessIndustryName}
-            onBack={handleBack}
-            onConfirm={handleConfirm}
-            isLoading={createEnterpriseMutation.isPending}
           />
         )}
-      </div>
+      </FormLayout>
 
       {isPublicRegister && isOtpModalOpen && formData && (
         <RegisterEnterpriseOtpModal
           email={formData.email}
           onClose={handleCloseOtpModal}
           onSuccess={handleOtpVerified}
+          otpTimers={activeOtpTimers}
+          onOtpTimersChange={(timers) =>
+            setOtpTimers({ email: formData.email, ...timers })
+          }
         />
-      )}
-
-      {isSendingOtp && (
-        <Overlay>
-          <Loading size={55} color="white" thickness={8} />
-          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
-        </Overlay>
       )}
 
       {step === 3 && formData && (
@@ -166,6 +232,13 @@ function CreateEnterpriseContainer() {
           taxCode={formData.taxCode}
           onClose={handleCloseAccountModal}
         />
+      )}
+
+      {(isSendingOtp || isCreating) && (
+        <Overlay>
+          <Loading size={55} color="white" thickness={8} />
+          <h4 className="text-white">Vui lòng chờ trong giây lát ...</h4>
+        </Overlay>
       )}
     </>
   );

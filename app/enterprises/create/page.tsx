@@ -1,11 +1,14 @@
 import CreateEnterpriseContainer from "@/libs/tts/components/enterprises/create-enterprise/CreateEnterpriseContainer";
-import LayoutPage from "@/libs/tts/components/layout/LayoutPage";
+import PageLayout from "@/libs/tts/components/layout/PageLayout";
+import { Suspense } from "react";
 
 function page() {
   return (
-    <LayoutPage>
-      <CreateEnterpriseContainer />
-    </LayoutPage>
+    <PageLayout>
+      <Suspense>
+        <CreateEnterpriseContainer />
+      </Suspense>
+    </PageLayout>
   );
 }
 

@@ -3,7 +3,6 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parseISO } from "date-fns";
 import z from "zod";
-import { Button } from "@/libs/core/components/ui/Button";
 import { FloatingInput } from "@/libs/core/components/ui/fields/FloatingInput";
 import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
 import { useGetAllBusinessIndustries } from "@/libs/tts/hooks/useBusinessIndustries";
@@ -16,13 +15,15 @@ import {
   CreateEnterpriseData,
   createEnterpriseSchema,
 } from "@/libs/shared/tts/schemas/enterprise.schema";
+import { formatTaxCode } from "@/libs/core/utils/formatters";
+import { PreviewFile } from "@/libs/tts/utils/filePreview";
 import {
   DocumentField,
-  DocumentRow,
+  EnterpriseDocumentRow,
 } from "@/libs/shared/tts/models/enterprise.model";
-import DocumentsField from "../DocumentsField";
-import { formatTaxCodeInput } from "@/libs/core/utils/formatters";
-import { PreviewFile } from "@/libs/tts/utils/filePreviewUtil";
+import DocumentsField from "@/libs/core/components/ui/fields/DocumentsField";
+
+export const CREATE_ENTERPRISE_FORM_ID = "create-enterprise-form";
 
 interface Props {
   onContinue: (
@@ -121,7 +122,7 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
     );
   };
 
-  const documents: DocumentRow<PreviewFile>[] = [
+  const documents: EnterpriseDocumentRow<PreviewFile>[] = [
     {
       id: "businessLicense",
       name: "Giấy phép kinh doanh",
@@ -140,14 +141,15 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
   const handleRemoveDocument = (id: DocumentField) =>
     setValue(id, null, { shouldDirty: true, shouldValidate: true });
 
-  const handleCancel = () => {
-    reset();
-  };
-
   return (
     <form
+      id={CREATE_ENTERPRISE_FORM_ID}
       className="flex flex-col gap-6 w-full"
       onSubmit={handleSubmit(onSubmit)}
+      onReset={(e) => {
+        e.preventDefault();
+        reset();
+      }}
     >
       <div className="flex flex-col gap-[20px] w-full">
         <div className="flex flex-col gap-[20px]">
@@ -173,7 +175,7 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
               error={errors.taxCode?.message}
               {...register("taxCode", {
                 onChange: (e) => {
-                  e.target.value = formatTaxCodeInput(e.target.value);
+                  e.target.value = formatTaxCode(e.target.value);
                 },
               })}
             />
@@ -391,23 +393,6 @@ function CreateEnterpriseForm({ onContinue, initialData }: Props) {
             onRemove={(row) => handleRemoveDocument(row.id)}
           />
         </div>
-      </div>
-
-      <div className="flex items-center justify-center gap-3">
-        <Button
-          type="button"
-          onClick={handleCancel}
-          className="rounded-lg px-3.5 py-2 font-medium border border-border"
-        >
-          Hủy bỏ
-        </Button>
-
-        <Button
-          type="submit"
-          className="rounded-lg px-3.5 py-2 font-medium bg-primary text-white"
-        >
-          Tiếp tục
-        </Button>
       </div>
     </form>
   );

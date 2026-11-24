@@ -17,6 +17,7 @@ import type {
   VerifyRegisterEnterpriseEmailOtpRequest,
   ChangeEmailRequest,
   InitializePasswordRequest,
+  AccessTokenPayload,
 } from "@/libs/shared/tts/models/auth.model";
 import type { UserDetailResponse } from "@/libs/shared/tts/models/user.model";
 import { authApi } from "../services/apis/authApis";
@@ -24,6 +25,8 @@ import { jwtUtil } from "@/libs/core/utils/jwtUtil";
 import { getErrorMessage } from "@/libs/core/utils/errorUtil";
 import { userKeys } from "./useUsers";
 import { enterpriseKeys } from "./useEnterprises";
+import { jwtDecode } from "jwt-decode";
+import { RoleCode } from "@/libs/shared/tts/models/enums";
 
 export const authKeys = {
   all: ["auth"] as const,
@@ -46,8 +49,17 @@ export const useLogin = () => {
       jwtUtil.setAccessToken(accessToken);
       jwtUtil.setRefreshToken(refreshToken);
 
+      let role: string | undefined;
+      try {
+        role = jwtDecode<AccessTokenPayload>(accessToken).role;
+      } catch {
+        role = undefined;
+      }
+
       toast.success(res.message || "Đăng nhập thành công");
-      router.replace("/account");
+      router.replace(
+        role === RoleCode.DOANH_NGHIEP ? "/enterprise" : "/account",
+      );
     },
 
     onError: (error) => {

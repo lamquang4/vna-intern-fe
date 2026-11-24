@@ -1,4 +1,4 @@
-import { FileResponse } from "../../core/models/common.model";
+import { DocumentRow, FileResponse } from "../../core/models/common.model";
 
 //response
 // /enterprises?name=&taxCode=&businessType=&businessIndustry=&ward=&isActive=&page=&size=
@@ -99,11 +99,9 @@ export interface UpdateEnterpriseMeRequest {
   otherDocument?: File | null; // Giấy tờ khác
 }
 
-// Cho Form trên FE
 export type DocumentField = "businessLicense" | "otherDocument";
 
-export interface DocumentRow<TFile = File> {
-  id: DocumentField;
-  name: string;
-  file: TFile | null;
-}
+export type EnterpriseDocumentRow<TFile = File> = DocumentRow<
+  TFile,
+  DocumentField
+>;

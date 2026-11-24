@@ -1,14 +1,13 @@
 "use client";
 import { useState } from "react";
-import { Pencil, KeyRound, Filter, Trash, CirclePlus } from "lucide-react";
+import { Pencil, KeyRound, Trash, CirclePlus, FunnelX } from "lucide-react";
 import { Button } from "@/libs/core/components/ui/Button";
 import DataTable from "@/libs/core/components/ui/DataTable";
 import ListLayout from "../layout/ListLayout";
 import { TableColumn } from "@/libs/core/models/component.model";
 import { Switch } from "@/libs/core/components/ui/Switch";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
-import EnterpriseFilterModal from "./EnterpriseFilterModal";
 import InitializePasswordModal from "../auth/InitializePasswordModal";
 import { GetEnterprisesParams } from "@/libs/shared/tts/models/params.model";
 import {
@@ -18,32 +17,35 @@ import {
 import { EnterpriseResponse } from "@/libs/shared/tts/models/enterprise.model";
 import { useToggleUserStatus } from "../../hooks/useUsers";
 import Link from "next/link";
+import { useGetHCMWards } from "../../hooks/useLocation";
+import { useGetAllBusinessTypes } from "../../hooks/useBusinessTypes";
+import { useGetAllBusinessIndustries } from "../../hooks/useBusinessIndustries";
+import { USER_STATUS_OPTIONS } from "@/libs/core/constants/options";
+
+const FILTER_KEYS = [
+  "name",
+  "taxCode",
+  "businessType",
+  "businessIndustry",
+  "ward",
+  "isActive",
+];
 
 function EnterpriseList() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [toggleStatusId, setToggleStatusId] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const [filterOpen, setFilterOpen] = useState<boolean>(false);
+  const [initializePasswordModalOpen, setInitializePasswordModalOpen] =
+    useState<boolean>(false);
   const [deleteOpen, setDeleteOpen] = useState<boolean>(false);
   const [username, setUsername] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
 
-  const FILTER_KEYS = [
-    "name",
-    "taxCode",
-    "businessType",
-    "businessIndustry",
-    "ward",
-    "isActive",
-  ];
-  const activeFilterCount = FILTER_KEYS.filter((key) =>
-    searchParams.get(key),
-  ).length;
-
   const page = Number(searchParams.get("page")) || 1;
-  const size = Number(searchParams.get("size")) || 10;
+  const size = Number(searchParams.get("size")) || 12;
   const isActiveParam = searchParams.get("isActive");
 
   const params: GetEnterprisesParams = {
@@ -65,11 +67,32 @@ function EnterpriseList() {
   const totalElements = data?.totalElements ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
+  const wards = useGetHCMWards();
+  const { data: businessTypeData } = useGetAllBusinessTypes();
+  const { data: businessIndustryData } = useGetAllBusinessIndustries();
+
   const toggleStatusMutation = useToggleUserStatus();
   const isTogglingStatus = toggleStatusMutation.isPending;
 
   const deleteEnterprisesMutation = useDeleteEnterprises();
   const isDeletingEnterprises = deleteEnterprisesMutation.isPending;
+
+  const businessTypeOptions = (businessTypeData?.data ?? []).map((type) => ({
+    value: type.name,
+    label: `${type.code} - ${type.name}`,
+  }));
+
+  const businessIndustryOptions = (businessIndustryData?.data ?? []).map(
+    (industry) => ({
+      value: industry.name,
+      label: `${industry.code} - ${industry.name}`,
+    }),
+  );
+
+  const wardOptions = (wards ?? []).map((ward) => ({
+    value: ward.name,
+    label: ward.name,
+  }));
 
   const handleConfirmDialogDeleteEnterprises = () => {
     if (isDeletingEnterprises) return;
@@ -109,9 +132,21 @@ function EnterpriseList() {
   };
 
   const handleOpenInitialPasswordModal = (username: string, userId: string) => {
-    setModalOpen(true);
+    setInitializePasswordModalOpen(true);
     setUsername(username);
     setUserId(userId);
+  };
+
+  const hasActiveFilter = FILTER_KEYS.some((k) => searchParams.get(k));
+
+  const handleClearFilter = () => {
+    const next = new URLSearchParams(searchParams.toString());
+
+    FILTER_KEYS.forEach((k) => next.delete(k));
+    next.delete("page");
+
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
   const columns: TableColumn<EnterpriseResponse>[] = [
@@ -137,20 +172,52 @@ function EnterpriseList() {
       key: "taxCode",
       header: "Mã số thuế",
       cell: (u) => u.taxCode,
+      filter: {
+        type: "text",
+        paramKey: "taxCode",
+        placeholder: "Nhập mã số thuế",
+      },
     },
-    { key: "name", header: "Tên doanh nghiệp", cell: (u) => u.name },
-
+    {
+      key: "name",
+      header: "Tên doanh nghiệp",
+      cell: (u) => u.name,
+      filter: {
+        type: "text",
+        paramKey: "name",
+        placeholder: "Nhập tên doanh nghiệp",
+      },
+    },
     {
       key: "businessType",
       header: "Loại hình kinh doanh",
       cell: (u) => u.businessType,
+      filter: {
+        type: "select",
+        paramKey: "businessType",
+        options: businessTypeOptions,
+      },
     },
     {
       key: "businessIndustry",
       header: "Ngành nghề kinh doanh",
       cell: (u) => u.businessIndustry,
+      filter: {
+        type: "select",
+        paramKey: "businessIndustry",
+        options: businessIndustryOptions,
+      },
     },
-    { key: "ward", header: "Phường/xã", cell: (u) => u.ward },
+    {
+      key: "ward",
+      header: "Phường/xã",
+      cell: (u) => u.ward,
+      filter: {
+        type: "select",
+        paramKey: "ward",
+        options: wardOptions,
+      },
+    },
     {
       key: "isActive",
       header: "Trạng thái",
@@ -161,21 +228,25 @@ function EnterpriseList() {
           disabled={isTogglingStatus}
         />
       ),
+      filter: {
+        type: "select",
+        paramKey: "isActive",
+        options: USER_STATUS_OPTIONS,
+      },
     },
   ];
 
   return (
     <>
       <ListLayout
-        title="Danh sách doanh nghiệp"
-        count={totalElements}
+        title={`Doanh nghiệp (${totalElements})`}
         actions={
-          <>
+          <div className="flex items-center justify-center gap-3">
             {selectedIds.length > 0 && (
               <Button
                 type="button"
                 onClick={handleConfirmDialogDeleteEnterprises}
-                className="flex items-center gap-2 rounded-md bg-error px-2 py-2.5 font-medium text-white"
+                className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
               >
                 <Trash size={18} />
                 <span>
@@ -184,24 +255,23 @@ function EnterpriseList() {
               </Button>
             )}
 
-            <Button
-              type="button"
-              onClick={() => setFilterOpen(true)}
-              className="flex items-center gap-2 rounded-md border border-primary px-2 py-2.5 font-medium text-primary"
-            >
-              <Filter size={18} />
-              <span>
-                Bộ lọc {activeFilterCount > 0 && ` (${activeFilterCount})`}
-              </span>
-            </Button>
-
             <Link
               href="/enterprises/create"
-              className="rounded-md bg-primary px-2 py-2.5 font-medium text-white flex items-center gap-2"
+              className="rounded-md bg-primary px-3 py-2 font-medium text-white flex items-center gap-2"
             >
               <CirclePlus size={18} strokeWidth={2} /> <span>Thêm</span>
             </Link>
-          </>
+
+            {hasActiveFilter && (
+              <Button
+                type="button"
+                onClick={handleClearFilter}
+                className="rounded-md bg-error px-3 py-2 font-medium text-white flex items-center gap-2"
+              >
+                <FunnelX size={18} /> <span>Xóa bộ lọc</span>
+              </Button>
+            )}
+          </div>
         }
         pagination={{ page, size, totalElements, totalPages }}
       >
@@ -215,9 +285,9 @@ function EnterpriseList() {
         />
       </ListLayout>
 
-      {modalOpen && (
+      {initializePasswordModalOpen && (
         <InitializePasswordModal
-          onClose={() => setModalOpen(false)}
+          onClose={() => setInitializePasswordModalOpen(false)}
           username={username}
           userId={userId}
         />
@@ -245,10 +315,6 @@ function EnterpriseList() {
           onConfirm={handleDeleteEnterprises}
           onClose={() => setDeleteOpen(false)}
         />
-      )}
-
-      {filterOpen && (
-        <EnterpriseFilterModal onClose={() => setFilterOpen(false)} />
       )}
     </>
   );
