@@ -1,5 +1,5 @@
 "use client";
-import { CircleCheck, CircleX, Eye, FunnelX, Pencil } from "lucide-react";
+import { Clock, Eye, FunnelX, Pencil, ClipboardCheck } from "lucide-react";
 import { Button } from "@/libs/core/components/ui/Button";
 import DataTable from "@/libs/core/components/ui/DataTable";
 import ListLayout from "../layout/ListLayout";
@@ -10,7 +10,6 @@ import Link from "next/link";
 import { GetAccidentReportsParams } from "@/libs/shared/tts/models/params.model";
 import {
   AccidentReportPeriod,
-  AccidentReportReviewStatus,
   AccidentReportStatus,
   RoleCode,
 } from "@/libs/shared/tts/models/enums";
@@ -18,7 +17,6 @@ import { AccidentReportResponse } from "@/libs/shared/tts/models/accident-report
 import {
   useGetAccidentReports,
   useGetAccidentReportsMe,
-  useReviewAccidentReport,
 } from "../../hooks/useAccidentReports";
 import {
   ACCIDENT_REPORT_PERIOD_OPTIONS,
@@ -26,13 +24,13 @@ import {
 } from "@/libs/core/constants/options";
 import { useGetMe } from "../../hooks/useAuth";
 import { Select } from "@/libs/core/components/ui/Select";
-import toast from "react-hot-toast";
-import NoteModal from "./NoteModal";
-import { ConfirmDialog } from "@/libs/core/components/ui/ConfirmDialog";
 import { useGetReportConfigYears } from "../../hooks/useReportConfigs";
 import { useGetHCMProvince, useGetHCMWards } from "../../hooks/useLocation";
 import { FloatingSelect } from "@/libs/core/components/ui/fields/FloatingSelect";
 import { formatDate } from "@/libs/core/utils/formatters";
+import { DeadlineExtensionModal } from "./DeadlineExtensionModal";
+import { DeadlineConfigurationModal } from "./DeadlineConfigurationModal";
+import toast from "react-hot-toast";
 
 const FILTER_KEYS = [
   "name",
@@ -68,10 +66,9 @@ function AccidentReportList() {
   const pathname = usePathname();
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [confirmStatus, setConfirmStatus] =
-    useState<AccidentReportReviewStatus | null>(null);
-  const [reviewStatus, setReviewStatus] =
-    useState<AccidentReportReviewStatus | null>(null);
+  const [deadlineReport, setDeadlineReport] =
+    useState<AccidentReportResponse | null>(null);
+  const [isDeadlineConfigOpen, setIsDeadlineConfigOpen] = useState(false);
 
   const getStatusLabel = (status: AccidentReportStatus) =>
     ACCIDENT_REPORT_STATUS_OPTIONS.find((o) => o.value === status)?.label ??
@@ -141,9 +138,6 @@ function AccidentReportList() {
   const { data: dataYears } = useGetReportConfigYears();
   const years = dataYears?.data ?? [];
 
-  const reviewAccidentReportMutation = useReviewAccidentReport();
-  const isReviewing = reviewAccidentReportMutation.isPending;
-
   const yearOptions = years.map((y) => ({
     value: String(y),
     label: String(y),
@@ -182,80 +176,33 @@ function AccidentReportList() {
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   };
 
-  const selectedReports = accidentReports.filter((r) =>
-    selectedIds.includes(r.accidentReportId),
-  );
-
-  const canApprove =
-    selectedReports.length > 0 &&
-    selectedReports.every(
-      (r) =>
-        r.status === AccidentReportStatus.ACCEPTED ||
-        r.status === AccidentReportStatus.DECLINED,
-    );
-
-  const canDecline =
-    selectedReports.length > 0 &&
-    selectedReports.every((r) => r.status === AccidentReportStatus.ACCEPTED);
-
-  const submitReview = (status: AccidentReportReviewStatus, note?: string) => {
-    if (isReviewing || selectedIds.length === 0) return;
-
-    reviewAccidentReportMutation.mutate(
-      { accidentReportIds: selectedIds, status, note },
-      {
-        onSuccess: () => {
-          setReviewStatus(null);
-          setSelectedIds([]);
-        },
-      },
-    );
-  };
-
-  const handleConfirmDialogReview = (status: AccidentReportReviewStatus) => {
+  const handleStartReview = () => {
     if (selectedIds.length === 0) return;
 
     const reportById = new Map(
-      accidentReports.map((r) => [r.accidentReportId, r]),
+      accidentReports.map((report) => [report.accidentReportId, report]),
     );
-
-    const allowedStatuses: AccidentReportStatus[] =
-      status === AccidentReportReviewStatus.APPROVED
-        ? [AccidentReportStatus.ACCEPTED, AccidentReportStatus.DECLINED]
-        : [AccidentReportStatus.ACCEPTED];
-
-    const hasInvalid = selectedIds.some((id) => {
+    const hasInvalidReport = selectedIds.some((id) => {
       const report = reportById.get(id);
-      return !report || !allowedStatuses.includes(report.status);
+      return !report || report.status !== AccidentReportStatus.ACCEPTED;
     });
 
-    if (hasInvalid) {
+    if (hasInvalidReport) {
       toast.error(
-        status === AccidentReportReviewStatus.APPROVED
-          ? "Chỉ được duyệt các báo cáo có trạng thái là đã tiếp nhận hoặc đã từ chối"
-          : "Chỉ được từ chối các báo cáo có trạng thái là đã tiếp nhận",
+        "Chỉ được xét duyệt các báo cáo đang ở trạng thái đã tiếp nhận",
       );
       return;
     }
 
-    setConfirmStatus(status);
-  };
+    const params = new URLSearchParams({
+      mode: "view",
+      reviewIds: selectedIds.join(","),
+      reviewIndex: "0",
+    });
 
-  const handleConfirmReview = () => {
-    if (!confirmStatus) return;
-
-    if (confirmStatus === AccidentReportReviewStatus.APPROVED) {
-      submitReview(confirmStatus);
-    } else {
-      setReviewStatus(confirmStatus);
-    }
-
-    setConfirmStatus(null);
-  };
-
-  const handleReviewAccidentReport = (note: string) => {
-    if (!reviewStatus) return;
-    submitReview(reviewStatus, note);
+    router.push(
+      `/accident-reports/${selectedIds[0]}?${params.toString()}`,
+    );
   };
 
   const hasActiveFilter = FILTER_KEYS.some((k) => searchParams.get(k));
@@ -288,7 +235,16 @@ function AccidentReportList() {
             <Link href={`/accident-reports/${r.accidentReportId}?mode=view`}>
               <Eye size={22} className="text-muted-foreground" />
             </Link>
-
+            {isRoleSo && r.status === AccidentReportStatus.EXPIRED && (
+              <button
+                type="button"
+                title="Gia hạn"
+                onClick={() => setDeadlineReport(r)}
+                className="cursor-pointer text-primary hover:opacity-80"
+              >
+                <Clock size={22} />
+              </button>
+            )}
             {isRoleDN && !isViewOnly && (
               <Link href={`/accident-reports/${r.accidentReportId}?mode=edit`}>
                 <Pencil size={22} className="text-edit" />
@@ -390,40 +346,25 @@ function AccidentReportList() {
               </Link>
             )}
 
-            {selectedIds.length > 0 && isRoleSo && (
-              <>
-                {canDecline && (
-                  <Button
-                    type="button"
-                    disabled={isReviewing}
-                    onClick={() =>
-                      handleConfirmDialogReview(
-                        AccidentReportReviewStatus.DECLINED,
-                      )
-                    }
-                    className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
-                  >
-                    <CircleX size={18} />
-                    <span>Từ chối ({selectedIds.length})</span>
-                  </Button>
-                )}
+            {isRoleSo && (
+              <Button
+                type="button"
+                onClick={() => setIsDeadlineConfigOpen(true)}
+                className="w-full whitespace-nowrap rounded-md bg-warning px-3 py-2 font-medium text-white"
+              >
+                Cấu hình thời hạn
+              </Button>
+            )}
 
-                {canApprove && (
-                  <Button
-                    type="button"
-                    disabled={isReviewing}
-                    onClick={() =>
-                      handleConfirmDialogReview(
-                        AccidentReportReviewStatus.APPROVED,
-                      )
-                    }
-                    className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
-                  >
-                    <CircleCheck size={18} />
-                    <span>Duyệt ({selectedIds.length})</span>
-                  </Button>
-                )}
-              </>
+            {selectedIds.length > 0 && isRoleSo && (
+              <Button
+                type="button"
+                onClick={handleStartReview}
+                className="flex items-center gap-2 rounded-md bg-teal-600 px-3 py-2 font-medium text-white"
+              >
+                <ClipboardCheck size={18} />
+                <span>Xét duyệt ({selectedIds.length})</span>
+              </Button>
             )}
 
             {isRoleSo && hasActiveFilter && (
@@ -471,34 +412,27 @@ function AccidentReportList() {
           isLoading={isFetchingAccidentReports}
           selectedIds={isRoleSo ? selectedIds : undefined}
           onSelectionChange={isRoleSo ? setSelectedIds : undefined}
+          isRowSelectable={(report) =>
+            report.status === AccidentReportStatus.ACCEPTED
+          }
+          onSelectionRejected={() =>
+            toast.error(
+              "Chỉ được chọn báo cáo đang ở trạng thái đã tiếp nhận",
+            )
+          }
         />
       </ListLayout>
 
-      {confirmStatus && (
-        <ConfirmDialog
-          title={
-            confirmStatus === AccidentReportReviewStatus.APPROVED
-              ? "Xác nhận duyệt báo cáo"
-              : "Xác nhận từ chối báo cáo"
-          }
-          description={`Bạn có chắc chắn muốn ${
-            confirmStatus === AccidentReportReviewStatus.APPROVED
-              ? "duyệt"
-              : "từ chối"
-          } ${selectedIds.length} báo cáo đã chọn?`}
-          confirmText="Xác nhận"
-          cancelText="Hủy bỏ"
-          onConfirm={handleConfirmReview}
-          onClose={() => setConfirmStatus(null)}
+      {deadlineReport && (
+        <DeadlineExtensionModal
+          report={deadlineReport}
+          onClose={() => setDeadlineReport(null)}
         />
       )}
-
-      {reviewStatus && (
-        <NoteModal
-          count={selectedIds.length}
-          isLoading={isReviewing}
-          onSubmit={handleReviewAccidentReport}
-          onClose={() => setReviewStatus(null)}
+      {isDeadlineConfigOpen && (
+        <DeadlineConfigurationModal
+          year={Number(selectedYear)}
+          onClose={() => setIsDeadlineConfigOpen(false)}
         />
       )}
     </>

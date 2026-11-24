@@ -7,6 +7,7 @@ interface Props {
   action?: React.ReactNode;
   others?: React.ReactNode;
   actions?: React.ReactNode;
+  bottomActions?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }
@@ -17,6 +18,7 @@ function FormLayout({
   action,
   others,
   actions,
+  bottomActions,
   children,
   className = "",
 }: Props) {
@@ -50,6 +52,12 @@ function FormLayout({
       >
         {children}
       </div>
+
+      {bottomActions && (
+        <div className="flex shrink-0 items-center justify-end border-t border-border bg-white px-[15px] py-3 sm:px-[20px]">
+          {bottomActions}
+        </div>
+      )}
     </div>
   );
 }

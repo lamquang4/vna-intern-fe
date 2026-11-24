@@ -1,14 +1,13 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleCheck, CircleX, Printer } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, CircleCheck, CircleX, Printer } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type FieldPath } from "react-hook-form";
 import { Button } from "@/libs/core/components/ui/Button";
 import { Select } from "@/libs/core/components/ui/Select";
 import {
   ACCIDENT_REPORT_PERIOD_OPTIONS,
-  ACCIDENT_REPORT_STATUS_OPTIONS,
   ACCIDENT_REPORT_STEP_OPTIONS,
 } from "@/libs/core/constants/options";
 import {
@@ -130,6 +129,7 @@ const collectErrorPaths = (errors: unknown, prefix = ""): string[] => {
 
 function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [confirmStatus, setConfirmStatus] =
     useState<AccidentReportReviewStatus | null>(null);
@@ -142,6 +142,31 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   const accidentReportsPath = `/accident-reports?year=${report?.year ?? new Date().getFullYear()}`;
   const isFetchingReport = reportQuery.isLoading;
 
+  const reviewIds =
+    searchParams
+      .get("reviewIds")
+      ?.split(",")
+      .filter((id) => id.length > 0) ?? [];
+  const reviewIndex = Math.max(
+    0,
+    Number(searchParams.get("reviewIndex")) || 0,
+  );
+  const isReviewSequence = reviewIds.length > 0;
+
+  const navigateReview = (index: number) => {
+    if (index < 0 || index >= reviewIds.length) return;
+
+    const params = new URLSearchParams({
+      mode: "view",
+      reviewIds: reviewIds.join(","),
+      reviewIndex: String(index),
+    });
+
+    router.push(
+      `/accident-reports/${reviewIds[index]}?${params.toString()}`,
+    );
+  };
+
   const reviewMutation = useReviewAccidentReport();
   const isReviewing = reviewMutation.isPending;
 
@@ -150,7 +175,6 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   const isRoleSo = currentAccount?.data.roleCode === RoleCode.SO;
   const isRoleDN = currentAccount?.data.roleCode === RoleCode.DOANH_NGHIEP;
   const isAccepted = report?.status === AccidentReportStatus.ACCEPTED;
-  const isDeclined = report?.status === AccidentReportStatus.DECLINED;
   const isViewOnly =
     !!report &&
     (
@@ -164,7 +188,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
   const canEdit =
     mode === "edit" && !isLoadingAccount && isRoleDN && !!report && !isViewOnly;
 
-  const canApprove = isRoleSo && (isAccepted || isDeclined);
+  const canApprove = isRoleSo && isAccepted;
 
   const canDecline = isRoleSo && isAccepted;
   const canReview = canApprove || canDecline;
@@ -317,7 +341,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
     if (!isReviewAllowed(status)) {
       toast.error(
         status === AccidentReportReviewStatus.APPROVED
-          ? "Chỉ được duyệt báo cáo có trạng thái đã tiếp nhận hoặc đã từ chối"
+          ? "Chỉ được duyệt báo cáo có trạng thái đã tiếp nhận"
           : "Chỉ được từ chối báo cáo có trạng thái đã tiếp nhận",
       );
       return;
@@ -330,15 +354,24 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
     if (isReviewing || !isReviewAllowed(status)) return;
 
     reviewMutation.mutate(
-      {
-        accidentReportIds: [accidentReportId],
-        status,
-        note,
-      },
+      status === AccidentReportReviewStatus.APPROVED
+        ? {
+            accidentReportIds: [accidentReportId],
+            status,
+          }
+        : {
+            accidentReportIds: [accidentReportId],
+            status,
+            note,
+          },
       {
         onSuccess: () => {
           setReviewStatus(null);
-          router.replace(accidentReportsPath);
+          if (isReviewSequence && reviewIndex < reviewIds.length - 1) {
+            navigateReview(reviewIndex + 1);
+          } else {
+            router.replace(accidentReportsPath);
+          }
         },
       },
     );
@@ -535,6 +568,31 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
         }
         actions={
           <div className="flex items-center justify-center gap-3">
+            {isReviewSequence && (
+              <>
+                <Button
+                  type="button"
+                  onClick={() => navigateReview(reviewIndex - 1)}
+                  disabled={reviewIndex <= 0}
+                  className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
+                >
+                  <ChevronLeft size={18} />
+                  <span>Trước đó</span>
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {reviewIndex + 1}/{reviewIds.length}
+                </span>
+                <Button
+                  type="button"
+                  onClick={() => navigateReview(reviewIndex + 1)}
+                  disabled={reviewIndex >= reviewIds.length - 1}
+                  className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
+                >
+                  <span>Kế tiếp</span>
+                  <ChevronRight size={18} />
+                </Button>
+              </>
+            )}
             {canNavigateSteps && activeStep > 0 && (
               <Button
                 type="button"
@@ -558,42 +616,6 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
               >
                 {activeStep === lastStep ? "Gửi báo cáo" : "Lưu"}
               </Button>
-            )}
-
-            {canReview && (
-              <>
-                {canApprove && (
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      handleConfirmDialogReview(
-                        AccidentReportReviewStatus.APPROVED,
-                      )
-                    }
-                    disabled={isReviewing}
-                    className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
-                  >
-                    <CircleCheck size={18} />
-                    <span>Duyệt</span>
-                  </Button>
-                )}
-
-                {canDecline && (
-                  <Button
-                    type="button"
-                    onClick={() =>
-                      handleConfirmDialogReview(
-                        AccidentReportReviewStatus.DECLINED,
-                      )
-                    }
-                    disabled={isReviewing}
-                    className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
-                  >
-                    <CircleX size={18} />
-                    <span>Từ chối</span>
-                  </Button>
-                )}
-              </>
             )}
 
             {activeStep === lastStep && (
@@ -621,6 +643,43 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
               </Button>
             )}
           </div>
+        }
+        bottomActions={
+          canReview ? (
+            <div className="flex items-center gap-3">
+              {canDecline && (
+                <Button
+                  type="button"
+                  onClick={() =>
+                    handleConfirmDialogReview(
+                      AccidentReportReviewStatus.DECLINED,
+                    )
+                  }
+                  disabled={isReviewing}
+                  className="flex items-center gap-2 rounded-md bg-error px-3 py-2 font-medium text-white"
+                >
+                  <CircleX size={18} />
+                  <span>Từ chối</span>
+                </Button>
+              )}
+
+              {canApprove && (
+                <Button
+                  type="button"
+                  onClick={() =>
+                    handleConfirmDialogReview(
+                      AccidentReportReviewStatus.APPROVED,
+                    )
+                  }
+                  disabled={isReviewing}
+                  className="flex items-center gap-2 rounded-md bg-success px-3 py-2 font-medium text-white"
+                >
+                  <CircleCheck size={18} />
+                  <span>Duyệt</span>
+                </Button>
+              )}
+            </div>
+          ) : undefined
         }
       >
         {canNavigateSteps && (
