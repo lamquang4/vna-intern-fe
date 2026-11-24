@@ -155,6 +155,7 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
       .filter((id) => id.length > 0) ?? [];
   const reviewIndex = Math.max(0, Number(searchParams.get("reviewIndex")) || 0);
   const isReviewSequence = reviewIds.length > 0;
+  const showReviewNavigation = reviewIds.length > 1;
 
   const navigateReview = (index: number) => {
     if (index < 0 || index >= reviewIds.length) return;
@@ -569,34 +570,6 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
         }
         actions={
           <div className="flex items-center justify-center gap-3">
-            {isReviewSequence && reviewIndex > 0 && (
-              <>
-                <Button
-                  type="button"
-                  onClick={() => navigateReview(reviewIndex - 1)}
-                  disabled={reviewIndex <= 0}
-                  className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
-                >
-                  <ChevronLeft size={18} />
-                  <span>Trước đó</span>
-                </Button>
-
-                <span className="text-muted-foreground">
-                  {reviewIndex + 1}/{reviewIds.length}
-                </span>
-
-                <Button
-                  type="button"
-                  onClick={() => navigateReview(reviewIndex + 1)}
-                  disabled={reviewIndex >= reviewIds.length - 1}
-                  className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
-                >
-                  <span>Kế tiếp</span>
-                  <ChevronRight size={18} />
-                </Button>
-              </>
-            )}
-
             {canNavigateSteps && activeStep > 0 && (
               <Button
                 type="button"
@@ -634,6 +607,34 @@ function EditAccidentReportContainer({ accidentReportId, mode }: Props) {
                 <Printer size={18} />
                 <span>In báo cáo</span>
               </Button>
+            )}
+
+            {showReviewNavigation && (
+              <>
+                <Button
+                  type="button"
+                  onClick={() => navigateReview(reviewIndex - 1)}
+                  disabled={reviewIndex <= 0}
+                  className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
+                >
+                  <ChevronLeft size={18} />
+                  <span>Trước đó</span>
+                </Button>
+
+                <span>
+                  {reviewIndex + 1}/{reviewIds.length}
+                </span>
+
+                <Button
+                  type="button"
+                  onClick={() => navigateReview(reviewIndex + 1)}
+                  disabled={reviewIndex >= reviewIds.length - 1}
+                  className="flex items-center gap-2 rounded-md border border-primary px-3 py-2 text-primary"
+                >
+                  <span>Kế tiếp</span>
+                  <ChevronRight size={18} />
+                </Button>
+              </>
             )}
 
             {canNavigateSteps && activeStep < lastStep && (
