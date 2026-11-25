@@ -78,13 +78,17 @@ export function DeadlineExtensionModal({ report, onClose }: Props) {
     extensionsQuery.isLoading;
 
   const onSubmit = (values: ExtendReportDeadlineData) =>
-    extendMutation.mutate({
-      accidentReportId: report.accidentReportId,
-      period: report.reportPeriod,
-      year: report.year,
-      ...values,
-    });
-
+    extendMutation.mutate(
+      {
+        accidentReportId: report.accidentReportId,
+        period: report.reportPeriod,
+        year: report.year,
+        ...values,
+      },
+      {
+        onSuccess: () => onClose(),
+      },
+    );
   return (
     <Modal
       title="Gia hạn thời hạn nộp báo cáo"
