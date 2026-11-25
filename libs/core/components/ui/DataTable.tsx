@@ -183,7 +183,7 @@ function DataTable<T>({
 
                   {col.filter?.type === "select" && (
                     <Select
-                      searchable={false}
+                      searchable={true}
                       placeholder={col.filter.placeholder ?? "Tất cả"}
                       options={[
                         { label: "Tất cả", value: "" },
